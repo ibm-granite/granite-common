@@ -1,3 +1,9 @@
+# Local bootstrap conda environment
+env
+
+# User-specific config files
+.vscode
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
