@@ -99,3 +99,24 @@ class Granite3ChatCompletion(ChatCompletion):
         # messages field. Undo any changes that we made during validation and return
         # the original value.
         return original_messages
+
+
+class Granite3AssistantMessage(AssistantMessage):
+    """
+    An assistant message augmented with additional fields that are specific to the
+    Granite 3 family of models.
+    """
+
+    reasoning_content: str | None = None
+    citations: list[Citation] | None = None
+    documents: list[Document] | None = None
+    hallucinations: list[Hallucination] | None = None
+    stop_reason: str | None = None
+
+    raw_content: str | None = pydantic.Field(
+        default=None,
+        description=(
+            "Raw response content without any parsing, for debugging and "
+            "re-serialization."
+        ),
+    )

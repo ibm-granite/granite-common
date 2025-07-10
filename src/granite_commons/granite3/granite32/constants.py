@@ -8,6 +8,21 @@ Constants used in code that is specific to the Granite 3.2 family of models.
 COT_START = "Here is my thought process:"
 COT_END = "Here is my response:"
 
+# Some versions of the model are known to shorten "Here is" to "Here's", so we
+# provide alternate forms of these strings for those versions.
+COT_START_ALTERNATIVES = [
+    COT_START,
+    "Here's my thought process:",
+]
+COT_END_ALTERNATIVES = [
+    COT_END,
+    "Here's my response:",
+]
+
+# Delimiters for hallucination and citation output of Granite 3.2
+CITATION_START = "# Citations:"
+HALLUCINATION_START = "# Hallucinations:"
+
 # String that a Granite 3.2 model must receive immediately after _SYSTEM_MESSAGE_START
 # if there are both tools and RAG documents in the current request.
 TOOLS_AND_DOCS_SYSTEM_MESSAGE_PART = """\
