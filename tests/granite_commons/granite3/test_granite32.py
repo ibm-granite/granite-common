@@ -192,7 +192,9 @@ def _model() -> transformers.AutoModelForCausalLM:
     model_path = constants.MODEL_HF_PATH_2B
     try:
         ret = transformers.AutoModelForCausalLM.from_pretrained(
-            model_path, local_files_only=False
+            model_path,
+            local_files_only=False,
+            torch_dtype="bfloat16",  # You'll get float32 if you don't set this.
         )
     except Exception as e:  # pylint: disable=broad-exception-caught
         pytest.skip(f"No model for {model_path}: {e}")
