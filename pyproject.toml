@@ -55,7 +55,7 @@ dev = [
     "tox",
     "anywidget",
     "ipywidgets",
-    "vcrpy==6.0.2",  # pin to avoid flakey newer
+    "vcrpy==7.0.0",  # pin to avoid flakey newer
     "granite-commons[transformers]",
     "granite-commons[nltk]",
 ]
