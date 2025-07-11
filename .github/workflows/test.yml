@@ -74,5 +74,5 @@ jobs:
 
       - name: "Run unit tests"
         run: |
-          tox -- tests
+          tox -e unit -- -n 2
 

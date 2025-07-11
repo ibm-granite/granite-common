@@ -130,6 +130,6 @@ known-local-folder=["src/granite_commons","tests"]
 # extend-skip="src/granite_io/_version.py"
 
 [tool.pytest.ini_options]
-# Run tests in parallel
-addopts = "-n 4"
+# Run tests in parallel. Note that CI drops this number to avoid OOM.
+addopts = "-n 8"
 asyncio_default_fixture_loop_scope = "module"
