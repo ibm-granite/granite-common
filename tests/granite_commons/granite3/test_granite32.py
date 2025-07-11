@@ -14,12 +14,15 @@ import torch
 import transformers
 
 # First Party
-from granite_commons.base.types import (
+from granite_commons import (
     AssistantMessage,
     ChatCompletion,
+    Granite3Point2ChatCompletion,
+    Granite3Point2InputProcessor,
+    Granite3Point2OutputProcessor,
     UserMessage,
 )
-from granite_commons.granite3.granite32 import constants, input, output, types
+from granite_commons.granite3.granite32 import ControlsRecord, constants
 from granite_commons.granite3.types import (
     Citation,
     Document,
@@ -38,7 +41,7 @@ INPUT_JSON_STRS = {
     [
         {"role": "user", "content": "Hello, how are you?"},
         {"role": "assistant", "content": "I'm doing great. How can I help you today?"},
-        {"role": "user", "content": "I'd like to show off how chat templating works!"}
+        {"role": "user", "content": "Say 'boo'!"}
     ]
 }
 """,
@@ -46,7 +49,7 @@ INPUT_JSON_STRS = {
 {
     "messages":
     [
-        {"role": "user", "content": "How much wood would a wood chuck chuck?"}
+        {"role": "user", "content": "What is 1 + 1?"}
     ],
     "thinking": true
 }
@@ -55,7 +58,8 @@ INPUT_JSON_STRS = {
 {
     "messages":
     [
-        {"role": "system", "content": "Answer all questions like a three year old."},
+        {"role": "system", "content": "Answer all questions like a three year old. \
+Use as few words as possible. Be extremely concise."},
         {"role": "user", "content": "Hi, I would like some advice on the best tax \
 strategy for managing dividend income."}
     ]
@@ -181,7 +185,9 @@ def tokenizer() -> transformers.PreTrainedTokenizerBase:
 def model() -> transformers.AutoModelForCausalLM:
     """Pytest fixture with a loaded copy of one of the target models for the tests
     in this file."""
-    torch.set_num_threads(4)
+
+    # Prevent thrashing when running tests in parallel
+    torch.set_num_threads(2)
 
     model_path = constants.MODEL_HF_PATH_2B
     try:
@@ -212,9 +218,9 @@ def model() -> transformers.AutoModelForCausalLM:
 def test_controls_field_validators(length, originality, error):
     if error:
         with pytest.raises(pydantic.ValidationError, match=error):
-            types.ControlsRecord(length=length, originality=originality)
+            ControlsRecord(length=length, originality=originality)
     else:
-        types.ControlsRecord(length=length, originality=originality)
+        ControlsRecord(length=length, originality=originality)
 
 
 def test_read_inputs(input_json_str):
@@ -229,7 +235,7 @@ def test_read_inputs(input_json_str):
     assert input_obj == input_obj_2
 
     # Parse additional Model-specific fields
-    granite_input_obj = types.Granite3Point2ChatCompletion.model_validate(
+    granite_input_obj = Granite3Point2ChatCompletion.model_validate(
         input_obj.model_dump()
     )
 
@@ -258,8 +264,8 @@ def test_same_input_string(
     )
 
     # Then compare against the input processor
-    inputs = types.Granite3Point2ChatCompletion.model_validate_json(input_json_str)
-    io_proc_str = input.Granite3Point2InputProcessor().transform(inputs)
+    inputs = Granite3Point2ChatCompletion.model_validate_json(input_json_str)
+    io_proc_str = Granite3Point2InputProcessor().transform(inputs)
 
     print(f"{io_proc_str=}")
     print(f"{transformers_str=}")
@@ -291,7 +297,7 @@ def test_basic_inputs_to_string():
     <|start_of_role|>user<|end_of_role|>I'd like to show off how chat templating works!\
 <|end_of_text|>
     """
-    chatRequest = input.Granite3Point2InputProcessor().transform(
+    chatRequest = Granite3Point2InputProcessor().transform(
         chat_completion=ChatCompletion(
             messages=[
                 UserMessage(content="Hello, how are you?"),
@@ -328,10 +334,8 @@ def test_run_model(
     """
     Run inference end-to-end with each of the test inputs in this file.
     """
-    chat_completion = types.Granite3Point2ChatCompletion.model_validate_json(
-        input_json_str
-    )
-    prompt = input.Granite3Point2InputProcessor().transform(chat_completion)
+    chat_completion = Granite3Point2ChatCompletion.model_validate_json(input_json_str)
+    prompt = Granite3Point2InputProcessor().transform(chat_completion)
     model_input = tokenizer(prompt, return_tensors="pt").to(model.device)
     generation_config = transformers.GenerationConfig(
         max_length=1024, num_beams=1, do_sample=False
@@ -345,9 +349,11 @@ def test_run_model(
         skip_special_tokens=True,
     )
 
-    next_message = output.Granite3Point2OutputProcessor().transform(
+    next_message = Granite3Point2OutputProcessor().transform(
         model_output, chat_completion
     )
+
+    print(f"{next_message=}")
 
     assert isinstance(next_message, Granite3AssistantMessage)
     assert (
@@ -375,9 +381,7 @@ def test_run_model(
 )
 def test_cot_parsing(chat_completion, model_output, exp_thought, exp_resp):
     """Test the parsing logic for CoT reasoning output"""
-    result = output.Granite3Point2OutputProcessor().transform(
-        model_output, chat_completion
-    )
+    result = Granite3Point2OutputProcessor().transform(model_output, chat_completion)
     assert result.reasoning_content == exp_thought
     assert result.content == exp_resp
     assert result.raw_content is None or result.raw_content == model_output
@@ -431,9 +435,7 @@ def test_citation_hallucination_parsing(
     exp_resp,
 ):
     """Test the parsing logic for Rag and hallucinations output"""
-    result = output.Granite3Point2OutputProcessor().transform(
-        model_output, chat_completion
-    )
+    result = Granite3Point2OutputProcessor().transform(model_output, chat_completion)
     assert result.content == exp_resp
     assert result.citations == exp_citation
     assert result.documents == exp_document

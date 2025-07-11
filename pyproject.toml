@@ -52,6 +52,7 @@ dev = [
     "pytest-html",
     "pytest-recording~=0.13.2",
     "pytest-retry~=1.7",
+    "pytest-xdist[psutil]",
     "ruff==0.12.0",
     "tox",
     "anywidget",
@@ -127,3 +128,7 @@ from-first=true
 # import_heading_localfolder="Local"
 known-local-folder=["src/granite_commons","tests"]
 # extend-skip="src/granite_io/_version.py"
+
+[tool.pytest.ini_options]
+# Run tests in parallel
+addopts = "-n logical"
