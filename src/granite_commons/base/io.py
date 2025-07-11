@@ -8,9 +8,6 @@ processing for all Granite models.
 # Standard
 import abc
 
-# Third Party
-import pydantic
-
 # Local
 from .types import AssistantMessage, ChatCompletion
 
@@ -41,11 +38,6 @@ class InputProcessor(abc.ABC):
         """
 
 
-class OutputProcessorParams(pydantic.BaseModel):
-    """Base class for parameters that control output processing. See individual output
-    processors for model-specific parameters."""
-
-
 class OutputProcessor(abc.ABC):
     """
     Base class for generic output processors. An output processor exposes an
@@ -57,7 +49,7 @@ class OutputProcessor(abc.ABC):
 
     @abc.abstractmethod
     def transform(
-        self, model_output: str, params: OutputProcessorParams | None = None
+        self, model_output: str, chat_completion: ChatCompletion | None = None
     ) -> AssistantMessage:
         """
         Convert the model output generated into a structured representation of the
@@ -65,7 +57,9 @@ class OutputProcessor(abc.ABC):
 
         :param model_output: String output of the a generation request, potentially
             incomplete if it was a streaming request
-        :param inputs: Optional parameters to control how to parse ``model_output``
+        :param chat_completion: The chat completion request that produced
+            ``model_output``. Parameters of the request can determine how the output
+            should be decoded.
 
         :returns: The parsed output so far, as an instance of :class:`AssistantMessage`
             possibly with model-specific extension fields.
