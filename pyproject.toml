@@ -131,4 +131,4 @@ known-local-folder=["src/granite_commons","tests"]
 
 [tool.pytest.ini_options]
 # Run tests in parallel
-addopts = "-n logical"
+addopts = "-n 4"

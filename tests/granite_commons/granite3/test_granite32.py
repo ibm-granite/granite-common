@@ -161,15 +161,15 @@ expected_hallucination = Hallucination(
 )
 
 
-@pytest.fixture(scope="module", params=INPUT_JSON_STRS)
-def input_json_str(request: pytest.FixtureRequest) -> str:
+@pytest.fixture(name="input_json_str", scope="module", params=INPUT_JSON_STRS)
+def _input_json_str(request: pytest.FixtureRequest) -> str:
     """Pytest fixture that allows us to run a given test case repeatedly with multiple
     different chat completion requests."""
     return INPUT_JSON_STRS[request.param]
 
 
-@pytest.fixture(scope="module")
-def tokenizer() -> transformers.PreTrainedTokenizerBase:
+@pytest.fixture(name="tokenizer", scope="module")
+def _tokenizer() -> transformers.PreTrainedTokenizerBase:
     """Pytest fixture with a shared handle on the tokenizer for the target model."""
     model_path = constants.MODEL_HF_PATH_2B
     try:
@@ -181,8 +181,8 @@ def tokenizer() -> transformers.PreTrainedTokenizerBase:
     return ret
 
 
-@pytest.fixture(scope="module")
-def model() -> transformers.AutoModelForCausalLM:
+@pytest.fixture(name="model", scope="module")
+def _model() -> transformers.AutoModelForCausalLM:
     """Pytest fixture with a loaded copy of one of the target models for the tests
     in this file."""
 

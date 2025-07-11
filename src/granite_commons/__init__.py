@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 __doc__ = f"""
-{__package__} is a Python library that provides enhanced prompt creation and output 
+{__package__} is a Python library that provides enhanced prompt creation and output
 parsing for IBM Granite models
 """
 
