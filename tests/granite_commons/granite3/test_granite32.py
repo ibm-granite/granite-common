@@ -49,7 +49,7 @@ INPUT_JSON_STRS = {
 {
     "messages":
     [
-        {"role": "user", "content": "What is 1 + 1?"}
+        {"role": "user", "content": "What is 1 + 1? Answer with just a number please."}
     ],
     "thinking": true
 }
