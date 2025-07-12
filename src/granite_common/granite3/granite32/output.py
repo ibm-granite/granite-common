@@ -37,10 +37,10 @@ import uuid
 import pydantic
 
 # First Party
-from granite_commons.base.io import OutputProcessor
-from granite_commons.base.types import AssistantMessage, ChatCompletion, ToolCall
-from granite_commons.granite3.types import Granite3AssistantMessage
-from granite_commons.util import nltk_check
+from granite_common.base.io import OutputProcessor
+from granite_common.base.types import AssistantMessage, ChatCompletion, ToolCall
+from granite_common.granite3.types import Granite3AssistantMessage
+from granite_common.util import nltk_check
 
 # Local
 from .constants import (

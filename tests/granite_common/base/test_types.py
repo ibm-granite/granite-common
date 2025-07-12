@@ -5,7 +5,7 @@ Tests for the core types
 """
 
 # First Party
-from granite_commons.base import types
+from granite_common.base import types
 
 
 def test_tool_call():

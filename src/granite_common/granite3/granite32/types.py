@@ -9,8 +9,8 @@ import pydantic
 import pydantic_core
 
 # First Party
-from granite_commons.base.types import Document
-from granite_commons.granite3.types import Granite3ChatCompletion
+from granite_common.base.types import Document
+from granite_common.granite3.types import Granite3ChatCompletion
 
 
 class ControlsRecord(

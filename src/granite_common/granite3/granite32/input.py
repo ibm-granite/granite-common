@@ -10,8 +10,8 @@ import datetime
 import json
 
 # First Party
-from granite_commons.base.io import InputProcessor
-from granite_commons.base.types import (
+from granite_common.base.io import InputProcessor
+from granite_common.base.types import (
     AssistantMessage,
     ChatCompletion,
     SystemMessage,

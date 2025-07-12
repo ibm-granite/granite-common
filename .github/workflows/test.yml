@@ -73,6 +73,7 @@ jobs:
           python -m pip install tox tox-gh>=1.2
 
       - name: "Run unit tests"
+        # -n 1 to avoid running out of memory.
         run: |
-          tox -e unit
+          tox -e unit -- -n 1
 

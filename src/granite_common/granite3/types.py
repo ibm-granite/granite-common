@@ -8,7 +8,7 @@ Type definitions that are shared within the Granite 3 family of models
 import pydantic
 
 # First Party
-from granite_commons.base.types import (
+from granite_common.base.types import (
     AssistantMessage,
     ChatCompletion,
     Document,

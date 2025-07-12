@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 __doc__ = """
-Tests of code under ``granite_commons.granite3.granite32``
+Tests of code under ``granite_common.granite3.granite32``
 """
 
 # Standard
@@ -14,7 +14,7 @@ import torch
 import transformers
 
 # First Party
-from granite_commons import (
+from granite_common import (
     AssistantMessage,
     ChatCompletion,
     Granite3Point2ChatCompletion,
@@ -22,8 +22,8 @@ from granite_commons import (
     Granite3Point2OutputProcessor,
     UserMessage,
 )
-from granite_commons.granite3.granite32 import ControlsRecord, constants
-from granite_commons.granite3.types import (
+from granite_common.granite3.granite32 import ControlsRecord, constants
+from granite_common.granite3.types import (
     Citation,
     Document,
     Granite3AssistantMessage,
