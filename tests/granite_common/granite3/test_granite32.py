@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 __doc__ = """
-Tests of code under ``granite_commons.granite3.granite32``
+Tests of code under ``granite_common.granite3.granite32``
 """
 
 # Standard
@@ -14,7 +14,7 @@ import torch
 import transformers
 
 # First Party
-from granite_commons import (
+from granite_common import (
     AssistantMessage,
     ChatCompletion,
     Granite3Point2ChatCompletion,
@@ -22,9 +22,10 @@ from granite_commons import (
     Granite3Point2OutputProcessor,
     UserMessage,
 )
-from granite_commons.granite3.granite32 import ControlsRecord, constants
-from granite_commons.granite3.types import (
+from granite_common.granite3.granite32 import constants
+from granite_common.granite3.types import (
     Citation,
+    ControlsRecord,
     Document,
     Granite3AssistantMessage,
     Granite3ChatCompletion,
@@ -52,6 +53,19 @@ INPUT_JSON_STRS = {
         {"role": "user", "content": "What is 1 + 1? Answer with just a number please."}
     ],
     "thinking": true
+}
+""",
+    "hallucinations": """
+{
+    "messages":
+    [
+        {"role": "user", "content": "Who invented the flub flibber?"}
+    ],
+    "documents":
+    [
+        {"text": "Joe Smith invented the wheel."}
+    ],
+    "hallucinations": true
 }
 """,
     "custom_system_prompt": """
@@ -102,6 +116,19 @@ old."}
         }
     ]
     
+}
+""",
+    "documents": """
+{
+    "messages":
+    [
+        {"role": "user", "content": "What's another word for thesaurus?"}
+    ],
+    "documents":
+    [
+        {"text": "It's a small world, but I wouldn't want to have to paint it."},
+        {"text": "Whenever I think of the past, it brings back so many memories."}
+    ]
 }
 """,
 }

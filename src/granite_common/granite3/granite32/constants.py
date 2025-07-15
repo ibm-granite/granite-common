@@ -4,6 +4,7 @@ __doc__ = """
 Constants used in code that is specific to the Granite 3.2 family of models.
 """
 
+
 # Delimiters for chain of thought output of Granite 3.2
 COT_START = "Here is my thought process:"
 COT_END = "Here is my response:"
@@ -23,6 +24,7 @@ COT_END_ALTERNATIVES = [
 CITATION_START = "# Citations:"
 HALLUCINATION_START = "# Hallucinations:"
 
+
 # String that a Granite 3.2 model must receive immediately after _SYSTEM_MESSAGE_START
 # if there are both tools and RAG documents in the current request.
 TOOLS_AND_DOCS_SYSTEM_MESSAGE_PART = """\
@@ -35,24 +37,6 @@ Write the response to the user's input by strictly aligning with the facts in th
 provided documents. If the information needed to answer the question is not available \
 in the documents, inform the user that the question cannot be answered based on the \
 available data."""
-
-# String that a Granite 3.2 model must receive immediately after _SYSTEM_MESSAGE_START
-# if there are documents in the current request but there are no tools in the current
-# request.
-NO_TOOLS_AND_DOCS_SYSTEM_MESSAGE_PART = """\
-Write the response to the user's input by strictly aligning with the facts in the \
-provided documents. If the information needed to answer the question is not available \
-in the documents, inform the user that the question cannot be answered based on the \
-available data."""
-
-# String that a Granite 3.2 model must receive immediately after _SYSTEM_MESSAGE_START
-# if there are tools in the current request but there are no documents in the current
-# request.
-TOOLS_AND_NO_DOCS_SYSTEM_MESSAGE_PART = """\
- You are a helpful AI assistant with access to the following tools. When a tool is \
-required to answer the user's query, respond with <|tool_call|> followed by a JSON \
-list of tools used. If a tool does not exist in the provided list of tools, notify the \
-user that you do not have the ability to fulfill the request."""
 
 # String that a Granite 3.2 model must receive immediately after _SYSTEM_MESSAGE_START
 # if there are no tools or documents in the current request and the "thinking" flag is
@@ -68,12 +52,6 @@ the thoughts section, systematically present the final solution that you deem co
 The response should summarize the thought process. Write your thoughts after '\
 {COT_START}' and write your response after '{COT_END}' \
 for each user query."""
-
-# String that a Granite 3.2 model must receive immediately after _SYSTEM_MESSAGE_START
-# if there are no tools or documents in the current request and the "thinking" flag is
-# set to `False`.
-NO_TOOLS_NO_DOCS_NO_THINKING_SYSTEM_MESSAGE_PART = """\
- You are a helpful AI assistant."""
 
 
 # String that a Granite 3.2 model must receive immediately after either
@@ -99,6 +77,14 @@ DOCS_AND_HALLUCINATIONS_SYSTEM_MESSAGE_PART = """\
 Finally, after the response is written, include a numbered list of sentences from the \
 response that are potentially hallucinated and not based in the documents."""
 
+# String that a Granite 3.2 model must receive immediately after _SYSTEM_MESSAGE_START
+# if there are tools in the current request but there are no documents in the current
+# request.
+TOOLS_AND_NO_DOCS_SYSTEM_MESSAGE_PART = """\
+ You are a helpful AI assistant with access to the following tools. When a tool is \
+required to answer the user's query, respond with <|tool_call|> followed by a JSON \
+list of tools used. If a tool does not exist in the provided list of tools, notify the \
+user that you do not have the ability to fulfill the request."""
 
 MODEL_NAME = "Granite 3.2"
 MODEL_HF_PATH_2B = "ibm-granite/granite-3.2-2b-instruct"

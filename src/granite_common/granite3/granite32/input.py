@@ -6,51 +6,31 @@ Classes and functions that implement input and output string processing for the 
 """
 
 # Standard
-import datetime
 import json
 
 # First Party
-from granite_commons.base.io import InputProcessor
-from granite_commons.base.types import (
-    AssistantMessage,
+from granite_common.base.types import (
     ChatCompletion,
-    SystemMessage,
-    ToolResultMessage,
-    UserMessage,
 )
+from granite_common.granite3.constants import (
+    NO_TOOLS_AND_DOCS_SYSTEM_MESSAGE_PART,
+    NO_TOOLS_NO_DOCS_NO_THINKING_SYSTEM_MESSAGE_PART,
+)
+from granite_common.granite3.input import Granite3InputProcessor
 
 # Local
 from .constants import (
     DOCS_AND_CITATIONS_SYSTEM_MESSAGE_PART,
     DOCS_AND_HALLUCINATIONS_SYSTEM_MESSAGE_PART,
     MODEL_NAME,
-    NO_TOOLS_AND_DOCS_SYSTEM_MESSAGE_PART,
     NO_TOOLS_AND_NO_DOCS_AND_THINKING_SYSTEM_MESSAGE_PART,
-    NO_TOOLS_NO_DOCS_NO_THINKING_SYSTEM_MESSAGE_PART,
     TOOLS_AND_DOCS_SYSTEM_MESSAGE_PART,
     TOOLS_AND_NO_DOCS_SYSTEM_MESSAGE_PART,
 )
 from .types import Granite3Point2ChatCompletion
 
 
-def _make_system_message_start():
-    """
-    :returns: String that comes at the beginning of the system message that a Granite
-    3 model must receive at the beginning of the prompt for any completion request
-    that does not provide a custom system message.
-
-    Note that the original Jinja template tends to choose weird dates from the future
-    for the "Today's date" part. Instead of replicating that behavior, we put today's
-    actual date in that section of the prompt. This difference probably doesn't matter,
-    since none of the supervised fine tuning data exercises knowledge cutoffs.
-    """
-    return f"""\
-Knowledge Cutoff Date: April 2024.
-Today's Date: {datetime.datetime.now().strftime("%B %d, %Y")}.
-You are Granite, developed by IBM."""
-
-
-class Granite3Point2InputProcessor(InputProcessor):
+class Granite3Point2InputProcessor(Granite3InputProcessor):
     """
     Input processor for version 3.2 of the main Granite models, all sizes.
 
@@ -149,29 +129,11 @@ class Granite3Point2InputProcessor(InputProcessor):
     ```
     """
 
-    def _split_messages(
-        self, chat_completion: Granite3Point2ChatCompletion
-    ) -> tuple[SystemMessage | None, list[UserMessage]]:
-        """
-        Separate the system message from other messages.
-
-        :returns: Tuple of system message, if present, and remaining messages.
-        """
-        messages = chat_completion.messages
-
-        # Validation code in the Inputs class should already have verified that there
-        # are either zero or one system messages, and that the system message, if
-        # present, occurs at position zero.
-        if isinstance(messages[0], SystemMessage):
-            # First message is a system message.
-            return messages[0], messages[1:]
-        return None, messages
-
     def _build_default_system_message(
         self, chat_completion: Granite3Point2ChatCompletion
     ) -> str:
         """
-        :param inputs: All inputs to a completion request that does not include a custom
+        :chat_completion: Chat completion request that does not include a custom
             system message.
         :returns: The standard system message portion of the prompt for the request,
             as a string suitable to feed to the model's tokenizer.
@@ -200,7 +162,7 @@ class Granite3Point2InputProcessor(InputProcessor):
         # The default system message starts with a header that includes the date and
         # knowledge cutoff.
         system_message = "<|start_of_role|>system<|end_of_role|>"
-        system_message += _make_system_message_start()
+        system_message += Granite3Point2InputProcessor._make_system_message_start()
 
         # Add a middle part that varies depending on tools, documents, and citations.
         if have_documents and have_tools:
@@ -239,56 +201,6 @@ class Granite3Point2InputProcessor(InputProcessor):
         system_message += "<|end_of_text|>\n"
 
         return system_message
-
-    def _message_to_prompt_string(self, message: UserMessage | AssistantMessage) -> str:
-        if isinstance(message, UserMessage):
-            return (
-                f"<|start_of_role|>user<|end_of_role|>{message.content}"
-                f"<|end_of_text|>\n"
-            )
-        if isinstance(message, AssistantMessage):
-            # Note that we discard any tool calls in the message, per the Jinja
-            # template.
-            return (
-                f"<|start_of_role|>assistant<|end_of_role|>{message.content}"
-                f"<|end_of_text|>\n"
-            )
-        if isinstance(message, ToolResultMessage):
-            # Note that we discard the tool call ID, per the Jinja template.
-            return (
-                f"<|start_of_role|>tool<|end_of_role|>{message.content}"
-                f"<|end_of_text|>\n"
-            )
-        raise TypeError(f"Unexpected message type {type(message)}")
-
-    def _build_controls_record(
-        self, chat_completion: Granite3Point2ChatCompletion
-    ) -> dict | None:
-        """
-        Use the output control flags in ``inputs`` to build a version of the
-        undocumented arbitrary JSON data regarding output controls that the Jinja
-        template expected to see in the input for each chat completion request.
-
-        :returns: A fake JSON record for "controls", or nothing of no output control
-        flags were set.
-        """
-        if not chat_completion.controls:
-            return None
-        result = {}
-        if chat_completion.controls.citations:
-            # The following is a guess; we have no example data for this case.
-            result["citations"] = True
-        if chat_completion.controls.hallucinations:
-            # The following is a guess; we have no example data for this case.
-            result["hallucinations"] = True
-        if chat_completion.controls.length is not None:
-            result["length"] = chat_completion.controls.length
-        if chat_completion.controls.originality is not None:
-            result["originality"] = chat_completion.controls.originality
-
-        if len(result) == 0:
-            return None
-        return result
 
     def transform(
         self, chat_completion: ChatCompletion, add_generation_prompt: bool = True

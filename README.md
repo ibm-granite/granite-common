@@ -1,4 +1,4 @@
-# granite-commons
+# granite-common
 
 
 Python library that provides enhanced prompt creation and output parsing for IBM 
@@ -26,9 +26,10 @@ Detailed instructions:
 
 After following the instructions in the previous section, you should be able to run tests on your local machine by typing:
 ```
-python -m pytest -vv -rA tests
+pytest tests
 ```
-from the root of your local copy of this repository.
+from the root of your local copy of this repository, using the conda environment 
+described in the previous section.
 
 The build automation for this project uses the [`tox`](https://tox.wiki/en) environment manager. Sometimes you will need to run tests from inside a `tox` managed environment to replicate issues from the continuous integration environment. To run tests with `tox`, activate the Python environment `./env` created earlier, then choose from among the following:
 

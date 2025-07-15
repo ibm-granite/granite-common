@@ -6,9 +6,10 @@ Type definitions that are shared within the Granite 3 family of models
 
 # Third Party
 import pydantic
+import pydantic_core
 
 # First Party
-from granite_commons.base.types import (
+from granite_common.base.types import (
     AssistantMessage,
     ChatCompletion,
     Document,
@@ -41,6 +42,41 @@ class Citation(pydantic.BaseModel):
     response_end: int
 
 
+class ControlsRecord(
+    pydantic.BaseModel,
+):
+    """
+    Granite 3.x controls record
+    """
+
+    citations: bool | None = None
+    hallucinations: bool | None = None
+    length: str | None = None  # Length output control variable
+    originality: str | None = None
+
+    @pydantic.field_validator("length", mode="after")
+    @classmethod
+    def _validate_length(cls, value: str | None) -> str | None:
+        if value is None or value == "short" or value == "long":
+            return value
+        raise pydantic_core.PydanticCustomError(
+            "length field validator",
+            'length ({length}) must be "short" or "long" or None',
+            {"length": value},
+        )
+
+    @pydantic.field_validator("originality", mode="after")
+    @classmethod
+    def _validate_originality(cls, value: str | None) -> str | None:
+        if value is None or value == "extractive" or value == "abstractive":
+            return value
+        raise pydantic_core.PydanticCustomError(
+            "originality field validator",
+            'originality ({originality}) must be "extractive" or "abstractive" or None',
+            {"originality": value},
+        )
+
+
 class Granite3ChatCompletion(ChatCompletion):
     """
     Class that represents the inputs that are common to models of the IBM Granite 3.x
@@ -48,6 +84,8 @@ class Granite3ChatCompletion(ChatCompletion):
     """
 
     documents: list[Document] | None = None
+    controls: ControlsRecord | None = None
+    thinking: bool = False
 
     @pydantic.field_validator("messages")
     @classmethod
