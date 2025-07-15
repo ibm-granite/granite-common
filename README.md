@@ -2,12 +2,16 @@
 
 
 Python library that provides enhanced prompt creation and output parsing for IBM 
-Granite models
+Granite models.
 
 
 ## Installation
 
-TODO
+To install from the main development branch, type:
+
+```
+pip install git+https://github.com/ibm-granite/granite-common.git
+```
 
 ## Developer setup
 
