@@ -55,7 +55,6 @@ dev = [
     "tox",
     "anywidget",
     "ipywidgets",
-    "vcrpy==6.0.2",  # pin to avoid flakey newer
     "granite-common[transformers]",
     "granite-common[nltk]",
 ]
@@ -128,6 +127,5 @@ known-local-folder=["src/granite_common","tests"]
 # extend-skip="src/granite_io/_version.py"
 
 [tool.pytest.ini_options]
-# Run tests in parallel. Disabled because CI runs out of memory
+# Run tests in parallel.
 addopts = "-n 8"
-asyncio_default_fixture_loop_scope = "module"

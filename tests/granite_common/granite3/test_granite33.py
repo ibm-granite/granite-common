@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 __doc__ = """
-Tests of code under ``granite_common.granite3.granite32``
+Tests of code under ``granite_common.granite3.granite33``
 """
 
 # Standard
@@ -16,19 +16,17 @@ import transformers
 # First Party
 from granite_common import (
     AssistantMessage,
-    ChatCompletion,
-    Granite3Point2ChatCompletion,
-    Granite3Point2InputProcessor,
-    Granite3Point2OutputProcessor,
+    Granite3Point3ChatCompletion,
+    Granite3Point3InputProcessor,
+    Granite3Point3OutputProcessor,
     UserMessage,
 )
-from granite_common.granite3.granite32 import constants
+from granite_common.granite3.granite33 import constants
 from granite_common.granite3.types import (
     Citation,
     ControlsRecord,
     Document,
     Granite3AssistantMessage,
-    Granite3ChatCompletion,
     Hallucination,
 )
 
@@ -63,7 +61,7 @@ INPUT_JSON_STRS = {
     ],
     "documents":
     [
-        {"text": "Joe Smith invented the wheel."}
+        {"doc_id": "42", "text": "Joe Smith invented the wheel."}
     ],
     "hallucinations": true
 }
@@ -126,16 +124,19 @@ old."}
     ],
     "documents":
     [
-        {"text": "It's a small world, but I wouldn't want to have to paint it."},
-        {"text": "Whenever I think of the past, it brings back so many memories."}
+        {"doc_id": "abc", 
+         "text": "It's a small world, but I wouldn't want to have to paint it."},
+        {"doc_id": "213", 
+         "text": "Whenever I think of the past, it brings back so many memories."}
     ]
 }
 """,
 }
 
+
 msg = UserMessage(content="Hello")
-no_thinking_input = ChatCompletion(messages=[msg])
-thinking_input = ChatCompletion(messages=[msg], thinking=True)
+no_thinking_input = Granite3Point3ChatCompletion(messages=[msg])
+thinking_input = Granite3Point3ChatCompletion(messages=[msg], thinking=True)
 
 thought = "Think think"
 response = "respond respond"
@@ -145,12 +146,12 @@ no_thinking_output = f"{thought} {constants.COT_END} {response}"
 no_response_output = f"{constants.COT_START}\n\n{response}"
 cot_output = f"{constants.COT_START}\n\n{thought}\n{constants.COT_END}\n\n{response}"
 cot_alt_output = (
-    f"{constants.COT_START_ALTERNATIVES[-1]}\n\n{thought}\n"
-    f"{constants.COT_END_ALTERNATIVES[-1]}\n\n{response}"
+    f"{constants.COT_START_ALTERNATIVES[-1]}\n\n{thought}"
+    f"\n{constants.COT_END_ALTERNATIVES[-1]}\n\n{response}"
 )
 cot_mixed_output = (
-    f"{constants.COT_START}\n\n{thought}\n"
-    f"{constants.COT_END_ALTERNATIVES[-1]}\n\n{response}"
+    f"{constants.COT_START}\n\n{thought}\n{constants.COT_END_ALTERNATIVES[-1]}\n\n"
+    f"{response}"
 )
 cot_pre_output = (
     f"{pre_thought} {constants.COT_START} {thought} "
@@ -158,18 +159,19 @@ cot_pre_output = (
 )
 
 no_constituent_output = "Mad about dog!"
-citation_example = '<co>1</co> Document 0: "Dog info"'
+citation_example = '1: "Dog info"'
 citation_output = (
-    f"{no_constituent_output}<co>1</co>\n\n{constants.CITATION_START}"
-    f"\n\n{citation_example}\n\n"
+    f'{no_constituent_output}<|start_of_cite|>{{"document_id": "1"}}'
+    f"<|end_of_cite|>\n\n{constants.CITATIONS_START}\n\n"
+    f"{citation_example}\n\n"
 )
 hallucination_example = "1. Risk low: Mad about dog"
 citation_hallucination_output = (
-    f"{citation_output}{constants.HALLUCINATION_START}\n\n{hallucination_example}\n\n"
+    f"{citation_output}{constants.HALLUCINATIONS_START}\n\n{hallucination_example}\n\n"
 )
 expected_citation = Citation(
-    citation_id="1",
-    doc_id="0",
+    citation_id="0",
+    doc_id="1",
     context_text="Dog info",
     context_begin=0,
     context_end=8,
@@ -177,8 +179,10 @@ expected_citation = Citation(
     response_begin=0,
     response_end=14,
 )
-expected_document = Document(doc_id="0", text="Dog info")
-doc_input = Granite3ChatCompletion(messages=[msg], documents=[{"text": "Dog info"}])
+expected_document = Document(doc_id="1", text="Dog info")
+doc_input = Granite3Point3ChatCompletion(
+    messages=[msg], documents=[{"doc_id": "1", "text": "Dog info"}]
+)
 expected_hallucination = Hallucination(
     hallucination_id="1",
     risk="low",
@@ -254,17 +258,17 @@ def test_controls_field_validators(length, originality, error):
 
 def test_read_inputs(input_json_str):
     """
-    Verify that the dataclasses for the Granite 3.2 I/O processor can parse Granite
-    3.2 JSON
+    Verify that the dataclasses for the Granite 3.3 I/O processor can parse
+    Granite 3.3 JSON
     """
     input_json = json.loads(input_json_str)
-    input_obj = ChatCompletion.model_validate(input_json)
-    input_obj_2 = ChatCompletion.model_validate_json(input_json_str)
+    input_obj = Granite3Point3ChatCompletion.model_validate(input_json)
+    input_obj_2 = Granite3Point3ChatCompletion.model_validate_json(input_json_str)
 
     assert input_obj == input_obj_2
 
-    # Parse additional Model-specific fields
-    granite_input_obj = Granite3Point2ChatCompletion.model_validate(
+    # Parse additional Granite-specific fields
+    granite_input_obj = Granite3Point3ChatCompletion.model_validate(
         input_obj.model_dump()
     )
 
@@ -293,8 +297,8 @@ def test_same_input_string(
     )
 
     # Then compare against the input processor
-    inputs = Granite3Point2ChatCompletion.model_validate_json(input_json_str)
-    io_proc_str = Granite3Point2InputProcessor().transform(inputs)
+    inputs = Granite3Point3ChatCompletion.model_validate_json(input_json_str)
+    io_proc_str = Granite3Point3InputProcessor().transform(inputs)
 
     print(f"{io_proc_str=}")
     print(f"{transformers_str=}")
@@ -305,7 +309,7 @@ def test_same_input_string(
 def test_basic_inputs_to_string():
     """
     Basic test against canned output in case the developer doesn't have a way to load
-    an actual Granite 3.2 tokenizer for output comparisons.
+    an actual Granite 3.3 tokenizer for output comparisons.
 
     Chat input:
 
@@ -326,8 +330,8 @@ def test_basic_inputs_to_string():
     <|start_of_role|>user<|end_of_role|>I'd like to show off how chat templating works!\
 <|end_of_text|>
     """
-    chatRequest = Granite3Point2InputProcessor().transform(
-        chat_completion=ChatCompletion(
+    chatRequest = Granite3Point3InputProcessor().transform(
+        chat_completion=Granite3Point3ChatCompletion(
             messages=[
                 UserMessage(content="Hello, how are you?"),
                 AssistantMessage(content="I'm doing great. How can I help you today?"),
@@ -340,8 +344,10 @@ def test_basic_inputs_to_string():
     chatReqStart = "<|start_of_role|>system<|end_of_role|>Knowledge Cutoff Date:"
     assert chatRequest.startswith(chatReqStart)
 
-    chatReqModelMsg = "You are Granite, developed by IBM. You are a helpful AI \
-assistant.<|end_of_text|>"
+    chatReqModelMsg = (
+        "You are Granite, developed by IBM. You are a helpful AI "
+        "assistant.<|end_of_text|>"
+    )
     assert chatReqModelMsg in chatRequest
 
     chatReqBody = """\
@@ -363,8 +369,8 @@ def test_run_model(
     """
     Run inference end-to-end with each of the test inputs in this file.
     """
-    chat_completion = Granite3Point2ChatCompletion.model_validate_json(input_json_str)
-    prompt = Granite3Point2InputProcessor().transform(chat_completion)
+    chat_completion = Granite3Point3ChatCompletion.model_validate_json(input_json_str)
+    prompt = Granite3Point3InputProcessor().transform(chat_completion)
     model_input = tokenizer(prompt, return_tensors="pt").to(model.device)
     generation_config = transformers.GenerationConfig(
         max_length=1024, num_beams=1, do_sample=False
@@ -378,7 +384,7 @@ def test_run_model(
         skip_special_tokens=True,
     )
 
-    next_message = Granite3Point2OutputProcessor().transform(
+    next_message = Granite3Point3OutputProcessor().transform(
         model_output, chat_completion
     )
 
@@ -410,7 +416,7 @@ def test_run_model(
 )
 def test_cot_parsing(chat_completion, model_output, exp_thought, exp_resp):
     """Test the parsing logic for CoT reasoning output"""
-    result = Granite3Point2OutputProcessor().transform(model_output, chat_completion)
+    result = Granite3Point3OutputProcessor().transform(model_output, chat_completion)
     assert result.reasoning_content == exp_thought
     assert result.content == exp_resp
     assert result.raw_content is None or result.raw_content == model_output
@@ -464,7 +470,14 @@ def test_citation_hallucination_parsing(
     exp_resp,
 ):
     """Test the parsing logic for Rag and hallucinations output"""
-    result = Granite3Point2OutputProcessor().transform(model_output, chat_completion)
+
+    # Controls must be explicitly enabled, see issue #173.
+    controls = ControlsRecord()
+    controls.citations = True
+    controls.hallucinations = True
+    chat_completion.controls = controls
+
+    result = Granite3Point3OutputProcessor().transform(model_output, chat_completion)
     assert result.content == exp_resp
     assert result.citations == exp_citation
     assert result.documents == exp_document

@@ -7,6 +7,8 @@ Common utility functions for internal use by the library and its tests.
 # Standard
 import contextlib
 import logging
+import re
+import uuid
 
 _NLTK_INSTALL_INSTRUCTIONS = """
 Please install nltk with:
@@ -45,3 +47,22 @@ def nltk_check(feature_name: str):
             f"{feature_name} in the 'granite_io' library."
             f"{_NLTK_INSTALL_INSTRUCTIONS}"
         ) from err
+
+
+def find_substring_in_text(substring: str, text: str) -> list[int]:
+    """
+    Given two strings - substring and text - find and return all
+    matches of substring within text. For each match return its begin and end index
+    """
+    span_matches = []
+
+    matches_iter = re.finditer(re.escape(substring), text)
+    for match in matches_iter:
+        span_matches.append({"begin_idx": match.start(), "end_idx": match.end()})
+
+    return span_matches
+
+
+def random_uuid() -> str:
+    """:returns: hexadecimal data suitable to use as a unique identifier"""
+    return str(uuid.uuid4())

@@ -18,7 +18,13 @@ from .granite3.granite32 import (
     Granite3Point2InputProcessor,
     Granite3Point2OutputProcessor,
 )
+from .granite3.granite33 import (
+    Granite3Point3ChatCompletion,
+    Granite3Point3InputProcessor,
+    Granite3Point3OutputProcessor,
+)
 
+# The contents of __all__ must be strings
 __all__ = (
     obj.__name__
     for obj in (
@@ -28,5 +34,8 @@ __all__ = (
         Granite3Point2InputProcessor,
         Granite3Point2OutputProcessor,
         Granite3Point2ChatCompletion,
+        Granite3Point3ChatCompletion,
+        Granite3Point3InputProcessor,
+        Granite3Point3OutputProcessor,
     )
 )
