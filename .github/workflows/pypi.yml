@@ -51,6 +51,7 @@ jobs:
     # - a PR is merged into main branch
     publish-test-pypi:
         name: Publish packages to test.pypi.org
+        environment: release
         if: |
             github.repository_owner == 'ibm-granite' && (
                 github.event.action == 'published' ||
@@ -84,6 +85,7 @@ jobs:
     # - a new GitHub release is published
     publish-pypi:
         name: Publish release to pypi.org
+        environment: release
         if: |
             github.repository_owner == 'ibm-granite' && github.event.action == 'published'
         permissions:
