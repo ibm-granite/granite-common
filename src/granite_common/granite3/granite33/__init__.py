@@ -5,12 +5,12 @@ Input and output processing for the Granite 3.3 family of models.
 """
 
 # Local
-from .input import Granite3Point3InputProcessor
-from .output import Granite3Point3OutputProcessor
-from .types import Granite3Point3ChatCompletion
+from .input import Granite33InputProcessor
+from .output import Granite33OutputProcessor
+from .types import Granite33ChatCompletion
 
 __all__ = (
-    "Granite3Point3ChatCompletion",
-    "Granite3Point3InputProcessor",
-    "Granite3Point3OutputProcessor",
+    "Granite33ChatCompletion",
+    "Granite33InputProcessor",
+    "Granite33OutputProcessor",
 )

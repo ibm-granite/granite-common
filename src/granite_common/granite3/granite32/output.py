@@ -55,7 +55,7 @@ from .constants import (
     COT_START_ALTERNATIVES,
     HALLUCINATION_START,
 )
-from .types import Granite3Point2ChatCompletion
+from .types import Granite32ChatCompletion
 
 # Setup logger
 logger = logging.getLogger(__name__)
@@ -594,7 +594,7 @@ def _parse_model_output(
     return result
 
 
-class Granite3Point2OutputProcessor(OutputProcessor):
+class Granite32OutputProcessor(OutputProcessor):
     """
     Output processor for version 3.2 of the main Granite models, all sizes.
     """
@@ -604,7 +604,7 @@ class Granite3Point2OutputProcessor(OutputProcessor):
     ) -> AssistantMessage:
         # Downcast to a Granite-specific request type with possible additional fields.
         # This operation also performs additional validation.
-        chat_completion = Granite3Point2ChatCompletion.model_validate(
+        chat_completion = Granite32ChatCompletion.model_validate(
             chat_completion.model_dump()
         )
 
