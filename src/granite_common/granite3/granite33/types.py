@@ -12,7 +12,7 @@ from granite_common.base.types import Document
 from granite_common.granite3.types import Granite3ChatCompletion
 
 
-class Granite3Point3ChatCompletion(Granite3ChatCompletion):
+class Granite33ChatCompletion(Granite3ChatCompletion):
     """
     Class that represents the inputs to a Granite 3.3 model generation call.
     """
