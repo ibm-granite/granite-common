@@ -167,7 +167,7 @@ class Document(pydantic.BaseModel, NoDefaultsMixin):
     documents."""
 
     text: str
-    doc_id: str | None = None
+    doc_id: str | int | None = None
 
 
 class ChatTemplateKwargs(pydantic.BaseModel, NoDefaultsMixin):
