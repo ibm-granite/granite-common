@@ -7,6 +7,7 @@ Classes and functions that implement input and output string processing for the 
 
 # Standard
 import json
+import re
 
 # First Party
 from granite_common.base.types import (
@@ -24,6 +25,7 @@ from .constants import (
     DOCS_AND_HALLUCINATIONS_SYSTEM_MESSAGE_PART,
     MODEL_NAME,
     NO_TOOLS_AND_NO_DOCS_AND_THINKING_SYSTEM_MESSAGE_PART,
+    SPECIAL_TOKENS,
     TOOLS_AND_DOCS_SYSTEM_MESSAGE_PART,
     TOOLS_AND_NO_DOCS_SYSTEM_MESSAGE_PART,
 )
@@ -201,6 +203,82 @@ class Granite3Point2InputProcessor(Granite3InputProcessor):
         system_message += "<|end_of_text|>\n"
 
         return system_message
+
+    def _remove_special_tokens(self, text) -> str:
+        """
+        Removes any special tokens from the text string.
+
+        :param text: String for removal of special tokens.
+        :returns: String with any special tokens removed.
+        """
+
+        regex_roles = r"<\|start_of_role\|>.*<\|end_of_role\|>.*<\|end_of_text\|>"
+        regex_tool_call = r"<\|tool_call\|>\{.*\}"
+
+        new_text = text
+        new_text = re.sub(regex_roles, "", new_text)
+        new_text = re.sub(regex_tool_call, "", new_text)
+
+        # Replace any stray special tokens.
+        for special_token in SPECIAL_TOKENS:
+            new_text = new_text.replace(special_token, "")
+        return new_text
+
+    def sanitize(
+        self, chat_completion: ChatCompletion, parts: list[str] | str = "all"
+    ) -> ChatCompletion:
+        """
+        :chat_completion: Chat completion request with unsanitized inputs.
+        :parts: The parts of the chat completion request to sanitize. Accepted
+            values are "messages", "tools", "documents", and "all", which can be
+            given individually or as part of a list. Defaults to "all".
+        :returns: A new chat completion request with sanitized inputs.
+        """
+
+        # Downcast to a Granite-specific request type with possible additional fields.
+        # This operation also performs additional validation.
+        chat_completion = Granite3Point2ChatCompletion.model_validate(
+            chat_completion.model_dump()
+        )
+
+        # Check given "parts" have expected values.
+        sanitize_modes = ["messages", "tools", "documents", "all"]
+        unsupported_parts = []
+        if isinstance(parts, str):
+            parts = [parts]
+        for part in parts:
+            if part not in sanitize_modes:
+                unsupported_parts.append(part)
+        if len(unsupported_parts) > 0:
+            raise ValueError(
+                "sanitize static method",
+                "sanitize ({sanitize}) must be one of {sanitize_modes}",
+                {"sanitize": unsupported_parts},
+            )
+
+        # Sanitize based on the given parts.
+        for part in parts:
+            if part in {"messages", "all"}:
+                for message in chat_completion.messages:
+                    message.content = self._remove_special_tokens(message.content)
+            if part in {"tools", "all"}:
+                for tool in chat_completion.tools:
+                    tool.name = self._remove_special_tokens(tool.name)
+                    if tool.description:
+                        tool.description = self._remove_special_tokens(tool.description)
+                    if tool.parameters:
+                        new_params = {}
+                        for k, v in tool.parameters.items():
+                            kk = self._remove_special_tokens(k)
+                            vv = self._remove_special_tokens(v)
+                            if len(kk) > 0:
+                                new_params[kk] = vv
+                        tool.parameters = new_params
+            if part in {"documents", "all"}:
+                for document in chat_completion.documents:
+                    document.text = self._remove_special_tokens(document.text)
+
+        return chat_completion
 
     def transform(
         self, chat_completion: ChatCompletion, add_generation_prompt: bool = True
