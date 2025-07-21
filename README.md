@@ -1,7 +1,7 @@
 # granite-common
 
 
-Python library that provides enhanced prompt creation and output parsing for IBM 
+Python library that provides enhanced prompt creation and output parsing for IBM
 Granite models.
 
 
@@ -32,12 +32,12 @@ After following the instructions in the previous section, you should be able to 
 ```
 pytest tests
 ```
-from the root of your local copy of this repository, using the conda environment 
+from the root of your local copy of this repository, using the conda environment
 described in the previous section.
 
 The build automation for this project uses the [`tox`](https://tox.wiki/en) environment manager. Sometimes you will need to run tests from inside a `tox` managed environment to replicate issues from the continuous integration environment. To run tests with `tox`, activate the Python environment `./env` created earlier, then choose from among the following:
 
 * Run regression tests: `tox -e unit`
 * Run `pylint` checks: `tox -e lint`
-* Run `ruff` formatter: `tox -e format`
+* Run `ruff` formatter: `tox -e ruff`
 * Run a full continuous integration suite: `tox`
