@@ -29,10 +29,10 @@ from .constants import (
     TOOLS_AND_DOCS_SYSTEM_MESSAGE_PART,
     TOOLS_AND_NO_DOCS_SYSTEM_MESSAGE_PART,
 )
-from .types import Granite3Point3ChatCompletion
+from .types import Granite33ChatCompletion
 
 
-class Granite3Point3InputProcessor(Granite3InputProcessor):
+class Granite33InputProcessor(Granite3InputProcessor):
     """
     Input processor for version 3.3 of the main Granite models, all sizes.
     This input processor is based on the Jinja template from tokenizer_config.json.
@@ -43,7 +43,7 @@ class Granite3Point3InputProcessor(Granite3InputProcessor):
     """  # noqa: E501
 
     def _build_default_system_message(
-        self, chat_completion: Granite3Point3ChatCompletion
+        self, chat_completion: Granite33ChatCompletion
     ) -> str:
         """
         :param inputs: Chat completion request that does not include a custom
@@ -76,7 +76,7 @@ class Granite3Point3InputProcessor(Granite3InputProcessor):
         # The default system message starts with a header that includes the date and
         # knowledge cutoff.
         system_message = "<|start_of_role|>system<|end_of_role|>"
-        system_message += Granite3Point3InputProcessor._make_system_message_start()
+        system_message += Granite33InputProcessor._make_system_message_start()
 
         # Add a middle part that varies depending on tools, documents, and citations.
         if have_documents and have_tools:
@@ -205,7 +205,7 @@ class Granite3Point3InputProcessor(Granite3InputProcessor):
     ) -> str:
         # Downcast to a Granite-specific request type with possible additional fields.
         # This operation also performs additional validation.
-        chat_completion = Granite3Point3ChatCompletion.model_validate(
+        chat_completion = Granite33ChatCompletion.model_validate(
             chat_completion.model_dump()
         )
 

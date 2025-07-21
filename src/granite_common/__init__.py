@@ -14,14 +14,14 @@ from .base.types import (
     UserMessage,
 )
 from .granite3.granite32 import (
-    Granite3Point2ChatCompletion,
-    Granite3Point2InputProcessor,
-    Granite3Point2OutputProcessor,
+    Granite32ChatCompletion,
+    Granite32InputProcessor,
+    Granite32OutputProcessor,
 )
 from .granite3.granite33 import (
-    Granite3Point3ChatCompletion,
-    Granite3Point3InputProcessor,
-    Granite3Point3OutputProcessor,
+    Granite33ChatCompletion,
+    Granite33InputProcessor,
+    Granite33OutputProcessor,
 )
 
 # The contents of __all__ must be strings
@@ -31,11 +31,11 @@ __all__ = (
         AssistantMessage,
         ChatCompletion,
         UserMessage,
-        Granite3Point2InputProcessor,
-        Granite3Point2OutputProcessor,
-        Granite3Point2ChatCompletion,
-        Granite3Point3ChatCompletion,
-        Granite3Point3InputProcessor,
-        Granite3Point3OutputProcessor,
+        Granite32InputProcessor,
+        Granite32OutputProcessor,
+        Granite32ChatCompletion,
+        Granite33ChatCompletion,
+        Granite33InputProcessor,
+        Granite33OutputProcessor,
     )
 )

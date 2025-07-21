@@ -49,7 +49,7 @@ from .constants import (
     RESPONSE_END,
     RESPONSE_START,
 )
-from .types import Granite3Point3ChatCompletion
+from .types import Granite33ChatCompletion
 
 # Setup logger
 logger = logging.getLogger(__name__)
@@ -418,7 +418,7 @@ def _update_docs_text_with_input_docs(
 
 
 def _parse_model_output(
-    model_output: str, chat_completion: Granite3Point3ChatCompletion
+    model_output: str, chat_completion: Granite33ChatCompletion
 ) -> list[str | dict]:
     """
     Parse the constituents of the output (response) of a model into
@@ -526,7 +526,7 @@ def _parse_model_output(
     return result
 
 
-class Granite3Point3OutputProcessor(OutputProcessor):
+class Granite33OutputProcessor(OutputProcessor):
     """
     Output processor for version 3.3 of the main Granite models, all sizes.
     """
@@ -536,9 +536,7 @@ class Granite3Point3OutputProcessor(OutputProcessor):
     ) -> AssistantMessage:
         # Downcast to a Granite-specific request type with possible additional fields.
         # This operation also performs additional validation.
-        inputs = Granite3Point3ChatCompletion.model_validate(
-            chat_completion.model_dump()
-        )
+        inputs = Granite33ChatCompletion.model_validate(chat_completion.model_dump())
 
         # Save a copy because code below mutates this variable
         original_output = model_output
