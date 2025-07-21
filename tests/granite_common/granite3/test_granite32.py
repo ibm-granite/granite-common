@@ -571,10 +571,10 @@ def test_sanitize_input_string(
     input_json_unsanitized = json.loads(input_json_str_sanitize[0])
     input_json_sanitized = json.loads(input_json_str_sanitize[1])
 
-    inputs = Granite3Point2ChatCompletion.model_validate(input_json_unsanitized)
-    sanitized_inputs = Granite3Point2InputProcessor().sanitize(inputs)
+    inputs = Granite32ChatCompletion.model_validate(input_json_unsanitized)
+    sanitized_inputs = Granite32InputProcessor().sanitize(inputs)
 
-    expected_sanitized_inputs = Granite3Point2ChatCompletion.model_validate(
+    expected_sanitized_inputs = Granite32ChatCompletion.model_validate(
         input_json_sanitized
     )
 

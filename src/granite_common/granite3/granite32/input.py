@@ -237,7 +237,7 @@ class Granite32InputProcessor(Granite3InputProcessor):
 
         # Downcast to a Granite-specific request type with possible additional fields.
         # This operation also performs additional validation.
-        chat_completion = Granite3Point2ChatCompletion.model_validate(
+        chat_completion = Granite32ChatCompletion.model_validate(
             chat_completion.model_dump()
         )
 
