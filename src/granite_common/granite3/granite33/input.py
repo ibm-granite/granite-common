@@ -176,28 +176,27 @@ class Granite3Point3InputProcessor(Granite3InputProcessor):
             )
 
         # Sanitize based on the given parts.
-        for part in parts:
-            if part in {"messages", "all"}:
-                for message in chat_completion.messages:
-                    message.content = self._remove_special_tokens(message.content)
-            if part in {"tools", "all"}:
-                for tool in chat_completion.tools:
-                    tool.name = self._remove_special_tokens(tool.name)
-                    if tool.description:
-                        tool.description = self._remove_special_tokens(tool.description)
-                    if tool.parameters:
-                        new_params = {}
-                        for k, v in tool.parameters.items():
-                            kk = self._remove_special_tokens(k)
-                            vv = self._remove_special_tokens(v)
-                            if len(kk) > 0:
-                                new_params[kk] = vv
-                        tool.parameters = new_params
-            if part in {"documents", "all"}:
-                for document in chat_completion.documents:
-                    if isinstance(document.doc_id, str):
-                        document.doc_id = self._remove_special_tokens(document.doc_id)
-                    document.text = self._remove_special_tokens(document.text)
+        if "messages" in parts or "all" in parts:
+            for message in chat_completion.messages:
+                message.content = self._remove_special_tokens(message.content)
+        if "tools" in parts or "all" in parts:
+            for tool in chat_completion.tools:
+                tool.name = self._remove_special_tokens(tool.name)
+                if tool.description:
+                    tool.description = self._remove_special_tokens(tool.description)
+                if tool.parameters:
+                    new_params = {}
+                    for k, v in tool.parameters.items():
+                        kk = self._remove_special_tokens(k)
+                        vv = self._remove_special_tokens(v)
+                        if len(kk) > 0:
+                            new_params[kk] = vv
+                    tool.parameters = new_params
+        if "documents" in parts or "all" in parts:
+            for document in chat_completion.documents:
+                if isinstance(document.doc_id, str):
+                    document.doc_id = self._remove_special_tokens(document.doc_id)
+                document.text = self._remove_special_tokens(document.text)
 
         return chat_completion
 
