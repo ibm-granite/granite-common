@@ -240,7 +240,10 @@ class ChatCompletion(pydantic.BaseModel, NoDefaultsMixin):
     )
 
     model_config = pydantic.ConfigDict(
-        extra="forbid",
+        # If an input to this library is an actual vLLM chat completion request, then
+        # the request will likely contain additional fields. Ignore these fields for
+        # the purposes of `granite-common`.
+        extra="ignore",
     )
 
 
