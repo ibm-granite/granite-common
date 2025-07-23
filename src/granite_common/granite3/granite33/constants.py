@@ -75,7 +75,7 @@ list all the citations with their corresponding documents in an ordered list."""
 # DOCS_AND_CITATIONS_SYSTEM_MESSAGE_PART in the system prompt
 # if the "hallucinations" flag is `True` and there are documents.
 # Note that a list of zero documents counts as "having documents".
-DOCS_AND_HALLUCINATIONS_SYSTEM_MESSAGE_PART = """ \
+DOCS_AND_HALLUCINATIONS_SYSTEM_MESSAGE_PART = """\
 
 Finally, after the response is written, include a numbered list of sentences from the \
 response with a corresponding risk value that are hallucinated and not based in the \

@@ -4,6 +4,9 @@
 Tests for the core types
 """
 
+# Third Party
+import pytest
+
 # First Party
 from granite_common.base import types
 
@@ -45,10 +48,24 @@ def test_chat_completion():
     assert len(cc.messages) == 0
     assert len(cc.tools) == 0
 
-    # Setting additional attributes should work as expected
-    cc.additional_attr = "value"
-    assert hasattr(cc, "additional_attr") is True
-    assert cc.additional_attr == "value"
+    # Only fields set in constructor should pass through to JSON
+    assert sorted(cc.model_dump().keys()) == ["messages", "tools"]
 
-    # Getting unknown attributes should return None
-    assert cc.foobar is None
+
+def test_granite_chat_completion():
+    with pytest.raises(ValueError, match="Conflicting values of documents"):
+        types.GraniteChatCompletion.model_validate(
+            {"messages": [], "documents": [], "chat_template_kwargs": {"documents": []}}
+        )
+    with pytest.raises(ValueError, match="not a list"):
+        types.GraniteChatCompletion.model_validate(
+            {"messages": [], "chat_template_kwargs": {"documents": "foo"}}
+        )
+
+    # Documents in kwargs should be moved to top-level arg
+    docs_in_kwargs = types.GraniteChatCompletion.model_validate(
+        {"messages": [], "chat_template_kwargs": {"documents": [{"text": "hello"}]}}
+    )
+    assert docs_in_kwargs.documents is not None
+    assert not hasattr(docs_in_kwargs.chat_template_kwargs, "documents")
+    assert "documents" not in docs_in_kwargs.chat_template_kwargs.model_dump()

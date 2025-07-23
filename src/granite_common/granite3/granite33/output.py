@@ -333,7 +333,11 @@ def _split_model_output_into_parts(model_output: str) -> tuple[str, str, str]:
     hallucinations_text = ""
 
     if HALLUCINATIONS_START in model_output and CITATIONS_START not in model_output:
-        response_text, hallucinations_text = model_output.split(HALLUCINATIONS_START)
+        # rsplit because sometimes the model produces multiple copies of the
+        # hallucinations output.
+        response_text, hallucinations_text = model_output.rsplit(
+            HALLUCINATIONS_START, 1
+        )
     elif CITATIONS_START in model_output and HALLUCINATIONS_START not in model_output:
         response_text, citations_text = model_output.split(CITATIONS_START)
     elif CITATIONS_START in model_output and HALLUCINATIONS_START in model_output:
@@ -543,7 +547,7 @@ class Granite33OutputProcessor(OutputProcessor):
 
         # Parse out CoT reasoning
         cot = None
-        if inputs.thinking:
+        if inputs.thinking():
             cot_start_span = None
             cot_end_span = None
             for cot_start_str in COT_START_ALTERNATIVES:
