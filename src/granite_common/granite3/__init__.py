@@ -5,6 +5,6 @@ Input and output processing for the Granite 3 family of models.
 """
 
 # Local
-from .types import ControlsRecord
+from .types import Granite3Controls
 
-__all__ = ("ControlsRecord",)
+__all__ = ("Granite3Controls",)

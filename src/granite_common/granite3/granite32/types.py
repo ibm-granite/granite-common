@@ -17,8 +17,6 @@ class Granite32ChatCompletion(Granite3ChatCompletion):
     Class that represents the inputs to a Granite 3.2 model generation call.
     """
 
-    thinking: bool = False
-
     @pydantic.field_validator("documents")
     @classmethod
     def _validate_documents(cls, documents: list[Document] | None) -> list | None:

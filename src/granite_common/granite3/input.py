@@ -97,18 +97,23 @@ You are Granite, developed by IBM."""
         :returns: A fake JSON record for "controls", or nothing of no output control
         flags were set.
         """
-        if not chat_completion.controls:
+        if (
+            not chat_completion.chat_template_kwargs
+            or not chat_completion.chat_template_kwargs.controls
+        ):
             return None
+        controls = chat_completion.chat_template_kwargs.controls
+
         result = {}
-        if chat_completion.controls.citations:
+        if controls.citations:
             # The following is a guess; we have no example data for this case.
             result["citations"] = True
-        if chat_completion.controls.hallucinations:
+        if controls.hallucinations:
             # The following is a guess; we have no example data for this case.
             result["hallucinations"] = True
-        if chat_completion.controls.length is not None:
+        if controls.length is not None:
             result["length"] = chat_completion.controls.length
-        if chat_completion.controls.originality is not None:
+        if controls.originality is not None:
             result["originality"] = chat_completion.controls.originality
 
         if len(result) == 0:
