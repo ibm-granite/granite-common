@@ -4,6 +4,13 @@ __doc__ = """
 Constants used in code that is specific to the Granite 3.2 family of models.
 """
 
+# Complete set of special tokens from the Granite 3.3 tokenizer
+SPECIAL_TOKENS = [
+    "<|end_of_text|>",
+    "<|start_of_role|>",
+    "<|end_of_role|>",
+    "<|tool_call|>",
+]
 
 # Delimiters for chain of thought output of Granite 3.2
 COT_START = "Here is my thought process:"
