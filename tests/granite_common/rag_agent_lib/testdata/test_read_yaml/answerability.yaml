@@ -1,0 +1,18 @@
+# Model name string for debugging and logging only
+model: answerability
+# JSON schema of the model's output
+response_format: |
+  {
+    "type": "string",
+    "enum": ["answerable", "unanswerable"]
+  }
+output_schema: |
+  {
+  "type": "object",
+  "properties": {
+    "answerable_likelihood": { "type": "number" }
+  }
+instruction: ~
+parameters:
+  max_completion_tokens: 5
+sentence_boundaries: false

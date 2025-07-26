@@ -44,7 +44,7 @@ class OutputProcessor(abc.ABC):
     API to transform model output into a structured representation of the
     information.
 
-    This interface is very generic; see individual classes for more specific arguments
+    This interface is very generic; see individual classes for more specific arguments.
     """
 
     @abc.abstractmethod
@@ -63,4 +63,22 @@ class OutputProcessor(abc.ABC):
 
         :returns: The parsed output so far, as an instance of :class:`AssistantMessage`
             possibly with model-specific extension fields.
+        """
+
+
+class ChatCompletionRewriter(abc.ABC):
+    """
+    Base class for objects that rewrite a chat completion request into another chat
+    completion request.
+    """
+
+    @abc.abstractmethod
+    def transform(self, chat_completion: ChatCompletion) -> ChatCompletion:
+        """
+        Rewrite a chat completion request into another chat completion request.
+        Does not modify the original :class:`ChatCompletion` object.
+
+        :param chat_completion: Original chat completion request
+
+        :returns: Rewritten copy of ``chat_completion``.
         """

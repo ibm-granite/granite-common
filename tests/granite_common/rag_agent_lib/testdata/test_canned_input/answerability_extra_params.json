@@ -1,0 +1,8 @@
+{
+  "messages": [
+    {
+      "content": "This request contains some extra parameters. Does it still work?",
+      "role": "user"
+    }
+  ]
+}
