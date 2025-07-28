@@ -414,7 +414,9 @@ def _split_model_output_into_parts(model_output: str) -> tuple[str, str, str]:
     hallucinations_text = ""
 
     if HALLUCINATION_START in model_output and CITATION_START not in model_output:
-        response_text, hallucinations_text = model_output.split(HALLUCINATION_START)
+        # rsplit because sometimes the model produces multiple copies of the
+        # hallucinations output.
+        response_text, hallucinations_text = model_output.rsplit(HALLUCINATION_START, 1)
     elif CITATION_START in model_output and HALLUCINATION_START not in model_output:
         response_text, citations_text = model_output.split(CITATION_START)
     elif CITATION_START in model_output and HALLUCINATION_START in model_output:
@@ -607,13 +609,14 @@ class Granite32OutputProcessor(OutputProcessor):
         chat_completion = Granite32ChatCompletion.model_validate(
             chat_completion.model_dump()
         )
+        have_thinking = chat_completion.thinking()
 
         # Save a copy because code below mutates this variable
         original_output = model_output
 
         # Parse out CoT reasoning
         cot = None
-        if chat_completion.thinking:
+        if have_thinking:
             cot_start_span = None
             cot_end_span = None
             for cot_start_str in COT_START_ALTERNATIVES:

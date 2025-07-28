@@ -143,18 +143,20 @@ class Granite32InputProcessor(Granite3InputProcessor):
         # bool([]) == bool(None) == False
         have_documents = bool(chat_completion.documents)
         have_tools = bool(chat_completion.tools)
+        have_thinking = chat_completion.thinking()
+        controls = chat_completion.controls()
 
         # Carefully hew to the policy that the original Jinja template's behavior
         # defines.
         # First, disallow the cases that the authors of the Jinja template did not
         # provide any code to handle.
-        if chat_completion.thinking and have_documents:
+        if have_thinking and have_documents:
             raise ValueError(
                 f"'thinking' flag is set, but documents were provided. "
                 f"{MODEL_NAME} only supports the 'thinking' flag when "
                 f"documents are not provided."
             )
-        if chat_completion.thinking and have_tools:
+        if have_thinking and have_tools:
             raise ValueError(
                 f"'thinking' flag is set, but tools were provided. "
                 f"{MODEL_NAME} only supports the 'thinking' flag when "
@@ -173,13 +175,13 @@ class Granite32InputProcessor(Granite3InputProcessor):
             system_message += NO_TOOLS_AND_DOCS_SYSTEM_MESSAGE_PART
         elif have_tools:  # and not have_documents
             system_message += TOOLS_AND_NO_DOCS_SYSTEM_MESSAGE_PART
-        elif chat_completion.thinking:  # if not have_documents and not have_tools
+        elif have_thinking:  # if not have_documents and not have_tools
             system_message += NO_TOOLS_AND_NO_DOCS_AND_THINKING_SYSTEM_MESSAGE_PART
         else:  # if not inputs.thinking and not have_documents and not have_tools
             system_message += NO_TOOLS_NO_DOCS_NO_THINKING_SYSTEM_MESSAGE_PART
 
         # Next comes an optional section of instructions for citations.
-        if chat_completion.controls and chat_completion.controls.citations:
+        if controls.citations:
             if not have_documents:
                 # TODO: The template skips the citations instruction in this case.
                 # Is this behavior an error? Should we raise an error if the caller
@@ -189,7 +191,7 @@ class Granite32InputProcessor(Granite3InputProcessor):
                 system_message += DOCS_AND_CITATIONS_SYSTEM_MESSAGE_PART
 
         # Then comes an optional section of instructions for hallucinations.
-        if chat_completion.controls and chat_completion.controls.hallucinations:
+        if controls.hallucinations:
             if not have_documents:
                 raise ValueError(
                     f"'hallucinations' flag is set, but the model input does not "
@@ -287,12 +289,14 @@ class Granite32InputProcessor(Granite3InputProcessor):
         chat_completion = Granite32ChatCompletion.model_validate(
             chat_completion.model_dump()
         )
+        controls = chat_completion.controls()
+        have_thinking = chat_completion.thinking()
 
         # Check for a caller-provided system message
         system_message_json, loop_messages = self._split_messages(chat_completion)
 
         if system_message_json is not None:
-            if chat_completion.thinking:
+            if have_thinking:
                 raise ValueError(
                     f"'thinking' flag is set, but the model input includes a custom "
                     f"system message. {MODEL_NAME} only supports the "
@@ -304,13 +308,13 @@ class Granite32InputProcessor(Granite3InputProcessor):
                     f"{MODEL_NAME} only supports the documents list when "
                     f"the default system message is used."
                 )
-            if chat_completion.controls and chat_completion.controls.citations:
+            if controls.citations:
                 raise ValueError(
                     f"'citations' flag is set, but the model input includes a custom "
                     f"system message. {MODEL_NAME} only supports the "
                     f"'citations' flag when the default system message is used."
                 )
-            if chat_completion.controls and chat_completion.controls.hallucinations:
+            if controls.hallucinations:
                 raise ValueError(
                     f"'hallucinations' flag is set, but the model input includes a "
                     f"custom system message. {MODEL_NAME} only supports "

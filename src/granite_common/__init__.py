@@ -11,6 +11,7 @@ parsing for IBM Granite models
 from .base.types import (
     AssistantMessage,
     ChatCompletion,
+    GraniteChatCompletion,
     UserMessage,
 )
 from .granite3.granite32 import (
@@ -37,5 +38,6 @@ __all__ = (
         Granite33ChatCompletion,
         Granite33InputProcessor,
         Granite33OutputProcessor,
+        GraniteChatCompletion,
     )
 )

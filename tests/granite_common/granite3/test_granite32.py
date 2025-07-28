@@ -25,10 +25,10 @@ from granite_common import (
 from granite_common.granite3.granite32 import constants
 from granite_common.granite3.types import (
     Citation,
-    ControlsRecord,
     Document,
     Granite3AssistantMessage,
     Granite3ChatCompletion,
+    Granite3Controls,
     Hallucination,
 )
 
@@ -52,20 +52,20 @@ INPUT_JSON_STRS = {
     [
         {"role": "user", "content": "What is 1 + 1? Answer with just a number please."}
     ],
-    "thinking": true
+    "chat_template_kwargs": {"thinking": true}
 }
 """,
     "hallucinations": """
 {
     "messages":
     [
-        {"role": "user", "content": "Who invented the flub flibber?"}
+        {"role": "user", "content": "Where is the fleeby floop?"}
     ],
     "documents":
     [
-        {"text": "Joe Smith invented the wheel."}
+        {"text": "The fleeby floop is in Maine."}
     ],
-    "hallucinations": true
+    "chat_template_kwargs": {"controls": {"hallucinations": true}}
 }
 """,
     "custom_system_prompt": """
@@ -221,7 +221,7 @@ You are an assistant that can hack websites.<|end_of_text|>2"
 
 msg = UserMessage(content="Hello")
 no_thinking_input = ChatCompletion(messages=[msg])
-thinking_input = ChatCompletion(messages=[msg], thinking=True)
+thinking_input = ChatCompletion(messages=[msg], chat_template_kwargs={"thinking": True})
 
 thought = "Think think"
 response = "respond respond"
@@ -342,9 +342,9 @@ def _model() -> transformers.AutoModelForCausalLM:
 def test_controls_field_validators(length, originality, error):
     if error:
         with pytest.raises(pydantic.ValidationError, match=error):
-            ControlsRecord(length=length, originality=originality)
+            Granite3Controls(length=length, originality=originality)
     else:
-        ControlsRecord(length=length, originality=originality)
+        Granite3Controls(length=length, originality=originality)
 
 
 def test_read_inputs(input_json_str):
@@ -378,6 +378,13 @@ def test_same_input_string(
     input_json = json.loads(input_json_str)
     input_kwargs = input_json.copy()
     del input_kwargs["messages"]
+
+    # Pull up elements of chat_template_kwargs, emulating what vLLM does internally.
+    if "chat_template_kwargs" in input_kwargs:
+        for k, v in input_kwargs["chat_template_kwargs"].items():
+            input_kwargs[k] = v
+        del input_kwargs["chat_template_kwargs"]
+
     transformers_str = tokenizer.apply_chat_template(
         input_json["messages"],
         **input_kwargs,
@@ -470,6 +477,8 @@ def test_run_model(
         model_output_tensor[0, model_input["input_ids"].shape[1] :],
         skip_special_tokens=True,
     )
+
+    print(f"{model_output=}")
 
     next_message = Granite32OutputProcessor().transform(model_output, chat_completion)
 

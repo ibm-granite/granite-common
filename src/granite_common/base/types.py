@@ -5,9 +5,10 @@ Common shared types
 """
 
 # Standard
-from typing import Literal, TypeAlias
+from typing import Literal, Self, TypeAlias
 
 # Third Party
+from pydantic import Field
 from typing_extensions import Any
 import pydantic
 
@@ -70,6 +71,11 @@ class NoDefaultsMixin:
                 # Sometimes Pydantic adds fields to self.model_fields_set without adding
                 # them to the output of self.model_dump()
                 result[f] = getattr(self, f)
+        for f in self._reserialize_these_fields():
+            # Sometimes Pydantic's serializer fails to serialize sub-objects correctly
+            field_value = getattr(self, f)
+            if field_value is not None:
+                result[f] = field_value.model_dump()
         return result
 
     def _keep_these_fields(self) -> tuple[str]:
@@ -79,6 +85,17 @@ class NoDefaultsMixin:
 
         This is necessary for round-tripping to JSON when there are fields that
         determine which dataclass to use for deserialization.
+        """
+        return ()
+
+    def _reserialize_these_fields(self) -> tuple[str]:
+        """
+        Dataclasses that include this mixin can override this method to trigger
+        replacing the serialized values of fields with the results of calling
+        :func:`model_dump()` on this fields.
+
+        This is necessary because Pydantic's serializer sometimes produces incorrect
+        outputs for child objects for reasons unknown when called on the parent object.
         """
         return ()
 
@@ -167,31 +184,51 @@ class Document(pydantic.BaseModel, NoDefaultsMixin):
     documents."""
 
     text: str
+    title: str | None = None
     doc_id: str | int | None = None
 
 
-class ChatTemplateKwargs(pydantic.BaseModel, NoDefaultsMixin):
+class ChatTemplateKwargs(pydantic.BaseModel):
     """
     Values that can appear in the ``chat_template_kwargs`` portion of a valid chat
     completion request for a Granite model.
     """
 
-    documents: list[Document] | None = None
+    model_config = pydantic.ConfigDict(
+        # Pass through arbitrary additional keyword arguments for handling by
+        # model-specific I/O processors.
+        arbitrary_types_allowed=True,
+        extra="allow",
+    )
 
 
 class ChatCompletion(pydantic.BaseModel, NoDefaultsMixin):
     """
-    Lowest-common-denominator inputs to a chat completion request for an IBM Granite
-    model.
-
-    The schema of this object mirrors that of a chat completion request in vLLM's
-    OpenAI-compatible inference API.
+    Subset of the schema of a chat completion request in vLLM's OpenAI-compatible
+    inference API that is exercised by Granite models.
     """
 
     messages: list[ChatMessage]
     model: str | None = None
     tools: list[ToolDefinition] | None = None
-
+    documents: list[Document] | None = Field(
+        default=None,
+        description=(
+            "A list of dicts representing documents that will be accessible to "
+            "the model if it is performing RAG (retrieval-augmented generation)."
+            " If the template does not support RAG, this argument will have no "
+            "effect. We recommend that each document should be a dict containing "
+            '"title" and "text" keys.'
+        ),
+    )
+    add_generation_prompt: bool = Field(
+        default=True,
+        description=(
+            "If true, the generation prompt will be added to the chat template. "
+            "This is a parameter used by chat template in tokenizer config of the "
+            "model."
+        ),
+    )
     chat_template_kwargs: ChatTemplateKwargs | None = pydantic.Field(
         default=None,
         description=(
@@ -203,15 +240,46 @@ class ChatCompletion(pydantic.BaseModel, NoDefaultsMixin):
     )
 
     model_config = pydantic.ConfigDict(
-        # Pass through arbitrary additional keyword arguments for handling by
-        # model-specific I/O processors.
-        arbitrary_types_allowed=True,
-        extra="allow",
+        # If an input to this library is an actual vLLM chat completion request, then
+        # the request will likely contain additional fields. Ignore these fields for
+        # the purposes of `granite-common`.
+        extra="ignore",
     )
 
-    def __getattr__(self, name: str) -> any:
-        """Allow attribute access for unknown attributes"""
-        try:
-            return super().__getattr__(name)
-        except AttributeError:
-            return None
+
+class GraniteChatCompletion(ChatCompletion):
+    """
+    Lowest-common-denominator inputs to a chat completion request for an IBM Granite
+    model.
+    """
+
+    @pydantic.model_validator(mode="after")
+    def _validate_documents_at_top_level(self) -> Self:
+        """Documents for a Granite model chat completion request should be passed in the
+        ``documents`` argument at the top level of the request.
+
+        Detect cases where the documents are hanging off of ``chat_template_kwargs``
+        and sanitize appropriately.
+        """
+        if self.chat_template_kwargs and hasattr(
+            self.chat_template_kwargs, "documents"
+        ):
+            if self.documents is not None:
+                raise ValueError(
+                    "Conflicting values of documents found in top-level "
+                    "'documents' parameter and inside "
+                    "'chat_template_kwargs'"
+                )
+            if not isinstance(self.chat_template_kwargs.documents, list):
+                raise ValueError(
+                    "'documents' parameter inside 'chat_template_kwargs' is not a list"
+                )
+
+            # Round-trip through dict so that documents field disappears from JSON
+            # representation.
+            args = self.chat_template_kwargs.model_dump()
+            self.documents = [Document.model_validate(d) for d in args["documents"]]
+            del args["documents"]
+            self.chat_template_kwargs = ChatTemplateKwargs.model_validate(args)
+
+        return self
