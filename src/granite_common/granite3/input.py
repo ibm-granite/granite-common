@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 __doc__ = """
-Input processing code that is specific to the Granite 3 family of models, but not 
+Input processing code that is specific to the Granite 3 family of models, but not
 specific to a particular point release.
 """
 
 # Standard
+from collections.abc import Callable
 import datetime
 
 # First Party
@@ -119,3 +120,66 @@ You are Granite, developed by IBM."""
         if len(result) == 0:
             return None
         return result
+
+    @classmethod
+    def _sanitize(
+        cls,
+        chat_completion: Granite3ChatCompletion,
+        remove_special_tokens: Callable[[str], str],
+        parts: list[str] | str = "all",
+    ) -> Granite3ChatCompletion:
+        """
+        :chat_completion: Chat completion request with unsanitized inputs.
+        :remove_special_tokens: Function that removes special tokens from the
+            text string. Passed in subclass. d
+        :parts: The parts of the chat completion request to sanitize. Accepted
+            values are "messages", "tools", "documents", and "all", which can be
+            given individually or as part of a list. Defaults to "all".
+        :returns: A new chat completion request with sanitized inputs.
+        """
+
+        # Downcast to a Granite-specific request type with possible additional fields.
+        # This operation also performs additional validation.
+        chat_completion = Granite3ChatCompletion.model_validate(
+            chat_completion.model_dump()
+        )
+
+        # Check given "parts" have expected values.
+        sanitize_modes = ["messages", "tools", "documents", "all"]
+        unsupported_parts = []
+        if isinstance(parts, str):
+            parts = [parts]
+        for part in parts:
+            if part not in sanitize_modes:
+                unsupported_parts.append(part)
+        if len(unsupported_parts) > 0:
+            raise ValueError(
+                "sanitize static method",
+                "sanitize ({sanitize}) must be one of {sanitize_modes}",
+                {"sanitize": unsupported_parts},
+            )
+
+        # Sanitize based on the given parts.
+        if ("messages" in parts or "all" in parts) and chat_completion.messages:
+            for message in chat_completion.messages:
+                message.content = remove_special_tokens(message.content)
+        if ("tools" in parts or "all" in parts) and chat_completion.tools:
+            for tool in chat_completion.tools:
+                tool.name = remove_special_tokens(tool.name)
+                if tool.description:
+                    tool.description = remove_special_tokens(tool.description)
+                if tool.parameters:
+                    new_params = {}
+                    for k, v in tool.parameters.items():
+                        kk = remove_special_tokens(k)
+                        vv = remove_special_tokens(v)
+                        if len(kk) > 0:
+                            new_params[kk] = vv
+                    tool.parameters = new_params
+        if ("documents" in parts or "all" in parts) and chat_completion.documents:
+            for document in chat_completion.documents:
+                if document.doc_id and isinstance(document.doc_id, str):
+                    document.doc_id = remove_special_tokens(document.doc_id)
+                document.text = remove_special_tokens(document.text)
+
+        return chat_completion

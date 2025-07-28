@@ -21,11 +21,11 @@ from granite_common.granite3.input import Granite3InputProcessor
 
 # Local
 from .constants import (
+    ALL_SPECIAL_TOKENS,
     DOCS_AND_CITATIONS_SYSTEM_MESSAGE_PART,
     DOCS_AND_HALLUCINATIONS_SYSTEM_MESSAGE_PART,
     MODEL_NAME,
     NO_TOOLS_AND_NO_DOCS_AND_THINKING_SYSTEM_MESSAGE_PART,
-    SPECIAL_TOKENS,
     TOOLS_AND_DOCS_SYSTEM_MESSAGE_PART,
     TOOLS_AND_NO_DOCS_SYSTEM_MESSAGE_PART,
 )
@@ -206,7 +206,8 @@ class Granite32InputProcessor(Granite3InputProcessor):
 
         return system_message
 
-    def _remove_special_tokens(self, text) -> str:
+    @classmethod
+    def _remove_special_tokens(cls, text: str) -> str:
         """
         Removes any special tokens from the text string.
 
@@ -222,64 +223,13 @@ class Granite32InputProcessor(Granite3InputProcessor):
         new_text = re.sub(regex_tool_call, "", new_text)
 
         # Replace any stray special tokens.
-        for special_token in SPECIAL_TOKENS:
+        for special_token in ALL_SPECIAL_TOKENS:
             new_text = new_text.replace(special_token, "")
         return new_text
 
-    def sanitize(
-        self, chat_completion: ChatCompletion, parts: list[str] | str = "all"
-    ) -> ChatCompletion:
-        """
-        :chat_completion: Chat completion request with unsanitized inputs.
-        :parts: The parts of the chat completion request to sanitize. Accepted
-            values are "messages", "tools", "documents", and "all", which can be
-            given individually or as part of a list. Defaults to "all".
-        :returns: A new chat completion request with sanitized inputs.
-        """
-
-        # Downcast to a Granite-specific request type with possible additional fields.
-        # This operation also performs additional validation.
-        chat_completion = Granite32ChatCompletion.model_validate(
-            chat_completion.model_dump()
-        )
-
-        # Check given "parts" have expected values.
-        sanitize_modes = ["messages", "tools", "documents", "all"]
-        unsupported_parts = []
-        if isinstance(parts, str):
-            parts = [parts]
-        for part in parts:
-            if part not in sanitize_modes:
-                unsupported_parts.append(part)
-        if len(unsupported_parts) > 0:
-            raise ValueError(
-                "sanitize static method",
-                "sanitize ({sanitize}) must be one of {sanitize_modes}",
-                {"sanitize": unsupported_parts},
-            )
-
-        # Sanitize based on the given parts.
-        if "messages" in parts or "all" in parts:
-            for message in chat_completion.messages:
-                message.content = self._remove_special_tokens(message.content)
-        if "tools" in parts or "all" in parts:
-            for tool in chat_completion.tools:
-                tool.name = self._remove_special_tokens(tool.name)
-                if tool.description:
-                    tool.description = self._remove_special_tokens(tool.description)
-                if tool.parameters:
-                    new_params = {}
-                    for k, v in tool.parameters.items():
-                        kk = self._remove_special_tokens(k)
-                        vv = self._remove_special_tokens(v)
-                        if len(kk) > 0:
-                            new_params[kk] = vv
-                    tool.parameters = new_params
-        if "documents" in parts or "all" in parts:
-            for document in chat_completion.documents:
-                document.text = self._remove_special_tokens(document.text)
-
-        return chat_completion
+    @classmethod
+    def sanitize(cls, chat_completion, parts="all"):
+        return super()._sanitize(chat_completion, cls._remove_special_tokens, parts)
 
     def transform(
         self, chat_completion: ChatCompletion, add_generation_prompt: bool = True
