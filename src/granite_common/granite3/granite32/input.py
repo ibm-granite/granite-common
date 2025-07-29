@@ -229,6 +229,8 @@ class Granite32InputProcessor(Granite3InputProcessor):
 
     @classmethod
     def sanitize(cls, chat_completion, parts="all"):
+        # Call the parent sanitize function with the specific remove special
+        # tokens function for this Granite version.
         return super()._sanitize(chat_completion, cls._remove_special_tokens, parts)
 
     def transform(

@@ -131,15 +131,14 @@ You are Granite, developed by IBM."""
         """
         :chat_completion: Chat completion request with unsanitized inputs.
         :remove_special_tokens: Function that removes special tokens from the
-            text string. Passed in subclass. d
+            text string. Passed in subclass.
         :parts: The parts of the chat completion request to sanitize. Accepted
             values are "messages", "tools", "documents", and "all", which can be
             given individually or as part of a list. Defaults to "all".
         :returns: A new chat completion request with sanitized inputs.
         """
 
-        # Downcast to a Granite-specific request type with possible additional fields.
-        # This operation also performs additional validation.
+        # Make a copy of the chat completion object.
         chat_completion = Granite3ChatCompletion.model_validate(
             chat_completion.model_dump()
         )
