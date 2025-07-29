@@ -11,6 +11,7 @@ import json
 import pathlib
 
 # First Party
+from granite_common import UserMessage
 from granite_common.base.io import ChatCompletion, ChatCompletionRewriter
 
 # Local
@@ -32,6 +33,10 @@ class RagAgentLibRewriter(ChatCompletionRewriter):
     parameters: dict
     """Additional parameters (key-value pairs) that this rewriter adds to all chat 
     completion requests."""
+
+    instruction: str | None
+    """Optional instruction template. If present, a new user message will be added with
+    the indicated instruction."""
 
     def __init__(
         self,
@@ -66,13 +71,19 @@ class RagAgentLibRewriter(ChatCompletionRewriter):
         elif self.config["model"]:
             self.parameters["model"] = self.config["model"]
 
-    def __call__(self, chat_completion: ChatCompletion) -> ChatCompletion:
+        self.instruction = self.config["instruction"]
+
+    def __call__(self, chat_completion: ChatCompletion, /, **kwargs) -> ChatCompletion:
         edits = {}
-
-        # TODO: Add instruction
-
-        # TODO: Add model name
-
+        if self.instruction is not None:
+            # Generate and append new user message of instructions
+            messages = chat_completion.messages.copy()  # Do not modify input!
+            format_args = kwargs.copy()
+            if len(messages) > 0:
+                format_args["last_message"] = messages[-1].content
+            instruction_str = self.instruction.format(**format_args)
+            messages.append(UserMessage(content=instruction_str))
+            edits["messages"] = messages
         edits.update(self.parameters)
 
         return chat_completion.model_copy(update=edits)

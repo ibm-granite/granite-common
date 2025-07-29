@@ -1,4 +1,5 @@
 {
+    "model": "original-model-name",
     "messages": [{
         "role": "user",
         "content": "This request contains some extra parameters. Does it still work?"
