@@ -1,4 +1,4 @@
-# Model name string for debugging and logging only
+# Model name string, or null to use whatever is provided in the chat completion request
 model: answerability
 # JSON schema of the model's output
 response_format: |

@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: Apache-2.0
+
+__doc__ = """
+Constants relating to of input and output processing for LoRA adapters in IBM's 
+`rag-agent-lib` library of intrinsics.
+"""
+
+RAG_AGENT_LIB_REPO_ID = "ibm-granite/granite-3.3-8b-rag-agent-lib"
+YAML_REQUIRED_FIELDS = [
+    "model",
+    "response_format",
+    "output_schema",
+    "instruction",
+    "parameters",
+    "sentence_boundaries",
+]
+"""Fields that must be present in every intrinsic's YAML configuration file."""

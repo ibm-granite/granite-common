@@ -70,7 +70,7 @@ def test_canned_input(input_json):
     rewriter = RagAgentLibRewriter(config_file=yaml_file)
 
     before = ChatCompletion.model_validate_json(json_data)
-    after = rewriter.transform(before)
+    after = rewriter(before)
     after_json = after.model_dump_json(indent=2)
 
     expected_file = (
@@ -80,5 +80,4 @@ def test_canned_input(input_json):
         expected_json = f.read()
 
     print(f"{after_json=}")
-
     assert after_json == expected_json

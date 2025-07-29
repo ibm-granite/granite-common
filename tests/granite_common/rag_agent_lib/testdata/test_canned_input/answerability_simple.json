@@ -4,5 +4,7 @@
       "content": "Hello world.",
       "role": "user"
     }
-  ]
+  ],
+  "model": "answerability",
+  "max_completion_tokens": 5
 }

@@ -6,6 +6,9 @@ import dataclasses
 import enum
 import pathlib
 
+# Local
+from .constants import RAG_AGENT_LIB_REPO_ID
+
 __doc__ = """
 Data structures and functions relating to model metadata for RAG Agent Library.
 """
@@ -68,9 +71,6 @@ class RagAgentLibModelInfo(RagAgentModelInfoMixin, enum.Enum):
             f"Available names: "
             f"{[m.short_name for m in RagAgentLibModelInfo]}"
         )
-
-
-RAG_AGENT_LIB_REPO_ID = "ibm-granite/granite-3.3-8b-rag-agent-lib"
 
 
 def obtain_lora(model_name: str, cache_dir: str | None = None) -> pathlib.Path:

@@ -9,7 +9,7 @@ processing for all Granite models.
 import abc
 
 # Local
-from .types import AssistantMessage, ChatCompletion
+from .types import AssistantMessage, ChatCompletion, ChatCompletionResponse
 
 
 class InputProcessor(abc.ABC):
@@ -73,12 +73,36 @@ class ChatCompletionRewriter(abc.ABC):
     """
 
     @abc.abstractmethod
-    def transform(self, chat_completion: ChatCompletion) -> ChatCompletion:
+    def __call__(self, chat_completion: ChatCompletion) -> ChatCompletion:
         """
         Rewrite a chat completion request into another chat completion request.
         Does not modify the original :class:`ChatCompletion` object.
 
         :param chat_completion: Original chat completion request
+
+        :returns: Rewritten copy of ``chat_completion``.
+        """
+
+
+class ChatCompletionResultParser(abc.ABC):
+    """
+    Base class for objects that convert the raw result of a chat completion request
+    into a JSON object.
+    """
+
+    @abc.abstractmethod
+    def __call__(
+        self,
+        chat_completion_response: ChatCompletionResponse,
+        chat_completion: ChatCompletion | None = None,
+    ) -> dict:
+        """
+        Parse the result of a chat completion.
+
+        :param chat_completion_response: Original chat completion request
+        :param chat_completion: The chat completion request that produced
+            ``chat_completion_response``. Required by some implementations in order
+            to decode references to part of the original request.
 
         :returns: Rewritten copy of ``chat_completion``.
         """

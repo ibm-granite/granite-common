@@ -206,6 +206,9 @@ class ChatCompletion(pydantic.BaseModel, NoDefaultsMixin):
     """
     Subset of the schema of a chat completion request in vLLM's OpenAI-compatible
     inference API that is exercised by Granite models.
+
+    See the class `vllm.entrypoints.openai.protocol.ChatCompletionRequest` for
+    more information.
     """
 
     messages: list[ChatMessage]
@@ -241,9 +244,9 @@ class ChatCompletion(pydantic.BaseModel, NoDefaultsMixin):
 
     model_config = pydantic.ConfigDict(
         # If an input to this library is an actual vLLM chat completion request, then
-        # the request will likely contain additional fields. Ignore these fields for
-        # the purposes of `granite-common`.
-        extra="ignore",
+        # the request will likely contain additional fields. Pass these fields through
+        # when processing with `granite-common`.
+        extra="allow",
     )
 
 
@@ -283,3 +286,96 @@ class GraniteChatCompletion(ChatCompletion):
             self.chat_template_kwargs = ChatTemplateKwargs.model_validate(args)
 
         return self
+
+
+class Logprob(pydantic.BaseModel, NoDefaultsMixin):
+    """
+    Subset of the vLLM API passing **prompt** log-probabilities back from vLLM's
+    OpenAI-compatible server.
+
+    Note that this is different from the API for token logprobs.
+
+    See the class `vllm.entrypoints.openai.protocol.Logprob` for
+    more information.
+    """
+
+    logprob: float
+    rank: int | None = None
+    decoded_token: str | None = None
+
+
+class ChatCompletionLogProb(pydantic.BaseModel, NoDefaultsMixin):
+    """
+    Subset of the vLLM API passing **token** log-probabilities back from vLLM's
+    OpenAI-compatible server.
+
+    Note that this is different from the API for prompt logprobs.
+
+    See the class `vllm.entrypoints.openai.protocol.ChatCompletionLogProb` for
+    more information.
+    """
+
+    token: str
+    logprob: float = -9999.0
+    bytes: list[int] | None = None
+
+
+class ChatCompletionLogProbsContent(ChatCompletionLogProb):
+    """
+    Subset of the vLLM API passing token log-probabilities back from vLLM's
+    OpenAI-compatible server.
+
+    See the class `vllm.entrypoints.openai.protocol.ChatCompletionLogProbsContent` for
+    more information.
+    """
+
+    top_logprobs: list[ChatCompletionLogProb] = Field(default_factory=list)
+
+
+class ChatCompletionLogProbs(pydantic.BaseModel, NoDefaultsMixin):
+    """
+    Subset of the schema of a token logprobs for a single choice in a chat completion
+    result in vLLM's OpenAI-compatible inference API.
+
+    See the class `vllm.entrypoints.openai.protocol.ChatCompletionLogProbs` for
+    more information.
+    """
+
+    content: list[ChatCompletionLogProbsContent] | None = None
+
+
+class ChatCompletionResponseChoice(pydantic.BaseModel, NoDefaultsMixin):
+    """
+    Subset of the schema of a single choice in a chat completion result in vLLM's
+    OpenAI-compatible inference API that is exercised by Granite intrinsics.
+
+    See the class `vllm.entrypoints.openai.protocol.ChatCompletionResponseChoice` for
+    more information.
+    """
+
+    index: int
+    message: ChatMessage
+    logprobs: ChatCompletionLogProbs | None = None
+    # per OpenAI spec this is the default
+    finish_reason: str | None = "stop"
+
+
+class ChatCompletionResponse(pydantic.BaseModel, NoDefaultsMixin):
+    """
+    Subset of the schema of a chat completion result in vLLM's OpenAI-compatible
+    inference API that is exercised by Granite intrinsics.
+
+    See the class `vllm.entrypoints.openai.protocol.ChatCompletionResponse` for
+    more information.
+    """
+
+    choices: list[ChatCompletionResponseChoice]
+
+    # vLLM-specific fields that are not in OpenAI spec
+    prompt_logprobs: list[dict[int, Logprob] | None] | None = None
+
+    model_config = pydantic.ConfigDict(
+        # Actual response objects will contain additional fields which this library
+        # ignores.
+        extra="ignore",
+    )

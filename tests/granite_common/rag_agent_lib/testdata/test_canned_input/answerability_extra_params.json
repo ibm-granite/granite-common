@@ -4,5 +4,9 @@
       "content": "This request contains some extra parameters. Does it still work?",
       "role": "user"
     }
-  ]
+  ],
+  "model": "answerability",
+  "frequency_penalty": 0.1,
+  "n": 5,
+  "max_completion_tokens": 5
 }
