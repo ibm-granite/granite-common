@@ -4,6 +4,31 @@ __doc__ = """
 Constants used in code that is specific to the Granite 3.2 family of models.
 """
 
+# Complete set of special tokens from the Granite 3.2 tokenizer
+ALL_SPECIAL_TOKENS = [
+    "<|end_of_text|>",
+    "<fim_prefix>",
+    "<fim_middle>",
+    "<fim_suffix>",
+    "<fim_pad>",
+    "<filename>",
+    "<gh_stars>",
+    "<issue_start>",
+    "<issue_comment>",
+    "<issue_closed>",
+    "<jupyter_start>",
+    "<jupyter_text>",
+    "<jupyter_code>",
+    "<jupyter_output>",
+    "<empty_output>",
+    "<commit_before>",
+    "<commit_msg>",
+    "<commit_after>",
+    "<reponame>",
+    "<|start_of_role|>",
+    "<|end_of_role|>",
+    "<|tool_call|>",
+]
 
 # Delimiters for chain of thought output of Granite 3.2
 COT_START = "Here is my thought process:"

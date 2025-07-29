@@ -7,6 +7,7 @@ Classes and functions that implement input and output string processing for the 
 
 # Standard
 import json
+import re
 
 # First Party
 from granite_common.base.types import (
@@ -20,6 +21,7 @@ from granite_common.granite3.input import Granite3InputProcessor
 
 # Local
 from .constants import (
+    ALL_SPECIAL_TOKENS,
     DOCS_AND_CITATIONS_SYSTEM_MESSAGE_PART,
     DOCS_AND_HALLUCINATIONS_SYSTEM_MESSAGE_PART,
     MODEL_NAME,
@@ -203,6 +205,33 @@ class Granite32InputProcessor(Granite3InputProcessor):
         system_message += "<|end_of_text|>\n"
 
         return system_message
+
+    @classmethod
+    def _remove_special_tokens(cls, text: str) -> str:
+        """
+        Removes any special tokens from the text string.
+
+        :param text: String for removal of special tokens.
+        :returns: String with any special tokens removed.
+        """
+
+        regex_roles = r"<\|start_of_role\|>.*<\|end_of_role\|>.*<\|end_of_text\|>"
+        regex_tool_call = r"<\|tool_call\|>\{.*\}"
+
+        new_text = text
+        new_text = re.sub(regex_roles, "", new_text)
+        new_text = re.sub(regex_tool_call, "", new_text)
+
+        # Replace any stray special tokens.
+        for special_token in ALL_SPECIAL_TOKENS:
+            new_text = new_text.replace(special_token, "")
+        return new_text
+
+    @classmethod
+    def sanitize(cls, chat_completion, parts="all"):
+        # Call the parent sanitize function with the specific remove special
+        # tokens function for this Granite version.
+        return super()._sanitize(chat_completion, cls._remove_special_tokens, parts)
 
     def transform(
         self, chat_completion: ChatCompletion, add_generation_prompt: bool = True
