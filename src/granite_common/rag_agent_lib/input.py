@@ -7,7 +7,6 @@ LoRA adapters in IBM's `rag-agent-lib` library of intrinsics.
 
 
 # Standard
-import json
 import pathlib
 
 # First Party
@@ -16,6 +15,22 @@ from granite_common.base.io import ChatCompletion, ChatCompletionRewriter
 
 # Local
 from .util import make_config_dict
+
+
+def _needs_logprobs(transformations: list | None) -> bool:
+    """
+    Subroutine to check whether input processing for a model needs to specify logprobs
+    in the chat completion arguments.
+
+    :param transformations: Contents of the field by the same name in the YAML file
+    :type transformations: list
+    :return: ``True`` if this intrinsic produces a field for which logprobs need to be
+        enabled for downstream result decoding to succeed.
+    :rtype: bool
+    """
+    if transformations is None:
+        return False
+    return any(t["type"] == "likelihood" for t in transformations)
 
 
 class RagAgentLibRewriter(ChatCompletionRewriter):
@@ -53,9 +68,6 @@ class RagAgentLibRewriter(ChatCompletionRewriter):
         """
         self.config = make_config_dict(config_file, config_dict)
 
-        # Response format is JSON schema
-        self.response_format = json.loads(self.config["response_format"])
-
         if self.config["parameters"] is not None and not isinstance(
             self.config["parameters"], dict
         ):
@@ -66,14 +78,18 @@ class RagAgentLibRewriter(ChatCompletionRewriter):
             )
         self.parameters = self.config["parameters"]
 
+        # Check if we're supposed to override model name
         if model_name is not None:
             self.parameters["model"] = model_name
         elif self.config["model"]:
             self.parameters["model"] = self.config["model"]
 
+        # Compute additional parameters we need to add to every request
+        self.parameters["logprobs"] = _needs_logprobs(self.config["transformations"])
         self.instruction = self.config["instruction"]
+        self.parameters["guided_json"] = self.config["response_format"]
 
-    def __call__(self, chat_completion: ChatCompletion, /, **kwargs) -> ChatCompletion:
+    def transform(self, chat_completion: ChatCompletion, /, **kwargs) -> ChatCompletion:
         edits = {}
         if self.instruction is not None:
             # Generate and append new user message of instructions

@@ -241,6 +241,10 @@ class ChatCompletion(pydantic.BaseModel, NoDefaultsMixin):
             "supports."
         ),
     )
+    guided_json: str | dict | None = Field(
+        default=None,
+        description=("If specified, the output will follow the JSON schema."),
+    )
 
     model_config = pydantic.ConfigDict(
         # If an input to this library is an actual vLLM chat completion request, then

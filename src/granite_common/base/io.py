@@ -73,7 +73,7 @@ class ChatCompletionRewriter(abc.ABC):
     """
 
     @abc.abstractmethod
-    def __call__(self, chat_completion: ChatCompletion, /, **kwargs) -> ChatCompletion:
+    def transform(self, chat_completion: ChatCompletion, /, **kwargs) -> ChatCompletion:
         """
         Rewrite a chat completion request into another chat completion request.
         Does not modify the original :class:`ChatCompletion` object.
@@ -91,7 +91,7 @@ class ChatCompletionResultParser(abc.ABC):
     """
 
     @abc.abstractmethod
-    def __call__(
+    def transform(
         self,
         chat_completion_response: ChatCompletionResponse,
         chat_completion: ChatCompletion | None = None,

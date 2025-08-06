@@ -9,9 +9,14 @@ RAG_AGENT_LIB_REPO_ID = "ibm-granite/granite-3.3-8b-rag-agent-lib"
 YAML_REQUIRED_FIELDS = [
     "model",
     "response_format",
-    "output_schema",
+    "transformations",
     "instruction",
     "parameters",
     "sentence_boundaries",
 ]
 """Fields that must be present in every intrinsic's YAML configuration file."""
+
+YAML_JSON_FIELDS = [
+    "response_format",
+]
+"""Fields of the YAML file that contain JSON values as strings"""
