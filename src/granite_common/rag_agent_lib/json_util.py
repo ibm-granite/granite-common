@@ -15,6 +15,9 @@ import re
 # Third Party
 import pydantic
 
+# First Party
+from granite_common.base.types import ChatCompletionLogProbs
+
 ##########################
 # CONSTANTS
 
@@ -31,7 +34,7 @@ NULL_REGEX = re.compile(r"null")
 # CLASSES
 
 
-class JsonLiteral(pydantic.BaseModel):
+class JsonLiteralWithPosition(pydantic.BaseModel):
     value: str | bool | int | float
     begin: int
     end: int
@@ -138,7 +141,7 @@ def reparse_value(tokens, offset) -> tuple[Any, int]:
             return reparse_list(tokens, offset + 1)
         raise ValueError(f"Unexpected token '{value}' found at {begin}")
     if type_ in ("string", "number", "bool", "null"):
-        return JsonLiteral(value=value, begin=begin, end=end), offset + 1
+        return JsonLiteralWithPosition(value=value, begin=begin, end=end), offset + 1
     raise ValueError(f"Unexpected type string {type_}")
 
 
@@ -210,8 +213,8 @@ def reparse_json_with_offsets(json_str: str) -> Any:
     :param json_str: String known to contain valid JSON data
     :type json_str: str
     :return: Parsed representation of ``json_str``, with literals at the leaf nodes of
-      the parse tree replaced with instances of :class:`JsonLiteral` containing position
-      information.
+      the parse tree replaced with instances of :class:`JsonLiteralWithPosition`
+      containing position information.
     :rtype: Any
     """
     tokens = tokenize_json(json_str)
@@ -266,17 +269,35 @@ def fetch_path(json_value: Any, path: tuple):
     return cur_json_value
 
 
-def replace_path(json_value: Any, path: tuple, new_value: Any):
+def replace_path(json_value: Any, path: tuple, new_value: Any) -> Any:
     """
     Modify a parsed JSON value in place by setting a particular path.
 
     :param json_value: Parsed JSON value
-    :param path: A tuple of names/numbers that indicates a path from root to leaf of
+    :param path: A tuple of names/numbers that indicates a path from root to node of
         ``json_value``
     :param new_value: New value to put in place at the indicated location
+
+    :returns: The modified input, or a new value if the root was modified.
     """
+    if len(path) == 0:
+        # Root
+        return new_value
     where_to_write = fetch_path(json_value, path[:-1])
     where_to_write[path[-1]] = new_value  # Modify in place
+    return json_value
+
+
+def make_begin_to_token_table(logprobs: ChatCompletionLogProbs | None):
+    if logprobs is None:
+        return None
+    content = logprobs.content
+    offset = 0
+    result = {}
+    for i in range(len(content)):
+        result[offset] = i
+        offset += len(content[i].token)
+    return result
 
 
 class TransformationRule(abc.ABC):
@@ -297,12 +318,19 @@ class TransformationRule(abc.ABC):
     #         :func:`json.loads()`, plus applying zero or more transformation rules.
     #     :returns: Paths to
 
-    def apply(self, parsed_json: Any, reparsed_json: Any) -> Any:
+    def apply(
+        self,
+        parsed_json: Any,
+        reparsed_json: Any,
+        logprobs: ChatCompletionLogProbs | None,
+    ) -> Any:
         """
         :param parsed_json: Output of running model results through
             :func:`json.loads()`, plus applying zero or more transformation rules.
         :param reparsed_json: Output of running the same model results through
             :func:`json_util.reparse_json_with_offsets()`.
+        :param logprobs: Optional logprobs result associated with the original model
+            output string.
         :returns: Transformed copy of ``parsed_json`` after applying this rule.
         """
         paths = scalar_paths(parsed_json)
@@ -342,15 +370,6 @@ class TransformationRule(abc.ABC):
             transformed_value = self._transform(original_value)
             replace_path(result, path, transformed_value)
         return result
-
-    @abc.abstractmethod
-    def _transform(self, value: int | float | str | None) -> int | float | str | None:
-        """
-        Subclasses should override this method to transform a single scalar value
-        from a larger JSON expression.
-
-        :param value: Original value pulled out of the JSON expression.
-        """
 
     @abc.abstractmethod
     def _transform(self, value: int | float | str | None) -> int | float | str | None:
