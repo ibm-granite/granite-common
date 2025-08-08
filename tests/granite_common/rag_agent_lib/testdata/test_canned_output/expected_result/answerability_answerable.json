@@ -1,0 +1,80 @@
+{
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "content": "1.0",
+                "role": "assistant",
+                "tool_calls": []
+            },
+            "logprobs": {
+                "content": [
+                    {
+                        "token": "\"",
+                        "logprob": 0.0,
+                        "bytes": [
+                            34
+                        ],
+                        "top_logprobs": []
+                    },
+                    {
+                        "token": "answer",
+                        "logprob": 0.0,
+                        "bytes": [
+                            97,
+                            110,
+                            115,
+                            119,
+                            101,
+                            114
+                        ],
+                        "top_logprobs": []
+                    },
+                    {
+                        "token": "able",
+                        "logprob": 0.0,
+                        "bytes": [
+                            97,
+                            98,
+                            108,
+                            101
+                        ],
+                        "top_logprobs": []
+                    },
+                    {
+                        "token": "\"",
+                        "logprob": 0.0,
+                        "bytes": [
+                            34
+                        ],
+                        "top_logprobs": []
+                    },
+                    {
+                        "token": "<|end_of_text|>",
+                        "logprob": 0.0,
+                        "bytes": [
+                            60,
+                            124,
+                            101,
+                            110,
+                            100,
+                            95,
+                            111,
+                            102,
+                            95,
+                            116,
+                            101,
+                            120,
+                            116,
+                            124,
+                            62
+                        ],
+                        "top_logprobs": []
+                    }
+                ]
+            },
+            "finish_reason": "stop"
+        }
+    ],
+    "prompt_logprobs": null
+}

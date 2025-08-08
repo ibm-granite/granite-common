@@ -6,13 +6,12 @@ response_format: |
     "type": "string",
     "enum": ["answerable", "unanswerable"]
   }
-output_schema: |
-  {
-  "type": "object",
-  "properties": {
-    "answerable_likelihood": { "type": "number" }
-  }
+transformations:
+  - type: likelihood
+    positive_label: "answerable"
+    input_path: []
+    output_name: ~  # Null == no change
 instruction: ~
 parameters:
-  max_completion_tokens: 5
+  max_completion_tokens: 6
 sentence_boundaries: false

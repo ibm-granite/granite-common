@@ -6,12 +6,8 @@ response_format: |
     "type": "string",
     "enum": ["fish", "not fish"]
   }
-output_schema: |
-  {
-  "type": "object",
-  "properties": {
-    "fish_likelihood": { "type": "number" }
-  }
+# No transformations
+transformations: ~
 instruction: |
   {{ This text should be inside curly braces. }}
   Here's the text of the last message: {last_message}

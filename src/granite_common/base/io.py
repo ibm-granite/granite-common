@@ -84,10 +84,10 @@ class ChatCompletionRewriter(abc.ABC):
         """
 
 
-class ChatCompletionResultParser(abc.ABC):
+class ChatCompletionResultProcessor(abc.ABC):
     """
-    Base class for objects that convert the raw result of a chat completion request
-    into a JSON object.
+    Base class for objects that convert the raw json result of a chat completion request
+    into a JSON object with model-specific postprocessing applied
     """
 
     @abc.abstractmethod
@@ -95,7 +95,7 @@ class ChatCompletionResultParser(abc.ABC):
         self,
         chat_completion_response: ChatCompletionResponse,
         chat_completion: ChatCompletion | None = None,
-    ) -> dict:
+    ) -> ChatCompletionResponse:
         """
         Parse the result of a chat completion.
 

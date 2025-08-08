@@ -1,11 +1,21 @@
 {
   "messages": [
     {
-      "content": "This request contains some extra parameters. Does it still work?",
+      "content": "Hello there, how can I help you?",
+      "role": "assistant"
+    },
+    {
+      "content": "What is the square root of 4?",
       "role": "user"
     }
   ],
   "model": "answerability",
+  "documents": [
+    {
+      "text": "The square root of 4 is 2.",
+      "doc_id": 1
+    }
+  ],
   "guided_json": {
     "type": "string",
     "enum": [
@@ -13,8 +23,6 @@
       "unanswerable"
     ]
   },
-  "frequency_penalty": 0.1,
-  "n": 5,
   "max_completion_tokens": 6,
   "logprobs": true
 }

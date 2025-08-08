@@ -15,8 +15,13 @@ import math
 import pathlib
 
 # First Party
-from granite_common.base.io import ChatCompletionRewriter
-from granite_common.base.types import ChatCompletionLogProbs
+from granite_common.base.io import ChatCompletionResultProcessor
+from granite_common.base.types import (
+    ChatCompletion,
+    ChatCompletionLogProbs,
+    ChatCompletionResponse,
+    ChatCompletionResponseChoice,
+)
 
 # Local
 from . import json_util
@@ -122,7 +127,12 @@ class TransformationRule(abc.ABC):
         """
 
 
-class DecodeBinaryToProb(TransformationRule):
+class LikelihoodRule(TransformationRule):
+    """
+    Transformation rule that decodes one or more yes/no answers to a likelihood ranging
+    from 0 to 1.
+    """
+
     def __init__(
         self,
         input_path_expr: list[str | int | None],
@@ -130,6 +140,11 @@ class DecodeBinaryToProb(TransformationRule):
         /,
         positive_label: str | int | bool,
     ):
+        """
+        :param positive_label: Value that, if present at the indicated path, indicates
+            a "yes" answer.
+        :type positive_label: str | int | bool
+        """
         super().__init__(input_path_expr, output_name)
         self.positive_label = positive_label
 
@@ -157,7 +172,7 @@ class DecodeBinaryToProb(TransformationRule):
                 f"but there is no token at that position."
             )
 
-        first_token_ix = begin_to_token[json_literal.begin]
+        first_token_ix = begin_to_token[value_str_offset]
 
         # Assume that probability of first token == probabity of entire literal
         prob = math.exp(logprobs.content[first_token_ix].logprob)
@@ -168,8 +183,11 @@ class DecodeBinaryToProb(TransformationRule):
         return 1 - prob
 
 
-class RagAgentLibRewriter(ChatCompletionRewriter):
-    """General-purpose chat completion rewriter for use with the models in the
+NAME_TO_RULE = {"likelihood": LikelihoodRule}
+
+
+class RagAgentLibResultProcessor(ChatCompletionResultProcessor):
+    """General-purpose chat completion result processor for use with the models in the
     RAG Agent Library. Reads parameters of the model's input and output formats
     from a YAML configuration file and edits the input chat completion appropriately.
     """
@@ -177,12 +195,8 @@ class RagAgentLibRewriter(ChatCompletionRewriter):
     config: dict
     """Parsed YAML configuration file for the target intrinsic."""
 
-    response_format: dict
-    """JSON Schema of expected response format"""
-
-    parameters: dict
-    """Additional parameters (key-value pairs) that this rewriter adds to all chat 
-    completion requests."""
+    rules: list[TransformationRule]
+    """Transformation rules that this object applies, in the order they are applied."""
 
     def __init__(
         self,
@@ -196,22 +210,49 @@ class RagAgentLibRewriter(ChatCompletionRewriter):
         """
         self.config = make_config_dict(config_file, config_dict)
 
-        # Response format is JSON schema
-        self.response_format = json.loads(self.config["response_format"])
+        # Set up transformation rules for the target model's JSON output
+        self.rules = []
+        for transform_spec in self.config["transformations"]:
+            if transform_spec["type"] not in NAME_TO_RULE:
+                raise ValueError(
+                    f"Unknown transformation rule '{transform_spec['type']}'"
+                )
+            rule_cls = NAME_TO_RULE[transform_spec["type"]]
+            input_path = transform_spec["input_path"]
+            output_name = transform_spec["output_name"]
+            rule_kwargs = {
+                k: v
+                for k, v in transform_spec.items()
+                if k not in ("type", "input_path", "output_name")
+            }
+            self.rules.append(rule_cls(input_path, output_name, **rule_kwargs))
 
-        # Output schema can be None, indicating same as response format; or another
-        # schema, indicating automated data transformation based on field names
-        if self.config["output_schema"] is None:
-            self.output_schema = None
-        else:
-            self.output_schema = json.loads(self.config["output_schema"])
+    # pylint: disable=unused-argument
+    def transform(
+        self,
+        chat_completion_response: ChatCompletionResponse,
+        chat_completion: ChatCompletion | None = None,
+    ) -> ChatCompletionResponse:
+        transformed_choices = [
+            self._transform_choice(c) for c in chat_completion_response.choices
+        ]
+        return chat_completion_response.model_copy(
+            update={"choices": transformed_choices}
+        )
 
-        # TODO: Finish initialization
+    def _transform_choice(
+        self,
+        choice: ChatCompletionResponseChoice,
+    ) -> ChatCompletionResponseChoice:
+        # Parse JSON output twice: Once to verify valid JSON and once to compute offsets
+        # Note that we don't currently check schema, as that would require an additional
+        # library dependency.
+        parsed_json = json.loads(choice.message.content)
+        reparsed_json = json_util.reparse_json_with_offsets(choice.message.content)
+        for rule in self.rules:
+            parsed_json = rule.apply(parsed_json, reparsed_json, choice.logprobs)
 
-    def _compute_schema_mapping(self) -> dict:
-        """Generates and returns the schema mapping for this object's response and
-        output schemas.
-
-        :returns: Mapping from fields of ``self.output_schema`` to corresponding fields
-            of ``self.response_format``
-        """
+        updated_message = choice.message.model_copy(
+            update={"content": json.dumps(parsed_json)}
+        )
+        return choice.model_copy(update={"message": updated_message})
