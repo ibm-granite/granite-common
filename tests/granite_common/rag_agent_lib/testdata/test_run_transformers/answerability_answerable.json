@@ -1,0 +1,11 @@
+{
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "content": "9.440484074474398e-05",
+                "role": "assistant"
+            }
+        }
+    ]
+}

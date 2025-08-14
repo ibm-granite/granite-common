@@ -102,7 +102,15 @@ def load_transformers_lora(local_or_remote_path):
     return model, tokenizer
 
 
-def chat_completion_request_to_transformers_inputs(request):
+def chat_completion_request_to_transformers_inputs(request, tokenizer=None):
+    """
+    Translate an OpenAI-style chat completion request into an input for a Transformers
+    ``generate()`` call.
+
+    :param request: Request as parsed JSON
+    :param tokenizer: Pointer to the HuggingFace tokenizer that will be used to handle
+        this request. Only required if the request uses constrained decoding.
+    """
     tokenizer_input = {
         "conversation": request["messages"],
         "add_generation_prompt": True,
@@ -118,6 +126,27 @@ def chat_completion_request_to_transformers_inputs(request):
 
     if request["max_completion_tokens"]:
         generate_input["max_new_tokens"] = request["max_completion_tokens"]
+
+    if request["guided_json"]:
+        # Constrained decoding in Hugging Face requires using a third-party library
+        # to create a callback function to be invoked from inside generate()
+        with import_optional("xgrammar"):
+            # Third Party
+            import xgrammar as xgr
+        if tokenizer is None:
+            raise ValueError(
+                "Request specifies constrained decoding, but no "
+                "tokenizer object was passed to this function."
+            )
+        tokenizer_info = xgr.TokenizerInfo.from_huggingface(
+            tokenizer, vocab_size=tokenizer.vocab_size
+        )
+        grammar_compiler = xgr.GrammarCompiler(tokenizer_info)
+        compiled_grammar = grammar_compiler.compile_json_schema(request["guided_json"])
+        logits_processor = xgr.contrib.hf.LogitsProcessor(compiled_grammar)
+
+        # The "logits_processor" argument to generate() must be a list.
+        generate_input["logits_processor"] = [logits_processor]
 
     return tokenizer_input, generate_input
 

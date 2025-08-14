@@ -12,7 +12,12 @@ import pathlib
 import yaml
 
 # Local
-from .constants import YAML_JSON_FIELDS, YAML_REQUIRED_FIELDS
+from .constants import (
+    BASE_MODEL_TO_CANONICAL_NAME,
+    INTRINSICS_LIB_REPO_NAME,
+    YAML_JSON_FIELDS,
+    YAML_REQUIRED_FIELDS,
+)
 
 
 def make_config_dict(
@@ -48,3 +53,49 @@ def make_config_dict(
                 ) from e
 
     return config_dict
+
+
+def obtain_lora(
+    intrinsic_name: str,
+    target_model_name: str,
+    alora: bool = False,
+    cache_dir: str | None = None,
+) -> pathlib.Path:
+    """
+    Downloads a cached copy of a LoRA or aLoRA adapter from the
+    [Granite Intrinsics Library](
+    https://huggingface.co/ibm-granite/granite-3.3-8b-rag-agent-lib) if one is not
+    already in the local cache.
+
+    :param intrinsic_name: Short name of the intrinsic model, such as "certainty".
+    :param target_model_name: Name of the base model for the LoRA or aLoRA adapter.
+    :param alora: If ``True``, load aLoRA version of intrinsic; otherwise use LoRA
+    :param cache_dir: Local directory to use as a cache (in Hugging Face Hub format),
+        or ``None`` to use the Hugging Face Hub default location.
+
+    :returns: the full path to the local copy of the specified (a)LoRA adapter.
+    This path is suitable for passing to commands that will serve the adapter.
+    """
+    # Third Party
+    import huggingface_hub
+
+    # Normalize target model name.
+    if target_model_name not in BASE_MODEL_TO_CANONICAL_NAME:
+        raise ValueError(
+            f"Unknown target model {target_model_name}. Known names are: "
+            f"{list(BASE_MODEL_TO_CANONICAL_NAME.keys())}"
+        )
+    target_model_name = BASE_MODEL_TO_CANONICAL_NAME[target_model_name]
+
+    lora_str = "alora" if alora else "lora"
+
+    lora_subdir_name = f"{intrinsic_name}/{lora_str}/{target_model_name}"
+
+    # Download just the files for this LoRA if not already present
+    local_root_path = huggingface_hub.snapshot_download(
+        repo_id=INTRINSICS_LIB_REPO_NAME,
+        allow_patterns=f"{lora_subdir_name}/*",
+        cache_dir=cache_dir,
+    )
+
+    return pathlib.Path(local_root_path) / lora_subdir_name

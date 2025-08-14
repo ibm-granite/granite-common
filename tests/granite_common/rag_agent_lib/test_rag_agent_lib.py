@@ -10,14 +10,17 @@ import os
 import pathlib
 
 # Third Party
+import huggingface_hub
 import pytest
 import yaml
 
 # First Party
 from granite_common import ChatCompletion, RagAgentLibRewriter
 from granite_common.base.types import ChatCompletionResponse
-from granite_common.rag_agent_lib import json_util
+from granite_common.rag_agent_lib import json_util, util
+from granite_common.rag_agent_lib.constants import INTRINSICS_LIB_REPO_NAME
 from granite_common.rag_agent_lib.output import RagAgentLibResultProcessor
+import granite_common.util
 
 
 def _read_file(name):
@@ -26,6 +29,13 @@ def _read_file(name):
 
 
 _TEST_DATA_DIR = pathlib.Path(os.path.dirname(__file__)) / "testdata"
+
+# Base model to use for testing; should be small enough to run in memory on the CI
+# server.
+_BASE_MODEL = "granite-3.3-2b-instruct"
+
+# TEMPORARY expedient to disable downloads from CI until models are public
+_TEST_DOWNLOADS = True
 
 
 _INPUT_JSON_DIR = _TEST_DATA_DIR / "input_json"
@@ -38,7 +48,7 @@ _YAML_JSON_COMBOS = {
     "answerability_simple": (
         _INPUT_YAML_DIR / "answerability.yaml",
         _INPUT_JSON_DIR / "simple.json",
-        "ibm-granite/intrinsics-lib/answerability/lora/granite-3.3-2b-instruct",
+        "answerability",
     ),
     "answerability_extra_params": (
         _INPUT_YAML_DIR / "answerability.yaml",
@@ -48,7 +58,7 @@ _YAML_JSON_COMBOS = {
     "answerability_answerable": (
         _INPUT_YAML_DIR / "answerability.yaml",
         _INPUT_JSON_DIR / "answerable.json",
-        "ibm-granite/intrinsics-lib/answerability/lora/granite-3.3-2b-instruct",
+        "answerability",
     ),
     "instruction": (
         _INPUT_YAML_DIR / "instruction.yaml",
@@ -119,9 +129,18 @@ def test_read_yaml():
         data = yaml.safe_load(file)
     assert data["model"] == "answerability"
 
+    # Read from local disk
     RagAgentLibRewriter(config_file=_INPUT_YAML_DIR / "answerability.yaml")
 
-    # TODO: Test reading from Hugging Face Hub once a suitable YAML file is uploaded
+    # Read from Hugging Face hub.
+    # Requires "hf auth login" with read token while repo is private.
+    if _TEST_DOWNLOADS:
+        path_suffix = "answerability/lora/granite-3.3-2b-instruct/io.yaml"
+        local_path = huggingface_hub.snapshot_download(
+            repo_id=INTRINSICS_LIB_REPO_NAME,
+            allow_patterns=path_suffix,
+        )
+        RagAgentLibRewriter(config_file=f"{local_path}/{path_suffix}")
 
 
 _CANNED_INPUT_EXPECTED_DIR = _TEST_DATA_DIR / "test_canned_input"
@@ -235,11 +254,55 @@ def test_reparse_json(reparse_json_file):
     assert json_util.scalar_paths(parsed_json) == json_util.scalar_paths(reparsed_json)
 
 
-# def test_run_transformers(yaml_json_combo_with_model):
-#     """
-#     Run the target model on transformers.
-#     """
-#     short_name, yaml_file, json_file, model_path = yaml_json_combo_with_model
+def test_run_transformers(yaml_json_combo_with_model):
+    """
+    Run the target model end-to-end on transformers.
+    """
+    short_name, yaml_file, input_file, model_name = yaml_json_combo_with_model
 
-#     #model = peft.PeftModel.from_pretrained(model_path)
-#     model = transformers.AutoModelForCausalLM.from_pretrained(model_path)
+    if not _TEST_DOWNLOADS:
+        pytest.xfail("Downloads disabled on CI")
+
+    # Load input request
+    with open(input_file, encoding="utf-8") as f:
+        model_input = ChatCompletion.model_validate_json(f.read())
+
+    # Download files from Hugging Face Hub
+    lora_dir = util.obtain_lora(model_name, _BASE_MODEL)
+
+    # Load IO config YAML for this model
+    io_yaml_path = lora_dir / "io.yaml"
+    if os.path.exists(io_yaml_path):
+        # Use local files until proper configs are up on Hugging Face
+        io_yaml_path = yaml_file
+    rewriter = RagAgentLibRewriter(config_file=io_yaml_path)
+    result_processor = RagAgentLibResultProcessor(config_file=io_yaml_path)
+
+    # Prepare inputs for inference
+    transformed_input = rewriter.transform(model_input)
+
+    # Run the model using Hugging Face APIs
+    model, tokenizer = granite_common.util.load_transformers_lora(lora_dir)
+    tokenizer_input, generate_input = (
+        granite_common.util.chat_completion_request_to_transformers_inputs(
+            transformed_input.model_dump(), tokenizer
+        )
+    )
+    responses = granite_common.util.generate_with_transformers(
+        tokenizer, model, tokenizer_input, generate_input
+    )
+
+    # Output processing
+    transformed_responses = result_processor.transform(responses)
+
+    # Pull this string out of the debugger to create a fresh expected file.
+    transformed_str = transformed_responses.model_dump_json(indent=4)
+    print(transformed_str)
+
+    with open(
+        _TEST_DATA_DIR / f"test_run_transformers/{short_name}.json", encoding="utf-8"
+    ) as f:
+        expected = ChatCompletionResponse.model_validate_json(f.read())
+    expected_str = expected.model_dump_json(indent=4)
+
+    assert transformed_str == expected_str

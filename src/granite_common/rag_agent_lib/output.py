@@ -251,8 +251,19 @@ class RagAgentLibResultProcessor(ChatCompletionResultProcessor):
         reparsed_json = json_util.reparse_json_with_offsets(choice.message.content)
         for rule in self.rules:
             parsed_json = rule.apply(parsed_json, reparsed_json, choice.logprobs)
-
         updated_message = choice.message.model_copy(
             update={"content": json.dumps(parsed_json)}
         )
-        return choice.model_copy(update={"message": updated_message})
+
+        result = choice.model_copy(update={"message": updated_message})
+
+        # Drop logprobs, since they should only be used by this function, and the tokens
+        # referenced will no longer match the processed JSON value anyhow.
+        # We may need to make this dropping configurable in the future.
+        # Ok to modify in place because updated_message is a deep copy.
+        if result.logprobs is not None:
+            # Don't set the logprobs to None, unset it. There is a distinction in
+            # Pydantic between these two states.
+            del result.logprobs
+
+        return result

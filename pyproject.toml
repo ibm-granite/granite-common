@@ -37,7 +37,9 @@ dependencies = [
 [project.optional-dependencies]
 transformers = [
     "transformers[torch]",
-    "peft"
+    "peft",
+    "huggingface-hub",
+    "xgrammar"
 ]
 nltk = [
     "nltk~=3.9.1",

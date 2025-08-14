@@ -20,3 +20,14 @@ YAML_JSON_FIELDS = [
     "response_format",
 ]
 """Fields of the YAML file that contain JSON values as strings"""
+
+INTRINSICS_LIB_REPO_NAME = "ibm-granite/intrinsics-lib"
+"""Location of the intrinsics library on Huggingface Hub"""
+
+BASE_MODEL_TO_CANONICAL_NAME = {
+    "ibm-granite/granite-3.3-8b-instruct": "granite-3.3-8b-instruct",
+    "ibm-granite/granite-3.3-2b-instruct": "granite-3.3-2b-instruct",
+    "granite-3.3-8b-instruct": "granite-3.3-8b-instruct",
+    "granite-3.3-2b-instruct": "granite-3.3-2b-instruct",
+}
+"""Base model names that we accept for LoRA/aLoRA adapters in intrinsics-lib."""
