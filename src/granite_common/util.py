@@ -121,13 +121,14 @@ def chat_completion_request_to_transformers_inputs(request, tokenizer=None):
         "return_dict_in_generate": True
     }
 
-    if request["logprobs"]:
+    if "logprobs" in request and request["logprobs"]:
+        print(f"{request['logprobs']=}")
         generate_input["output_scores"] = True
 
-    if request["max_completion_tokens"]:
+    if request.get("max_completion_tokens") is not None:
         generate_input["max_new_tokens"] = request["max_completion_tokens"]
 
-    if request["guided_json"]:
+    if request.get("guided_json") is not None:
         # Constrained decoding in Hugging Face requires using a third-party library
         # to create a callback function to be invoked from inside generate()
         with import_optional("xgrammar"):
@@ -205,15 +206,16 @@ def generate_with_transformers(
     num_responses = generate_result.sequences.shape[0]
     generated_tokens = generate_result.sequences[:, num_prompt_tokens:]
 
-    generated_scores = torch.stack(generate_result.scores).swapaxes(0, 1)[
-        :num_responses
-    ]
+    generated_scores = (
+        None
+        if generate_result.scores is None
+        else (torch.stack(generate_result.scores).swapaxes(0, 1)[:num_responses])
+    )
 
     # Iterate over the responses, stripping off EOS tokens
     choices = []
     for i in range(num_responses):
         response_tokens = generated_tokens[i]
-        response_scores = generated_scores[i]
 
         if tokenizer.eos_token_id in response_tokens:
             # Strip off everything after the first EOS token.
@@ -243,33 +245,40 @@ def generate_with_transformers(
             )
         token_offsets = retokenized["offset_mapping"]
 
-        # Scores come back as raw logits. You need to decode them to produce top-k
-        # logprobs. For now we just do top-1.
-        top_1_logprobs = [
-            torch.log_softmax(response_scores[token_ix].to(torch.float32), 0)[
-                response_tokens[token_ix]
-            ].item()
-            for token_ix in range(len(response_tokens))
-        ]
-        token_strings = [response_string[begin:end] for begin, end in token_offsets]
-        token_bytes = [list(s.encode("utf-8")) for s in token_strings]
+        if generated_scores is None:
+            logprobs_content = None
+        else:
+            response_scores = generated_scores[i]
 
-        logprobs_content = [
-            {
-                "token": token_strings[i],
-                "bytes": token_bytes[i],
-                "logprob": top_1_logprobs[i],
-                "top_logprobs]": [],
-            }
-            for i in range(len(response_tokens))
-        ]
+            # Scores come back as raw logits. You need to decode them to produce top-k
+            # logprobs. For now we just do top-1.
+            top_1_logprobs = [
+                torch.log_softmax(response_scores[token_ix].to(torch.float32), 0)[
+                    response_tokens[token_ix]
+                ].item()
+                for token_ix in range(len(response_tokens))
+            ]
+            token_strings = [response_string[begin:end] for begin, end in token_offsets]
+            token_bytes = [list(s.encode("utf-8")) for s in token_strings]
 
+            logprobs_content = [
+                {
+                    "token": token_strings[i],
+                    "bytes": token_bytes[i],
+                    "logprob": top_1_logprobs[i],
+                    "top_logprobs]": [],
+                }
+                for i in range(len(response_tokens))
+            ]
+
+        response_choice_value = {
+            "index": i,
+            "message": {"content": response_string, "role": "assistant"},
+        }
+        if logprobs_content is not None:
+            response_choice_value["logprobs"] = {"content": logprobs_content}
         response_choice = ChatCompletionResponseChoice.model_validate(
-            {
-                "index": i,
-                "logprobs": {"content": logprobs_content},
-                "message": {"content": response_string, "role": "assistant"},
-            }
+            response_choice_value
         )
         choices.append(response_choice)
 

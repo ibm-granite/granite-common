@@ -212,20 +212,21 @@ class RagAgentLibResultProcessor(ChatCompletionResultProcessor):
 
         # Set up transformation rules for the target model's JSON output
         self.rules = []
-        for transform_spec in self.config["transformations"]:
-            if transform_spec["type"] not in NAME_TO_RULE:
-                raise ValueError(
-                    f"Unknown transformation rule '{transform_spec['type']}'"
-                )
-            rule_cls = NAME_TO_RULE[transform_spec["type"]]
-            input_path = transform_spec["input_path"]
-            output_name = transform_spec["output_name"]
-            rule_kwargs = {
-                k: v
-                for k, v in transform_spec.items()
-                if k not in ("type", "input_path", "output_name")
-            }
-            self.rules.append(rule_cls(input_path, output_name, **rule_kwargs))
+        if self.config["transformations"]:
+            for transform_spec in self.config["transformations"]:
+                if transform_spec["type"] not in NAME_TO_RULE:
+                    raise ValueError(
+                        f"Unknown transformation rule '{transform_spec['type']}'"
+                    )
+                rule_cls = NAME_TO_RULE[transform_spec["type"]]
+                input_path = transform_spec["input_path"]
+                output_name = transform_spec["output_name"]
+                rule_kwargs = {
+                    k: v
+                    for k, v in transform_spec.items()
+                    if k not in ("type", "input_path", "output_name")
+                }
+                self.rules.append(rule_cls(input_path, output_name, **rule_kwargs))
 
     # pylint: disable=unused-argument
     def transform(

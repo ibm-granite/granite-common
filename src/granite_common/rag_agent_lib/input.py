@@ -89,7 +89,9 @@ class RagAgentLibRewriter(ChatCompletionRewriter):
         self.instruction = self.config["instruction"]
         self.parameters["guided_json"] = self.config["response_format"]
 
-    def transform(self, chat_completion: ChatCompletion, /, **kwargs) -> ChatCompletion:
+    def _transform(
+        self, chat_completion: ChatCompletion, /, **kwargs
+    ) -> ChatCompletion:
         edits = {}
         if self.instruction is not None:
             # Generate and append new user message of instructions

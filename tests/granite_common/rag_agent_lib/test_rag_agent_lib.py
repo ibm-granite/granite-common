@@ -5,6 +5,7 @@ Tests of code under ``granite_common.rag_agent_lib``
 """
 
 # Standard
+import copy
 import json
 import os
 import pathlib
@@ -33,10 +34,6 @@ _TEST_DATA_DIR = pathlib.Path(os.path.dirname(__file__)) / "testdata"
 # Base model to use for testing; should be small enough to run in memory on the CI
 # server.
 _BASE_MODEL = "granite-3.3-2b-instruct"
-
-# TEMPORARY expedient to disable downloads from CI until models are public
-_TEST_DOWNLOADS = True
-
 
 _INPUT_JSON_DIR = _TEST_DATA_DIR / "input_json"
 _INPUT_YAML_DIR = _TEST_DATA_DIR / "input_yaml"
@@ -68,6 +65,11 @@ _YAML_JSON_COMBOS = {
     "hallucination": (
         _INPUT_YAML_DIR / "hallucination.yaml",
         _INPUT_JSON_DIR / "hallucination.json",
+        None,  # TODO: Add model once we have a checkpoint
+    ),
+    "rewrite": (
+        _INPUT_YAML_DIR / "rewrite.yaml",
+        _INPUT_JSON_DIR / "rewrite.json",
         None,  # TODO: Add model once we have a checkpoint
     ),
 }
@@ -134,13 +136,15 @@ def test_read_yaml():
 
     # Read from Hugging Face hub.
     # Requires "hf auth login" with read token while repo is private.
-    if _TEST_DOWNLOADS:
-        path_suffix = "answerability/lora/granite-3.3-2b-instruct/io.yaml"
+    path_suffix = "answerability/lora/granite-3.3-2b-instruct/io.yaml"
+    try:
         local_path = huggingface_hub.snapshot_download(
             repo_id=INTRINSICS_LIB_REPO_NAME,
             allow_patterns=path_suffix,
         )
-        RagAgentLibRewriter(config_file=f"{local_path}/{path_suffix}")
+    except huggingface_hub.RepositoryNotFoundError:
+        pytest.xfail("Downloads fail on CI server because repo is private")
+    RagAgentLibRewriter(config_file=f"{local_path}/{path_suffix}")
 
 
 _CANNED_INPUT_EXPECTED_DIR = _TEST_DATA_DIR / "test_canned_input"
@@ -175,6 +179,7 @@ _YAML_OUTPUT_COMBOS = {
     # Short name => YAML file
     "answerability_answerable": _INPUT_YAML_DIR / "answerability.yaml",
     "answerability_unanswerable": _INPUT_YAML_DIR / "answerability.yaml",
+    "rewrite": _INPUT_YAML_DIR / "rewrite.yaml",
 }
 
 
@@ -254,21 +259,37 @@ def test_reparse_json(reparse_json_file):
     assert json_util.scalar_paths(parsed_json) == json_util.scalar_paths(reparsed_json)
 
 
+def _round_floats(json_data, num_digits: int = 2):
+    """Round all floating-point numbers in a JSON value to facilitate comparisons.
+
+    :param json_data: Arbitrary JSON data.
+    :param num_digits: How many decimal points to round to
+
+    :returns: Copy of the input with all floats rounded
+    """
+    result = copy.deepcopy(json_data)
+    for p in json_util.scalar_paths(result):
+        value = json_util.fetch_path(result, p)
+        if isinstance(value, float):
+            json_util.replace_path(result, p, round(value, num_digits))
+    return result
+
+
 def test_run_transformers(yaml_json_combo_with_model):
     """
     Run the target model end-to-end on transformers.
     """
     short_name, yaml_file, input_file, model_name = yaml_json_combo_with_model
 
-    if not _TEST_DOWNLOADS:
-        pytest.xfail("Downloads disabled on CI")
-
     # Load input request
     with open(input_file, encoding="utf-8") as f:
         model_input = ChatCompletion.model_validate_json(f.read())
 
     # Download files from Hugging Face Hub
-    lora_dir = util.obtain_lora(model_name, _BASE_MODEL)
+    try:
+        lora_dir = util.obtain_lora(model_name, _BASE_MODEL)
+    except huggingface_hub.RepositoryNotFoundError:
+        pytest.xfail("Downloads fail on CI server because repo is private")
 
     # Load IO config YAML for this model
     io_yaml_path = lora_dir / "io.yaml"
@@ -303,6 +324,12 @@ def test_run_transformers(yaml_json_combo_with_model):
         _TEST_DATA_DIR / f"test_run_transformers/{short_name}.json", encoding="utf-8"
     ) as f:
         expected = ChatCompletionResponse.model_validate_json(f.read())
-    expected_str = expected.model_dump_json(indent=4)
+    # expected_str = expected.model_dump_json(indent=4)
 
-    assert transformed_str == expected_str
+    # Correct for floating point rounding.
+    # Can't use pytest.approx() directly because of lists
+    transformed_json = _round_floats(
+        json_util.parse_inline_json(transformed_responses.model_dump())
+    )
+    expected_json = _round_floats(json_util.parse_inline_json(expected.model_dump()))
+    assert transformed_json == expected_json

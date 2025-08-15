@@ -250,6 +250,8 @@ def fetch_path(json_value: Any, path: tuple):
 
     :returns: The node at the indicated leaf node
     """
+    if not isinstance(path, tuple):
+        raise TypeError(f"Expected tuple, but received '{type(path)}'")
     cur_json_value = json_value
     ix = 0
     while ix < len(path):
@@ -280,6 +282,8 @@ def replace_path(json_value: Any, path: tuple, new_value: Any) -> Any:
 
     :returns: The modified input, or a new value if the root was modified.
     """
+    if not isinstance(path, tuple):
+        raise TypeError(f"Expected tuple, but received '{type(path)}'")
     if len(path) == 0:
         # Root
         return new_value
@@ -288,15 +292,34 @@ def replace_path(json_value: Any, path: tuple, new_value: Any) -> Any:
     return json_value
 
 
+def parse_inline_json(json_response: dict) -> dict:
+    """Replace the JSON strings in message contents with parsed JSON.
+
+    :param json_response: parsed JSON representation of a ``ChatCompletionResponse``
+        object.
+
+    :returns: Copy of the input with JSON message contents parsed.
+    """
+    result = copy.deepcopy(json_response)
+
+    for p in scalar_paths(json_response):
+        if p[-1] == "content":
+            # Found a content field. Parse the JSON string
+            parsed_str = json.loads(fetch_path(result, p))
+            replace_path(result, p, parsed_str)
+
+    return result
+
+
 def make_begin_to_token_table(logprobs: ChatCompletionLogProbs | None):
     if logprobs is None:
         return None
     content = logprobs.content
     offset = 0
     result = {}
-    for i in range(len(content)):
+    for i, content_elem in enumerate(content):  # Linter prefers enumerate here
         result[offset] = i
-        offset += len(content[i].token)
+        offset += len(content_elem.token)
     return result
 
 
@@ -309,14 +332,6 @@ class TransformationRule(abc.ABC):
          indicate that the transformation should apply at the root of a scalar value.
         """
         self.input_name = input_name
-
-    # def target_paths(self, parsed_json: Any):
-    #     """
-    #     Method for subclasses to use to find where to apply themselves.
-
-    #     :param parsed_json: Output of running model results through
-    #         :func:`json.loads()`, plus applying zero or more transformation rules.
-    #     :returns: Paths to
 
     def apply(
         self,

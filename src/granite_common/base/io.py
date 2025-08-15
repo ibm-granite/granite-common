@@ -72,15 +72,43 @@ class ChatCompletionRewriter(abc.ABC):
     completion request.
     """
 
-    @abc.abstractmethod
-    def transform(self, chat_completion: ChatCompletion, /, **kwargs) -> ChatCompletion:
+    def transform(
+        self, chat_completion: ChatCompletion | str | dict, /, **kwargs
+    ) -> ChatCompletion:
         """
         Rewrite a chat completion request into another chat completion request.
         Does not modify the original :class:`ChatCompletion` object.
 
-        :param chat_completion: Original chat completion request
+        :param chat_completion: Original chat completion request, either as a dataclass
+            or as the JSON representation of one.
 
         :returns: Rewritten copy of ``chat_completion``.
+        """
+        if isinstance(chat_completion, str):
+            chat_completion = ChatCompletion.model_validate_json(chat_completion)
+        if isinstance(chat_completion, dict):
+            chat_completion = ChatCompletion.model_validate(chat_completion)
+
+        if not isinstance(chat_completion, ChatCompletion):
+            raise TypeError(
+                f"chat_completion argument must be either a ChatCompletion "
+                f"object or the JSON representation of one. Received type "
+                f"'{type(chat_completion)}'."
+            )
+        return self._transform(chat_completion, **kwargs)
+
+    @abc.abstractmethod
+    def _transform(
+        self, chat_completion: ChatCompletion, /, **kwargs
+    ) -> ChatCompletion:
+        """
+        Subclasses must implement this internal hook to transform input requests.
+
+        :param chat_completion: Description Original chat completion request
+        :type chat_completion: ChatCompletion
+        :param kwargs: Description
+        :return: Description
+        :rtype: ChatCompletion
         """
 
 
