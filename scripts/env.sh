@@ -11,7 +11,7 @@
 # Use environment variables if present.
 # (-z predicate means "unset or empty string")
 if [ -z "$PYTHON_VERSION" ]; then
-    PYTHON_VERSION="3.11"
+    PYTHON_VERSION="3.12"
 fi
 ENV_PATH="./env"
 
@@ -70,13 +70,13 @@ fi
 
 
 ############################
-# HACK ALERT *** HACK ALERT 
+# HACK ALERT *** HACK ALERT
 # The friendly folks at Anaconda thought it would be a good idea to make the
-# "conda" command a shell function. 
+# "conda" command a shell function.
 # See https://github.com/conda/conda/issues/7126
 # The following workaround will probably be fragile.
 if [ -z "$CONDA_HOME" ]
-then 
+then
     echo "Error: CONDA_HOME environment variable not set."
     exit
 fi
@@ -92,7 +92,7 @@ fi
 ############################
 
 ################################################################################
-# Create the environment 
+# Create the environment
 
 if [ -e "${ENV_PATH}" ]; then
 
@@ -110,13 +110,13 @@ conda activate ${ENV_PATH}
 ################################################################################
 # Install packages with pip
 
-# If Anaconda's version of Pip is backlevel, Pip will complain bitterly until you 
+# If Anaconda's version of Pip is backlevel, Pip will complain bitterly until you
 # update it. Start out with a preemptive update to prevent these complaints.
 pip install --upgrade pip
 
 # Install our local copy of the source tree in editable mode.
 # Also install development-only packages.
-pip install --editable ".[all]" 
+pip install --editable ".[all]"
 
 # Also install pre-commit hooks in the local working copy
 pip install pre-commit
