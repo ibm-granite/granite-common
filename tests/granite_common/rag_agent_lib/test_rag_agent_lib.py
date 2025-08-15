@@ -13,6 +13,7 @@ import pathlib
 # Third Party
 import huggingface_hub
 import pytest
+import requests
 import yaml
 
 # First Party
@@ -142,7 +143,7 @@ def test_read_yaml():
             repo_id=INTRINSICS_LIB_REPO_NAME,
             allow_patterns=path_suffix,
         )
-    except huggingface_hub.RepositoryNotFoundError:
+    except requests.exceptions.HTTPError:
         pytest.xfail("Downloads fail on CI server because repo is private")
     RagAgentLibRewriter(config_file=f"{local_path}/{path_suffix}")
 
@@ -288,7 +289,7 @@ def test_run_transformers(yaml_json_combo_with_model):
     # Download files from Hugging Face Hub
     try:
         lora_dir = util.obtain_lora(model_name, _BASE_MODEL)
-    except huggingface_hub.RepositoryNotFoundError:
+    except requests.exceptions.HTTPError:
         pytest.xfail("Downloads fail on CI server because repo is private")
 
     # Load IO config YAML for this model
