@@ -333,6 +333,7 @@ class TransformationRule(abc.ABC):
         """
         self.input_name = input_name
 
+    # pylint: disable=unused-argument
     def apply(
         self,
         parsed_json: Any,
