@@ -14,6 +14,7 @@ import uuid
 
 # First Party
 from granite_common.base.types import (
+    ChatCompletion,
     ChatCompletionResponse,
     ChatCompletionResponseChoice,
 )
@@ -116,6 +117,16 @@ def chat_completion_request_to_transformers_inputs(request, tokenizer=None):
         "add_generation_prompt": True,
     }
 
+    # pylint: disable=unsupported-membership-test
+    if "documents" not in ChatCompletion.model_fields:
+        # Current location of documents is deprecated
+        raise ValueError(
+            "Documents have been moved to OpenAI standard location. "
+            "The following lines of code need to be rewritten."
+        )
+    if request.get("documents") is not None:
+        tokenizer_input["documents"] = request["documents"]
+
     generate_input = {
         # Always return dict, else downstream code will need lots type checks
         "return_dict_in_generate": True
@@ -140,7 +151,10 @@ def chat_completion_request_to_transformers_inputs(request, tokenizer=None):
                 "tokenizer object was passed to this function."
             )
         tokenizer_info = xgr.TokenizerInfo.from_huggingface(
-            tokenizer, vocab_size=tokenizer.vocab_size
+            tokenizer,
+            # Tokenizer.vocab_size doesn't return the size of the tokenizer's
+            # vocabulary, because of course it doesn't.
+            vocab_size=len(tokenizer),
         )
         grammar_compiler = xgr.GrammarCompiler(tokenizer_info)
         compiled_grammar = grammar_compiler.compile_json_schema(request["guided_json"])
