@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 __doc__ = """
-Output processing code that is specific to the Granite 3 family of models, but not 
+Output processing code that is specific to the Granite 3 family of models, but not
 specific to a particular point release.
 """
 # Standard
@@ -179,6 +179,9 @@ def add_hallucination_response_spans(
                 "Error in adding the response spans to hallucination: "
                 "Hallucination text not found in response"
             )
+            # Install placeholder values to avoid breaking downstream code.
+            hallucination["response_begin"] = 0
+            hallucination["response_end"] = 0
             continue
 
         if len(matches) > 1:
