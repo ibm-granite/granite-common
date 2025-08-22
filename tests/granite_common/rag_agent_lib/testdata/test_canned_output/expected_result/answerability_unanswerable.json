@@ -1,0 +1,14 @@
+{
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "content": "1.0728824619832267e-06",
+                "role": "assistant",
+                "tool_calls": []
+            },
+            "finish_reason": "length"
+        }
+    ],
+    "prompt_logprobs": null
+}

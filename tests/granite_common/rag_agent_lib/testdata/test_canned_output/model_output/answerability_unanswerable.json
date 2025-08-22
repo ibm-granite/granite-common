@@ -1,0 +1,110 @@
+{
+    "id": "chatcmpl-bab09ee81e194afa86b53614cdf712f8",
+    "choices": [
+        {
+            "finish_reason": "length",
+            "index": 0,
+            "logprobs": {
+                "content": [
+                    {
+                        "token": "\"",
+                        "bytes": [
+                            34
+                        ],
+                        "logprob": 0.0,
+                        "top_logprobs": []
+                    },
+                    {
+                        "token": "un",
+                        "bytes": [
+                            117,
+                            110
+                        ],
+                        "logprob": -1.0728830375228426e-6,
+                        "top_logprobs": []
+                    },
+                    {
+                        "token": "answer",
+                        "bytes": [
+                            97,
+                            110,
+                            115,
+                            119,
+                            101,
+                            114
+                        ],
+                        "logprob": 0.0,
+                        "top_logprobs": []
+                    },
+                    {
+                        "token": "able",
+                        "bytes": [
+                            97,
+                            98,
+                            108,
+                            101
+                        ],
+                        "logprob": 0.0,
+                        "top_logprobs": []
+                    },
+                    {
+                        "token": "\"",
+                        "bytes": [
+                            34
+                        ],
+                        "logprob": 0.0,
+                        "top_logprobs": []
+                    },
+                    {
+                        "token": "<|end_of_text|>",
+                        "bytes": [
+                            60,
+                            124,
+                            101,
+                            110,
+                            100,
+                            95,
+                            111,
+                            102,
+                            95,
+                            116,
+                            101,
+                            120,
+                            116,
+                            124,
+                            62
+                        ],
+                        "logprob": 0.0,
+                        "top_logprobs": []
+                    }
+                ],
+                "refusal": null
+            },
+            "message": {
+                "content": "\"unanswerable\"",
+                "refusal": null,
+                "role": "assistant",
+                "annotations": null,
+                "audio": null,
+                "function_call": null,
+                "tool_calls": [],
+                "reasoning_content": null
+            },
+            "stop_reason": null
+        }
+    ],
+    "created": 1754690071,
+    "model": "answerability",
+    "object": "chat.completion",
+    "service_tier": null,
+    "system_fingerprint": null,
+    "usage": {
+        "completion_tokens": 6,
+        "prompt_tokens": 164,
+        "total_tokens": 170,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "kv_transfer_params": null
+}

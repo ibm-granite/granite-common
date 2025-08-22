@@ -9,7 +9,7 @@ processing for all Granite models.
 import abc
 
 # Local
-from .types import AssistantMessage, ChatCompletion
+from .types import AssistantMessage, ChatCompletion, ChatCompletionResponse
 
 
 class InputProcessor(abc.ABC):
@@ -44,7 +44,7 @@ class OutputProcessor(abc.ABC):
     API to transform model output into a structured representation of the
     information.
 
-    This interface is very generic; see individual classes for more specific arguments
+    This interface is very generic; see individual classes for more specific arguments.
     """
 
     @abc.abstractmethod
@@ -63,4 +63,74 @@ class OutputProcessor(abc.ABC):
 
         :returns: The parsed output so far, as an instance of :class:`AssistantMessage`
             possibly with model-specific extension fields.
+        """
+
+
+class ChatCompletionRewriter(abc.ABC):
+    """
+    Base class for objects that rewrite a chat completion request into another chat
+    completion request.
+    """
+
+    def transform(
+        self, chat_completion: ChatCompletion | str | dict, /, **kwargs
+    ) -> ChatCompletion:
+        """
+        Rewrite a chat completion request into another chat completion request.
+        Does not modify the original :class:`ChatCompletion` object.
+
+        :param chat_completion: Original chat completion request, either as a dataclass
+            or as the JSON representation of one.
+
+        :returns: Rewritten copy of ``chat_completion``.
+        """
+        if isinstance(chat_completion, str):
+            chat_completion = ChatCompletion.model_validate_json(chat_completion)
+        if isinstance(chat_completion, dict):
+            chat_completion = ChatCompletion.model_validate(chat_completion)
+
+        if not isinstance(chat_completion, ChatCompletion):
+            raise TypeError(
+                f"chat_completion argument must be either a ChatCompletion "
+                f"object or the JSON representation of one. Received type "
+                f"'{type(chat_completion)}'."
+            )
+        return self._transform(chat_completion, **kwargs)
+
+    @abc.abstractmethod
+    def _transform(
+        self, chat_completion: ChatCompletion, /, **kwargs
+    ) -> ChatCompletion:
+        """
+        Subclasses must implement this internal hook to transform input requests.
+
+        :param chat_completion: Description Original chat completion request
+        :type chat_completion: ChatCompletion
+        :param kwargs: Description
+        :return: Description
+        :rtype: ChatCompletion
+        """
+
+
+class ChatCompletionResultProcessor(abc.ABC):
+    """
+    Base class for objects that convert the raw json result of a chat completion request
+    into a JSON object with model-specific postprocessing applied
+    """
+
+    @abc.abstractmethod
+    def transform(
+        self,
+        chat_completion_response: ChatCompletionResponse,
+        chat_completion: ChatCompletion | None = None,
+    ) -> ChatCompletionResponse:
+        """
+        Parse the result of a chat completion.
+
+        :param chat_completion_response: Original chat completion request
+        :param chat_completion: The chat completion request that produced
+            ``chat_completion_response``. Required by some implementations in order
+            to decode references to part of the original request.
+
+        :returns: Rewritten copy of ``chat_completion``.
         """

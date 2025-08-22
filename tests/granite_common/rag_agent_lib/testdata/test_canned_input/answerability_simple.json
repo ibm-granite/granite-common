@@ -1,0 +1,18 @@
+{
+  "messages": [
+    {
+      "content": "Hello world.",
+      "role": "user"
+    }
+  ],
+  "model": "answerability",
+  "guided_json": {
+    "type": "string",
+    "enum": [
+      "answerable",
+      "unanswerable"
+    ]
+  },
+  "max_completion_tokens": 6,
+  "logprobs": true
+}

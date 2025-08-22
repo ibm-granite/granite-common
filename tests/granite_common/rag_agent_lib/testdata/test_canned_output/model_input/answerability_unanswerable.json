@@ -1,0 +1,31 @@
+{
+  "messages": [
+    {
+      "role": "assistant",
+      "content": "Welcome to pet questions!"
+    },
+    {
+      "content": "What is the population of Australia?",
+      "role": "user"
+    }
+  ],
+  "documents": [
+    {
+        "doc_id": 1,
+        "text": "My dog has fleas."
+    },
+    {
+        "doc_id": 2,
+        "text": "My cat does not have fleas."
+    }
+  ],
+  "guided_json": {
+    "type": "string",
+    "enum": [
+      "answerable",
+      "unanswerable"
+    ]
+  },
+  "max_completion_tokens": 6,
+  "logprobs": true
+}

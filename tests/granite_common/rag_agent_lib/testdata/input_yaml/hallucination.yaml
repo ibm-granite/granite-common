@@ -1,0 +1,60 @@
+# Model name string, or null to use whatever is provided in the chat completion request
+model: ~
+# JSON schema of the model's output
+response_format: |
+  {
+    "$defs": {
+      "HallucinationOutputEntry": {
+        "properties": {
+          "sentence_num": {
+            "minimum": 0,
+            "title": "Sentence Num",
+            "type": "integer"
+          },
+          "reasoning": {
+            "title": "Reasoning",
+            "type": "string"
+          },
+          "is_faithful": {
+            "title": "Is Faithful",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "sentence_num",
+          "reasoning",
+          "is_faithful"
+        ],
+        "title": "HallucinationOutputEntry",
+        "type": "object"
+      }
+    },
+    "items": {
+      "$ref": "#/$defs/HallucinationOutputEntry"
+    },
+    "title": "HallucinationOutput",
+    "type": "array"
+  }
+transformations:
+  # Use logprobs to replace is_faithful flag with a probability
+  - type: likelihood
+    positive_label: true
+    input_path: ["*", "is_faithful"]
+    output_name: "is_faithful_likelihood"
+  # Replace "sentence_num" with sentence location and contents
+  - type: decode_sentences
+    source: "last_turn"
+    input_path: ["*", "sentence_num"]
+    output_name: ["sentence_begin", "sentence_end", "sentence_text"]
+instruction: >
+  Split the last assistant response into individual sentences.
+  For each sentence in the last assistant response, identify the faithfulness
+  by comparing with the provided documents and generate the faithfulness reasoning
+  and faithfulness decision.
+  Ensure that your output includes all response sentence IDs,
+  and for each response sentence ID, provide the corresponding faithfulness
+  reasoning and faithfulness decision.
+  The output must be a json structure.
+parameters:
+  max_completion_tokens: 1024
+sentence_boundaries: true

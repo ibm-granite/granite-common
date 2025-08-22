@@ -37,6 +37,9 @@ dependencies = [
 [project.optional-dependencies]
 transformers = [
     "transformers[torch]",
+    "peft",
+    "huggingface-hub",
+    "xgrammar"
 ]
 nltk = [
     "nltk~=3.9.1",
@@ -55,6 +58,7 @@ dev = [
     "tox",
     "anywidget",
     "ipywidgets",
+    "openai",
     "granite-common[transformers]",
     "granite-common[nltk]",
 ]

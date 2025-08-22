@@ -1,0 +1,17 @@
+# Model name string, or null to use whatever is provided in the chat completion request
+model: answerability
+# JSON schema of the model's output
+response_format: |
+  {
+    "type": "string",
+    "enum": ["answerable", "unanswerable"]
+  }
+transformations:
+  - type: likelihood
+    positive_label: "answerable"
+    input_path: []
+    output_name: ~  # Null == no change
+instruction: ~
+parameters:
+  max_completion_tokens: 6
+sentence_boundaries: false
