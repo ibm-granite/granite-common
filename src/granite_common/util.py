@@ -133,7 +133,7 @@ def chat_completion_request_to_transformers_inputs(request, tokenizer=None):
     }
 
     if "logprobs" in request and request["logprobs"]:
-        print(f"{request['logprobs']=}")
+        # print(f"{request['logprobs']=}")
         generate_input["output_scores"] = True
 
     if request.get("max_completion_tokens") is not None:

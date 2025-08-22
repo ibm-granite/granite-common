@@ -71,7 +71,7 @@ _YAML_JSON_COMBOS = {
     "rewrite": (
         _INPUT_YAML_DIR / "rewrite.yaml",
         _INPUT_JSON_DIR / "rewrite.json",
-        None,  # TODO: Add model once we have a checkpoint
+        "query_rewrite",
     ),
 }
 
@@ -328,7 +328,7 @@ def test_run_transformers(yaml_json_combo_with_model):
     # expected_str = expected.model_dump_json(indent=4)
 
     # Correct for floating point rounding.
-    # Can't use pytest.approx() directly because of lists
+    # Can't use pytest.approx() because of lists
     transformed_json = _round_floats(
         json_util.parse_inline_json(transformed_responses.model_dump())
     )
