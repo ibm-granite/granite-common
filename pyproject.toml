@@ -54,7 +54,7 @@ dev = [
     "pytest-html",
     "pytest-retry~=1.7",
     "pytest-xdist",
-    "ruff==0.12.9",
+    "ruff==0.12.10",
     "tox",
     "anywidget",
     "ipywidgets",
