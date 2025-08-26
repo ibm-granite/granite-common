@@ -134,7 +134,7 @@ old."}
         [
             {"doc_id": "abc",
             "text": "It's a small world, but I wouldn't want to have to paint it."},
-            {"doc_id": 213,
+            {"doc_id": "213",
             "text": "Whenever I think of the past, it brings back so many memories."}
         ]
     }

@@ -185,7 +185,9 @@ class Document(pydantic.BaseModel, NoDefaultsMixin):
 
     text: str
     title: str | None = None
-    doc_id: str | int | None = None
+
+    # vLLM requires document IDs to be strings
+    doc_id: str | None = None
 
 
 class ChatTemplateKwargs(pydantic.BaseModel):

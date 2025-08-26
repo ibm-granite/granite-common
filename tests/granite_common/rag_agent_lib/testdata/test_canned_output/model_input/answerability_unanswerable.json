@@ -11,11 +11,11 @@
   ],
   "documents": [
     {
-        "doc_id": 1,
+        "doc_id": "1",
         "text": "My dog has fleas."
     },
     {
-        "doc_id": 2,
+        "doc_id": "2",
         "text": "My cat does not have fleas."
     }
   ],
