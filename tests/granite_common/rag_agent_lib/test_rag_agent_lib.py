@@ -182,7 +182,7 @@ def test_openai_compat(yaml_json_combo: str):
     to the OpenAI Python API without raising parsing errors.
     """
 
-    short_name, yaml_file, json_file, _ = yaml_json_combo
+    _, yaml_file, json_file, _ = yaml_json_combo
 
     # Temporary: Use a YAML file from local disk
     rewriter = RagAgentLibRewriter(config_file=yaml_file)
