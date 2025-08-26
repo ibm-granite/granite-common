@@ -54,6 +54,7 @@ dev = [
     "pytest-html",
     "pytest-retry~=1.7",
     "pytest-xdist",
+    "pytest-recording",  # Used for blocking network access
     "ruff==0.12.10",
     "tox",
     "anywidget",

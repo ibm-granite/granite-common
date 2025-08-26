@@ -12,6 +12,7 @@ import pathlib
 
 # Third Party
 import huggingface_hub
+import openai
 import pytest
 import requests
 import yaml
@@ -172,6 +173,38 @@ def test_canned_input(yaml_json_combo):
 
     print(f"{after_json=}")
     assert after_json == expected_json
+
+
+@pytest.mark.block_network
+def test_openai_compat(yaml_json_combo: str):
+    """
+    Verify that the dataclasses for intrinsics chat completions can be directly passed
+    to the OpenAI Python API without raising parsing errors.
+    """
+
+    short_name, yaml_file, json_file, _ = yaml_json_combo
+
+    # Temporary: Use a YAML file from local disk
+    rewriter = RagAgentLibRewriter(config_file=yaml_file)
+    json_data = _read_file(json_file)
+    before = ChatCompletion.model_validate_json(json_data)
+    after = rewriter.transform(before, test_kwarg="George")
+
+    # Create a fake connection to the API so we can use its request validation code.
+    # Note that network access is blocked for this test case.
+    openai_base_url = "http://localhost:98765/not/a/valid/url"
+    openai_api_key = "not_a_valid_api_key"
+    client = openai.OpenAI(base_url=openai_base_url, api_key=openai_api_key)
+
+    # OpenAI requires a model name
+    before.model = "dummy_model_name"
+    after.model = "dummy_model_name"
+
+    # The client should get all the way through validation and fail to connect
+    with pytest.raises(openai.APIConnectionError):
+        client.chat.completions.create(**(before.model_dump()))
+    with pytest.raises(openai.APIConnectionError):
+        client.chat.completions.create(**(after.model_dump()))
 
 
 # Combinations of YAML and canned output files that go together.
