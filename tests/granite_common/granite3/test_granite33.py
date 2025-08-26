@@ -8,6 +8,7 @@ Tests of code under ``granite_common.granite3.granite33``
 import json
 
 # Third Party
+import openai
 import pydantic
 import pytest
 import torch
@@ -133,7 +134,7 @@ old."}
         [
             {"doc_id": "abc",
             "text": "It's a small world, but I wouldn't want to have to paint it."},
-            {"doc_id": 213,
+            {"doc_id": "213",
             "text": "Whenever I think of the past, it brings back so many memories."}
         ]
     }
@@ -370,6 +371,27 @@ def _model() -> transformers.AutoModelForCausalLM:
     except Exception as e:  # pylint: disable=broad-exception-caught
         pytest.skip(f"No model for {model_path}: {e}")
     return ret
+
+
+@pytest.mark.block_network
+def test_openai_compat(input_json_str: str):
+    """
+    Verify that the dataclasses for Granite 3.3 chat completions can be directly passed
+    to the OpenAI Python API without raising parsing errors.
+    """
+    input_obj = Granite33ChatCompletion.model_validate_json(input_json_str)
+
+    # Create a fake connection to the API so we can use its request validation code
+    # Note that network access is blocked for this test case.
+    openai_base_url = "http://localhost:98765/not/a/valid/url"
+    openai_api_key = "not_a_valid_api_key"
+    client = openai.OpenAI(base_url=openai_base_url, api_key=openai_api_key)
+
+    # The client should get all the way through validation and fail to connect
+    with pytest.raises(openai.APIConnectionError):
+        client.chat.completions.create(
+            model="dummy_model_name", **(input_obj.model_dump())
+        )
 
 
 @pytest.mark.parametrize(
