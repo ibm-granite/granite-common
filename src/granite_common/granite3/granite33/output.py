@@ -458,7 +458,7 @@ def _parse_model_output(
         logger.debug(f"Response text without controls:\n{result}\n")
         return result
 
-    docs_from_input = chat_completion.documents
+    docs_from_input = chat_completion._documents()
 
     # Split model output into its parts: response, citation, and hallucination section
     response_text, citations_text, hallucinations_text = _split_model_output_into_parts(

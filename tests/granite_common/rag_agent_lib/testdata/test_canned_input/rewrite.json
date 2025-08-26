@@ -25,18 +25,20 @@
       "role": "user"
     }
   ],
-  "guided_json": {
-    "properties": {
-      "rewritten_question": {
-        "title": "Rewritten Question",
-        "type": "string"
-      }
-    },
-    "required": [
-      "rewritten_question"
-    ],
-    "title": "QueryRewriteOutput",
-    "type": "object"
+  "extra_body": {
+    "guided_json": {
+      "properties": {
+        "rewritten_question": {
+          "title": "Rewritten Question",
+          "type": "string"
+        }
+      },
+      "required": [
+        "rewritten_question"
+      ],
+      "title": "QueryRewriteOutput",
+      "type": "object"
+    }
   },
   "temperature": 0.0,
   "n": 1024,

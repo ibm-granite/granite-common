@@ -14,7 +14,6 @@ import uuid
 
 # First Party
 from granite_common.base.types import (
-    ChatCompletion,
     ChatCompletionResponse,
     ChatCompletionResponseChoice,
 )
@@ -118,14 +117,11 @@ def chat_completion_request_to_transformers_inputs(request, tokenizer=None):
     }
 
     # pylint: disable=unsupported-membership-test
-    if "documents" not in ChatCompletion.model_fields:
-        # Current location of documents is deprecated
-        raise ValueError(
-            "Documents have been moved to OpenAI standard location. "
-            "The following lines of code need to be rewritten."
-        )
-    if request.get("documents") is not None:
-        tokenizer_input["documents"] = request["documents"]
+    if (
+        request.get("extra_body") is not None
+        and request["extra_body"].get("documents") is not None
+    ):
+        tokenizer_input["documents"] = request["extra_body"]["documents"]
 
     generate_input = {
         # Always return dict, else downstream code will need lots type checks
@@ -139,7 +135,10 @@ def chat_completion_request_to_transformers_inputs(request, tokenizer=None):
     if request.get("max_completion_tokens") is not None:
         generate_input["max_new_tokens"] = request["max_completion_tokens"]
 
-    if request.get("guided_json") is not None:
+    if (
+        request.get("extra_body") is not None
+        and request["extra_body"].get("guided_json") is not None
+    ):
         # Constrained decoding in Hugging Face requires using a third-party library
         # to create a callback function to be invoked from inside generate()
         with import_optional("xgrammar"):
@@ -157,7 +156,9 @@ def chat_completion_request_to_transformers_inputs(request, tokenizer=None):
             vocab_size=len(tokenizer),
         )
         grammar_compiler = xgr.GrammarCompiler(tokenizer_info)
-        compiled_grammar = grammar_compiler.compile_json_schema(request["guided_json"])
+        compiled_grammar = grammar_compiler.compile_json_schema(
+            request["extra_body"]["guided_json"]
+        )
         logits_processor = xgr.contrib.hf.LogitsProcessor(compiled_grammar)
 
         # The "logits_processor" argument to generate() must be a list.

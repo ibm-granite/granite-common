@@ -202,18 +202,13 @@ class ChatTemplateKwargs(pydantic.BaseModel):
     )
 
 
-class ChatCompletion(pydantic.BaseModel, NoDefaultsMixin):
+class VLLMExtraBody(pydantic.BaseModel, NoDefaultsMixin):
     """
-    Subset of the schema of a chat completion request in vLLM's OpenAI-compatible
-    inference API that is exercised by Granite models.
-
-    See the class `vllm.entrypoints.openai.protocol.ChatCompletionRequest` for
-    more information.
+    Elements of `vllm.entrypoints.openai.protocol.ChatCompletionRequest` that
+    are not part of OpenAI's protocol and need to be stuffed into the
+    "extra_body" parameter of a chat completion request.
     """
 
-    messages: list[ChatMessage]
-    model: str | None = None
-    tools: list[ToolDefinition] | None = None
     documents: list[Document] | None = Field(
         default=None,
         description=(
@@ -253,6 +248,53 @@ class ChatCompletion(pydantic.BaseModel, NoDefaultsMixin):
         extra="allow",
     )
 
+    def _reserialize_these_fields(self):
+        """Hook from NoDefaultsMixin.
+
+        We need to set this because subclasses override chat_template_kwargs with a
+        class-specific type.
+        """
+        return ("chat_template_kwargs",)
+
+
+class ChatCompletion(pydantic.BaseModel, NoDefaultsMixin):
+    """
+    Subset of the schema of a chat completion request in vLLM's OpenAI-compatible
+    inference API that is exercised by Granite models.
+
+    See the class `vllm.entrypoints.openai.protocol.ChatCompletionRequest` for
+    more information.
+    """
+
+    messages: list[ChatMessage]
+    model: str | None = None
+    tools: list[ToolDefinition] | None = None
+    extra_body: VLLMExtraBody | None = Field(
+        default=None,
+        description=("Additional VLLM-specific arguments go here."),
+    )
+
+    def _documents(self) -> list[Document] | None:
+        """Convenience method for internal code to fetch documents attached to the
+        chat completion without having to dig into ``extra_body``."""
+        if self.extra_body:
+            return self.extra_body.documents
+        return None
+
+    def _chat_template_kwargs(self) -> ChatTemplateKwargs | None:
+        """Convenience method for internal code to fetch chat template arguments
+        without having to dig into ``extra_body``."""
+        if self.extra_body:
+            return self.extra_body.chat_template_kwargs
+        return None
+
+    model_config = pydantic.ConfigDict(
+        # If an input to this library is an actual vLLM chat completion request, then
+        # the request will likely contain additional fields. Pass these fields through
+        # when processing with `granite-common`.
+        extra="allow",
+    )
+
 
 class GraniteChatCompletion(ChatCompletion):
     """
@@ -261,33 +303,61 @@ class GraniteChatCompletion(ChatCompletion):
     """
 
     @pydantic.model_validator(mode="after")
+    def _validate_vllm_stuff_in_extra_body(self) -> Self:
+        """
+        Non-standard VLLM fields should be passed via the ``extra_body`` parameter.
+        Make sure the user didn't stuff them into the root, which is currently set up
+        to allow arbitrary additional fields.
+        """
+        model_fields = list(VLLMExtraBody.model_fields.keys())
+        for attr_name in model_fields:
+            if hasattr(self, attr_name):
+                raise ValueError(
+                    f"Attempted to pass '{attr_name}' parameter at top "
+                    f"level of the chat completion request. "
+                    f"Please place this parameter at extra_body."
+                    f"{attr_name} for compatibility with the OpenAI "
+                    f"Python API."
+                )
+        return self
+
+    @pydantic.model_validator(mode="after")
     def _validate_documents_at_top_level(self) -> Self:
         """Documents for a Granite model chat completion request should be passed in the
-        ``documents`` argument at the top level of the request.
+        ``documents`` argument at the top level of the ``extra_body`` portion of the
+        request.
 
         Detect cases where the documents are hanging off of ``chat_template_kwargs``
         and sanitize appropriately.
         """
-        if self.chat_template_kwargs and hasattr(
-            self.chat_template_kwargs, "documents"
+        if self is None:
+            # Weird Pydantic corner case
+            return self
+
+        if (
+            self.extra_body
+            and self.extra_body.chat_template_kwargs
+            and hasattr(self.extra_body.chat_template_kwargs, "documents")
         ):
-            if self.documents is not None:
+            if self.extra_body.documents is not None:
                 raise ValueError(
                     "Conflicting values of documents found in top-level "
                     "'documents' parameter and inside "
                     "'chat_template_kwargs'"
                 )
-            if not isinstance(self.chat_template_kwargs.documents, list):
+            if not isinstance(self.extra_body.chat_template_kwargs.documents, list):
                 raise ValueError(
                     "'documents' parameter inside 'chat_template_kwargs' is not a list"
                 )
 
             # Round-trip through dict so that documents field disappears from JSON
             # representation.
-            args = self.chat_template_kwargs.model_dump()
+            args = self.extra_body.chat_template_kwargs.model_dump()
             self.documents = [Document.model_validate(d) for d in args["documents"]]
             del args["documents"]
-            self.chat_template_kwargs = ChatTemplateKwargs.model_validate(args)
+            self.extra_body.chat_template_kwargs = ChatTemplateKwargs.model_validate(
+                args
+            )
 
         return self
 

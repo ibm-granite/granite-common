@@ -11,7 +11,8 @@ import pathlib
 
 # First Party
 from granite_common import UserMessage
-from granite_common.base.io import ChatCompletion, ChatCompletionRewriter
+from granite_common.base.io import ChatCompletionRewriter
+from granite_common.base.types import ChatCompletion, VLLMExtraBody
 
 # Local
 from .util import make_config_dict
@@ -49,6 +50,11 @@ class RagAgentLibRewriter(ChatCompletionRewriter):
     """Additional parameters (key-value pairs) that this rewriter adds to all chat 
     completion requests."""
 
+    extra_body_parameters: dict
+    """Extended vLLM-specific parameters that go under the ``extra_body`` element of 
+    the parameters field. These parameters need to be merged with any ``extra_body``
+    content that is present in incoming requests."""
+
     instruction: str | None
     """Optional instruction template. If present, a new user message will be added with
     the indicated instruction."""
@@ -76,7 +82,13 @@ class RagAgentLibRewriter(ChatCompletionRewriter):
                 f"from chat completion parameter name to value. Current value "
                 f"{self.config['parameters']}"
             )
+
+        # Split out parameters that go in extra_body
         self.parameters = self.config["parameters"]
+        self.extra_body_parameters = {}
+        if "extra_body" in self.parameters:
+            self.extra_body_parameters.update(self.parameters["extra_body"])
+            del self.parameters["extra_body"]
 
         # Check if we're supposed to override model name
         if model_name is not None:
@@ -87,7 +99,8 @@ class RagAgentLibRewriter(ChatCompletionRewriter):
         # Compute additional parameters we need to add to every request
         self.parameters["logprobs"] = _needs_logprobs(self.config["transformations"])
         self.instruction = self.config["instruction"]
-        self.parameters["guided_json"] = self.config["response_format"]
+
+        self.extra_body_parameters["guided_json"] = self.config["response_format"]
 
     def _transform(
         self, chat_completion: ChatCompletion, /, **kwargs
@@ -103,5 +116,15 @@ class RagAgentLibRewriter(ChatCompletionRewriter):
             messages.append(UserMessage(content=instruction_str))
             edits["messages"] = messages
         edits.update(self.parameters)
+
+        # TODO: Merge extra params
+        extra_body = (
+            chat_completion.extra_body.model_dump()
+            if chat_completion.extra_body
+            else {}
+        )
+        extra_body.update(self.extra_body_parameters)
+        if len(extra_body) > 0:
+            edits["extra_body"] = VLLMExtraBody.model_validate(extra_body)
 
         return chat_completion.model_copy(update=edits)

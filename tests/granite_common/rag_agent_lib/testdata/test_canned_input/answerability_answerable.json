@@ -10,18 +10,20 @@
     }
   ],
   "model": "answerability",
-  "documents": [
-    {
-      "text": "The square root of 4 is 2.",
-      "doc_id": 1
+  "extra_body": {
+    "documents": [
+      {
+        "text": "The square root of 4 is 2.",
+        "doc_id": 1
+      }
+    ],
+    "guided_json": {
+      "type": "string",
+      "enum": [
+        "answerable",
+        "unanswerable"
+      ]
     }
-  ],
-  "guided_json": {
-    "type": "string",
-    "enum": [
-      "answerable",
-      "unanswerable"
-    ]
   },
   "max_completion_tokens": 6,
   "logprobs": true

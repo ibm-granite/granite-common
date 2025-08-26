@@ -17,6 +17,7 @@ from granite_common.base.types import (
     NoDefaultsMixin,
     SystemMessage,
     UserMessage,
+    VLLMExtraBody,
 )
 
 
@@ -94,33 +95,37 @@ class Granite3ChatCompletion(GraniteChatCompletion):
         """
         :returns: An appropriate Granite 3 controls record for the chat completion
         """
-        if self.chat_template_kwargs and self.chat_template_kwargs.controls:
-            return self.chat_template_kwargs.controls
+        if (
+            self.extra_body
+            and self.extra_body.chat_template_kwargs
+            and self.extra_body.chat_template_kwargs.controls
+        ):
+            return self.extra_body.chat_template_kwargs.controls
         return Granite3Controls()
 
     def thinking(self) -> bool:
         """
         :returns: ``True`` if thinking mode is enabled for this request
         """
-        return self.chat_template_kwargs and self.chat_template_kwargs.thinking
+        return (
+            self.extra_body
+            and self.extra_body.chat_template_kwargs
+            and self.extra_body.chat_template_kwargs.thinking
+        )
 
-    def _reserialize_these_fields(self):
-        """Hook from NoDefaultsMixin"""
-        return ("chat_template_kwargs",)
-
-    @pydantic.field_validator("chat_template_kwargs")
+    @pydantic.field_validator("extra_body")
     @classmethod
-    def _validate_chat_template_kwargs(
-        cls, chat_template_kwargs: ChatTemplateKwargs
-    ) -> ChatTemplateKwargs:
+    def _validate_chat_template_kwargs(cls, extra_body: VLLMExtraBody) -> VLLMExtraBody:
         """
         Validates kwargs that are specific to Granite 3 chat templates and converts
         the ``chat_template_kwargs`` field to a Granite 3-specific dataclass.
 
         Other arguments are currently passed through without checking.
         """
-        kwargs_dict = chat_template_kwargs.model_dump()
-        return Granite3Kwargs.model_validate(kwargs_dict)
+        if extra_body.chat_template_kwargs:
+            kwargs_dict = extra_body.chat_template_kwargs.model_dump()
+            extra_body.chat_template_kwargs = Granite3Kwargs.model_validate(kwargs_dict)
+        return extra_body
 
     @pydantic.field_validator("messages")
     @classmethod

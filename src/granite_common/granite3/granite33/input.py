@@ -53,7 +53,7 @@ class Granite33InputProcessor(Granite3InputProcessor):
         """
         # Compute the predicates that determine exactly what default system message to
         # use.
-        have_documents = bool(chat_completion.documents)
+        have_documents = bool(chat_completion._documents())
         have_tools = bool(chat_completion.tools)
         have_thinking = chat_completion.thinking()
         controls = chat_completion.controls()
@@ -173,7 +173,7 @@ class Granite33InputProcessor(Granite3InputProcessor):
                     f"system message. {MODEL_NAME} only supports the "
                     f"'thinking' flag when the default system message is used."
                 )
-            if chat_completion.documents:
+            if chat_completion._documents():
                 raise ValueError(
                     f"The model input includes documents and a custom system message. "
                     f"{MODEL_NAME} only supports the documents list when "
@@ -211,14 +211,14 @@ class Granite33InputProcessor(Granite3InputProcessor):
                 + "<|end_of_text|>\n"
             )
 
-        if not chat_completion.documents:
+        if not chat_completion._documents():
             documents_part = ""
         else:
             documents_part = "".join(
                 [
                     f'<|start_of_role|>document {{"document_id": "{d.doc_id}"}}'
                     f"<|end_of_role|>\n{d.text}<|end_of_text|>\n"
-                    for d in chat_completion.documents
+                    for d in chat_completion._documents()
                 ]
             )
 
