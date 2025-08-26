@@ -14,12 +14,14 @@
     }
   ],
   "model": "dummy-model-1b",
-  "guided_json": {
-    "type": "string",
-    "enum": [
-      "fish",
-      "not fish"
-    ]
+  "extra_body": {
+    "guided_json": {
+      "type": "string",
+      "enum": [
+        "fish",
+        "not fish"
+      ]
+    }
   },
   "max_completion_tokens": 42,
   "temperature": 0.75,

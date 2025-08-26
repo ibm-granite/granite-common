@@ -99,11 +99,11 @@ You are Granite, developed by IBM."""
         flags were set.
         """
         if (
-            not chat_completion.chat_template_kwargs
-            or not chat_completion.chat_template_kwargs.controls
+            not chat_completion._chat_template_kwargs()
+            or not chat_completion._chat_template_kwargs().controls
         ):
             return None
-        controls = chat_completion.chat_template_kwargs.controls
+        controls = chat_completion._chat_template_kwargs().controls
 
         result = {}
         if controls.citations:
@@ -175,8 +175,8 @@ You are Granite, developed by IBM."""
                         if len(kk) > 0:
                             new_params[kk] = vv
                     tool.parameters = new_params
-        if ("documents" in parts or "all" in parts) and chat_completion.documents:
-            for document in chat_completion.documents:
+        if ("documents" in parts or "all" in parts) and chat_completion._documents():
+            for document in chat_completion._documents():
                 if document.doc_id and isinstance(document.doc_id, str):
                     document.doc_id = remove_special_tokens(document.doc_id)
                 document.text = remove_special_tokens(document.text)

@@ -141,7 +141,7 @@ class Granite32InputProcessor(Granite3InputProcessor):
             as a string suitable to feed to the model's tokenizer.
         """
         # bool([]) == bool(None) == False
-        have_documents = bool(chat_completion.documents)
+        have_documents = bool(chat_completion._documents())
         have_tools = bool(chat_completion.tools)
         have_thinking = chat_completion.thinking()
         controls = chat_completion.controls()
@@ -254,7 +254,7 @@ class Granite32InputProcessor(Granite3InputProcessor):
                     f"system message. {MODEL_NAME} only supports the "
                     f"'thinking' flag when the default system message is used."
                 )
-            if chat_completion.documents:
+            if chat_completion._documents():
                 raise ValueError(
                     f"The model input includes documents and a custom system message. "
                     f"{MODEL_NAME} only supports the documents list when "
@@ -292,13 +292,13 @@ class Granite32InputProcessor(Granite3InputProcessor):
                 + "<|end_of_text|>\n"
             )
 
-        if not bool(chat_completion.documents):
+        if not bool(chat_completion._documents()):
             documents_part = ""
         else:
             documents_body = "\n\n".join(
                 [
-                    f"Document {i}\n{chat_completion.documents[i].text}"
-                    for i in range(len(chat_completion.documents))
+                    f"Document {i}\n{chat_completion._documents()[i].text}"
+                    for i in range(len(chat_completion._documents()))
                 ]
             )
             documents_part = (

@@ -6,12 +6,14 @@
     }
   ],
   "model": "answerability",
-  "guided_json": {
-    "type": "string",
-    "enum": [
-      "answerable",
-      "unanswerable"
-    ]
+  "extra_body": {
+    "guided_json": {
+      "type": "string",
+      "enum": [
+        "answerable",
+        "unanswerable"
+      ]
+    }
   },
   "max_completion_tokens": 6,
   "logprobs": true

@@ -53,19 +53,37 @@ def test_chat_completion():
 
 
 def test_granite_chat_completion():
-    with pytest.raises(ValueError, match="Conflicting values of documents"):
+    with pytest.raises(ValueError, match="'documents' parameter at top level"):
         types.GraniteChatCompletion.model_validate(
             {"messages": [], "documents": [], "chat_template_kwargs": {"documents": []}}
         )
+    with pytest.raises(ValueError, match="Conflicting values of documents"):
+        types.GraniteChatCompletion.model_validate(
+            {
+                "messages": [],
+                "extra_body": {
+                    "documents": [],
+                    "chat_template_kwargs": {"documents": []},
+                },
+            }
+        )
     with pytest.raises(ValueError, match="not a list"):
         types.GraniteChatCompletion.model_validate(
-            {"messages": [], "chat_template_kwargs": {"documents": "foo"}}
+            {
+                "messages": [],
+                "extra_body": {"chat_template_kwargs": {"documents": "foo"}},
+            }
         )
 
     # Documents in kwargs should be moved to top-level arg
     docs_in_kwargs = types.GraniteChatCompletion.model_validate(
-        {"messages": [], "chat_template_kwargs": {"documents": [{"text": "hello"}]}}
+        {
+            "messages": [],
+            "extra_body": {"chat_template_kwargs": {"documents": [{"text": "hello"}]}},
+        }
     )
     assert docs_in_kwargs.documents is not None
-    assert not hasattr(docs_in_kwargs.chat_template_kwargs, "documents")
-    assert "documents" not in docs_in_kwargs.chat_template_kwargs.model_dump()
+    assert not hasattr(docs_in_kwargs.extra_body.chat_template_kwargs, "documents")
+    assert (
+        "documents" not in docs_in_kwargs.extra_body.chat_template_kwargs.model_dump()
+    )

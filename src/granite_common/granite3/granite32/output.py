@@ -663,7 +663,9 @@ class Granite32OutputProcessor(OutputProcessor):
 
         # Parse out citations, documents and hallucinations
         try:
-            parsed_output = _parse_model_output(model_output, chat_completion.documents)
+            parsed_output = _parse_model_output(
+                model_output, chat_completion._documents()
+            )
         except Exception as err:
             raise ValueError(
                 "Failed to parse citations, documents and hallucinations "

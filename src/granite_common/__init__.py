@@ -13,6 +13,7 @@ from .base.types import (
     ChatCompletion,
     GraniteChatCompletion,
     UserMessage,
+    VLLMExtraBody,
 )
 from .granite3.granite32 import (
     Granite32ChatCompletion,
@@ -41,5 +42,6 @@ __all__ = (
         Granite33OutputProcessor,
         GraniteChatCompletion,
         RagAgentLibRewriter,
+        VLLMExtraBody,
     )
 )
