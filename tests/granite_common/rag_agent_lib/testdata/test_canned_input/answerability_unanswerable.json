@@ -1,11 +1,11 @@
 {
   "messages": [
     {
-      "content": "Hello there, how can I help you?",
+      "content": "Welcome to pet questions!",
       "role": "assistant"
     },
     {
-      "content": "What is the square root of 4?",
+      "content": "What is the population of Australia?",
       "role": "user"
     }
   ],
@@ -13,8 +13,12 @@
   "extra_body": {
     "documents": [
       {
-        "text": "The square root of 4 is 2.",
+        "text": "My dog has fleas.",
         "doc_id": "1"
+      },
+      {
+        "text": "My cat does not have fleas.",
+        "doc_id": "2"
       }
     ],
     "guided_json": {

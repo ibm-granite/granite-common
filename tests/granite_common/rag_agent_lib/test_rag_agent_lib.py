@@ -59,6 +59,11 @@ _YAML_JSON_COMBOS = {
         _INPUT_JSON_DIR / "answerable.json",
         "answerability",
     ),
+    "answerability_unanswerable": (
+        _INPUT_YAML_DIR / "answerability.yaml",
+        _INPUT_JSON_DIR / "unanswerable.json",
+        "answerability",
+    ),
     "instruction": (
         _INPUT_YAML_DIR / "instruction.yaml",
         _INPUT_JSON_DIR / "instruction.json",
@@ -260,13 +265,19 @@ def test_canned_output(yaml_output_combo):
 
     transformed = processor.transform(model_output, model_input)
 
+    # Pull this string out of the debugger to update expected file
     transformed_str = transformed.model_dump_json(indent=4)
 
     with open(expected_file, encoding="utf-8") as f:
         expected = ChatCompletionResponse.model_validate_json(f.read())
     expected_str = expected.model_dump_json(indent=4)
 
-    assert transformed_str == expected_str
+    # Do an approximate comparison of numeric values.
+    # Can't use pytest.approx() because of lists and floats encoded as strings
+    transformed_json = _round_floats(json.loads(transformed_str))
+    expected_json = _round_floats(json.loads(expected_str))
+
+    assert transformed_json == expected_json
 
 
 _REPARSE_JSON_DIR = _TEST_DATA_DIR / "test_reparse_json"
@@ -302,10 +313,19 @@ def _round_floats(json_data, num_digits: int = 2):
     :returns: Copy of the input with all floats rounded
     """
     result = copy.deepcopy(json_data)
-    for p in json_util.scalar_paths(result):
-        value = json_util.fetch_path(result, p)
+    for path in json_util.scalar_paths(result):
+        value = json_util.fetch_path(result, path)
         if isinstance(value, float):
-            json_util.replace_path(result, p, round(value, num_digits))
+            json_util.replace_path(result, path, round(value, num_digits))
+        elif isinstance(value, str):
+            # Test for floating-point number encoded as a string.
+            # In Python this test is supposed to use exceptions as control flow.
+            try:
+                str_as_float = float(value)
+                json_util.replace_path(result, path, round(str_as_float, num_digits))
+            except ValueError:
+                # flow through
+                pass
     return result
 
 
@@ -338,13 +358,13 @@ def test_run_transformers(yaml_json_combo_with_model):
 
     # Run the model using Hugging Face APIs
     model, tokenizer = granite_common.util.load_transformers_lora(lora_dir)
-    tokenizer_input, generate_input = (
+    tokenizer_input, generate_input, other_input = (
         granite_common.util.chat_completion_request_to_transformers_inputs(
             transformed_input.model_dump(), tokenizer
         )
     )
     responses = granite_common.util.generate_with_transformers(
-        tokenizer, model, tokenizer_input, generate_input
+        tokenizer, model, tokenizer_input, generate_input, other_input
     )
 
     # Output processing

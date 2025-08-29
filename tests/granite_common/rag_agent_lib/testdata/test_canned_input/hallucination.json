@@ -59,5 +59,6 @@
     }
   },
   "max_completion_tokens": 1024,
-  "logprobs": true
+  "logprobs": true,
+  "top_logprobs": 10
 }

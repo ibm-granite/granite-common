@@ -24,5 +24,6 @@
     ]
   },
   "max_completion_tokens": 6,
-  "logprobs": true
+  "logprobs": true,
+  "top_logprobs": 10
 }

@@ -31,3 +31,6 @@ BASE_MODEL_TO_CANONICAL_NAME = {
     "granite-3.3-2b-instruct": "granite-3.3-2b-instruct",
 }
 """Base model names that we accept for LoRA/aLoRA adapters in intrinsics-lib."""
+
+TOP_LOGPROBS = 10
+"""Number of logprobs we request per token when decoding logprobs."""
