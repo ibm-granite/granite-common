@@ -79,6 +79,11 @@ _YAML_JSON_COMBOS = {
         _INPUT_JSON_DIR / "rewrite.json",
         "query_rewrite",
     ),
+    "certainty": (
+        _INPUT_YAML_DIR / "certainty.yaml",
+        _INPUT_JSON_DIR / "certainty.json",
+        None,  # TODO: Add model once we have a checkpoint
+    ),
 }
 
 _YAML_JSON_COMBOS_WITH_MODEL = {
