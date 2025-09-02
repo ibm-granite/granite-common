@@ -201,7 +201,7 @@ class TokenToFloat(TransformationRule):
                 # happens.
                 continue
             for category, value_for_category in self.categories_to_values.items():
-                if category.startswith(top_logprob.token):
+                if str(category).startswith(top_logprob.token):
                     # Use the first prefix match
                     values.append(value_for_category)
                     weights.append(math.exp(top_logprob.logprob))
