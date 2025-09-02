@@ -14,10 +14,14 @@ import json
 import math
 import pathlib
 
+# Third Party
+import pydantic
+
 # First Party
 from granite_common.base.io import ChatCompletionResultProcessor
 from granite_common.base.types import (
     ChatCompletion,
+    ChatCompletionLogProb,
     ChatCompletionLogProbs,
     ChatCompletionResponse,
     ChatCompletionResponseChoice,
@@ -79,6 +83,10 @@ class TransformationRule(abc.ABC):
             output string.
         :returns: Transformed copy of ``parsed_json`` after applying this rule.
         """
+        if not isinstance(logprobs, ChatCompletionLogProbs):
+            raise TypeError(
+                f"Expected ChatCompletionLogProbs, but received {type(logprobs)}"
+            )
         paths = json_util.scalar_paths(parsed_json)
         paths_reparsed = json_util.scalar_paths(reparsed_json)
         if paths != paths_reparsed:
@@ -127,10 +135,9 @@ class TransformationRule(abc.ABC):
         """
 
 
-class LikelihoodRule(TransformationRule):
+class TokenToFloat(TransformationRule):
     """
-    Transformation rule that decodes one or more yes/no answers to a likelihood ranging
-    from 0 to 1.
+    Transformation rule that decodes token logprobs to a floating point number.
     """
 
     def __init__(
@@ -138,15 +145,15 @@ class LikelihoodRule(TransformationRule):
         input_path_expr: list[str | int | None],
         output_name: str | None,
         /,
-        positive_label: str | int | bool,
+        categories_to_values: dict[str | int | bool, float] | None = None,
     ):
         """
-        :param positive_label: Value that, if present at the indicated path, indicates
-            a "yes" answer.
-        :type positive_label: str | int | bool
+        :param categories_to_values: Mapping from categorical labels to floating-point
+            values.
+        :type categories_to_values: dict[str | int | bool, float]
         """
         super().__init__(input_path_expr, output_name)
-        self.positive_label = positive_label
+        self.categories_to_values = categories_to_values
 
     def _transform(
         self,
@@ -161,6 +168,7 @@ class LikelihoodRule(TransformationRule):
             )
         json_literal = value
         value_str_offset = json_literal.begin
+
         if isinstance(json_literal.value, str):
             # Skip double quote at beginning of string literal
             value_str_offset += 1
@@ -173,17 +181,42 @@ class LikelihoodRule(TransformationRule):
             )
 
         first_token_ix = begin_to_token[value_str_offset]
+        values = []
+        weights = []
 
-        # Assume that probability of first token == probabity of entire literal
-        prob = math.exp(logprobs.content[first_token_ix].logprob)
+        # Decode top token.
+        # Assume that probability of first token == probability of entire literal
+        if json_literal.value in self.categories_to_values:
+            values.append(self.categories_to_values[json_literal.value])
+            weights.append(math.exp(logprobs.content[first_token_ix].logprob))
 
-        # Also assume that 1 - probability is the chance of the alternative value
-        if json_literal.value == self.positive_label:
-            return prob
-        return 1 - prob
+        # Decode remaining tokens.
+        # Here we assume that the first category that shares a prefix with the token is
+        # what the completion would have been had that token been the top-1.
+        top_logprob: ChatCompletionLogProb
+        for top_logprob in logprobs.content[first_token_ix].top_logprobs:
+            if top_logprob.token == logprobs.content[first_token_ix].token:
+                # Some inference engines will output the top-1 token both in logprobs
+                # and in top_logprobs some of the time. Don't double-count when that
+                # happens.
+                continue
+            for category, value_for_category in self.categories_to_values.items():
+                if str(category).startswith(top_logprob.token):
+                    # Use the first prefix match
+                    values.append(value_for_category)
+                    weights.append(math.exp(top_logprob.logprob))
+                    break
+
+        # Make the weights sum to 1 and return weighted sum, aka expected value
+        if len(values) == 0:
+            # No match --> default to 0
+            return 0.0
+        total_weight = sum(weights)
+        weights = [w / total_weight for w in weights]
+        return sum(w * v for w, v in zip(weights, values, strict=True))
 
 
-NAME_TO_RULE = {"likelihood": LikelihoodRule}
+NAME_TO_RULE = {"likelihood": TokenToFloat}
 
 
 class RagAgentLibResultProcessor(ChatCompletionResultProcessor):
@@ -229,9 +262,9 @@ class RagAgentLibResultProcessor(ChatCompletionResultProcessor):
                 self.rules.append(rule_cls(input_path, output_name, **rule_kwargs))
 
     # pylint: disable=unused-argument
-    def transform(
+    def _transform_impl(
         self,
-        chat_completion_response: ChatCompletionResponse,
+        chat_completion_response: ChatCompletionResponse | dict | pydantic.BaseModel,
         chat_completion: ChatCompletion | None = None,
     ) -> ChatCompletionResponse:
         transformed_choices = [

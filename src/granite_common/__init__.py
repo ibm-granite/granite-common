@@ -11,6 +11,7 @@ parsing for IBM Granite models
 from .base.types import (
     AssistantMessage,
     ChatCompletion,
+    ChatCompletionResponse,
     GraniteChatCompletion,
     UserMessage,
     VLLMExtraBody,
@@ -33,6 +34,7 @@ __all__ = (
     for obj in (
         AssistantMessage,
         ChatCompletion,
+        ChatCompletionResponse,
         UserMessage,
         Granite32InputProcessor,
         Granite32OutputProcessor,

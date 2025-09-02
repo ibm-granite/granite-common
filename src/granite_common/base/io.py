@@ -8,6 +8,9 @@ processing for all Granite models.
 # Standard
 import abc
 
+# Third Party
+import pydantic
+
 # Local
 from .types import AssistantMessage, ChatCompletion, ChatCompletionResponse
 
@@ -118,19 +121,46 @@ class ChatCompletionResultProcessor(abc.ABC):
     into a JSON object with model-specific postprocessing applied
     """
 
-    @abc.abstractmethod
     def transform(
         self,
-        chat_completion_response: ChatCompletionResponse,
+        chat_completion_response: ChatCompletionResponse | dict | pydantic.BaseModel,
         chat_completion: ChatCompletion | None = None,
     ) -> ChatCompletionResponse:
         """
         Parse the result of a chat completion.
 
-        :param chat_completion_response: Original chat completion request
+        :param chat_completion_response: Response to a chat completion request as
+            a parsed dataclass, parsed JSON value, or OpenAI dataclass
         :param chat_completion: The chat completion request that produced
             ``chat_completion_response``. Required by some implementations in order
             to decode references to part of the original request.
 
         :returns: Rewritten copy of ``chat_completion``.
+        """
+        # Convert from over-the-wire format if necessary
+        if isinstance(chat_completion_response, dict):
+            chat_completion_response = ChatCompletionResponse.model_validate(
+                chat_completion_response
+            )
+        elif not isinstance(chat_completion_response, ChatCompletionResponse):
+            if isinstance(chat_completion_response, pydantic.BaseModel):
+                # Got another library's dataclass. Attempt to convert to our own.
+                chat_completion_response = ChatCompletionResponse.model_validate(
+                    chat_completion_response.model_dump()
+                )
+            else:
+                raise TypeError(
+                    f"Received unexpected type {type(chat_completion_response)=}"
+                )
+        return self._transform_impl(chat_completion_response, chat_completion)
+
+    @abc.abstractmethod
+    def _transform_impl(
+        self,
+        chat_completion_response: ChatCompletionResponse,
+        chat_completion: ChatCompletion | None,
+    ) -> ChatCompletionResponse:
+        """
+        Subclasses must override this method with an implementation of
+        :func:`transform()`.
         """

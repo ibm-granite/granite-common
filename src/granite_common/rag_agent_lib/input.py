@@ -15,6 +15,7 @@ from granite_common.base.io import ChatCompletionRewriter
 from granite_common.base.types import ChatCompletion, VLLMExtraBody
 
 # Local
+from .constants import TOP_LOGPROBS
 from .util import make_config_dict
 
 
@@ -97,7 +98,9 @@ class RagAgentLibRewriter(ChatCompletionRewriter):
             self.parameters["model"] = self.config["model"]
 
         # Compute additional parameters we need to add to every request
-        self.parameters["logprobs"] = _needs_logprobs(self.config["transformations"])
+        if _needs_logprobs(self.config["transformations"]):
+            self.parameters["logprobs"] = True
+            self.parameters["top_logprobs"] = TOP_LOGPROBS
         self.instruction = self.config["instruction"]
 
         self.extra_body_parameters["guided_json"] = self.config["response_format"]
