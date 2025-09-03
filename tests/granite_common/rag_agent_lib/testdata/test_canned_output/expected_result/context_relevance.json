@@ -1,0 +1,14 @@
+{
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "content": "{\"context_relevance\": 0.47131842717316635}",
+                "role": "assistant",
+                "tool_calls": []
+            },
+            "finish_reason": "stop"
+        }
+    ],
+    "prompt_logprobs": null
+}
