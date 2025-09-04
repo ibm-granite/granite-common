@@ -358,6 +358,17 @@ def _round_floats(json_data, num_digits: int = 2):
             except ValueError:
                 # flow through
                 pass
+
+            # Test for JSON object or array encoded as a string
+            if value[0] in ("{", "["):
+                try:
+                    str_as_json = json.loads(value)
+                    rounded_json = _round_floats(str_as_json, num_digits)
+                    rounded_json_as_str = json.dumps(rounded_json)
+                    json_util.replace_path(result, path, rounded_json_as_str)
+                except json.JSONDecodeError:
+                    # flow through
+                    pass
     return result
 
 
