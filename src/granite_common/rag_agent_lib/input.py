@@ -85,7 +85,7 @@ class RagAgentLibRewriter(ChatCompletionRewriter):
             )
 
         # Split out parameters that go in extra_body
-        self.parameters = self.config["parameters"]
+        self.parameters = self.config["parameters"] or {}
         self.extra_body_parameters = {}
         if "extra_body" in self.parameters:
             self.extra_body_parameters.update(self.parameters["extra_body"])

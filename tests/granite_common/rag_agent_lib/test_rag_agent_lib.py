@@ -39,50 +39,65 @@ _BASE_MODEL = "granite-3.3-2b-instruct"
 
 _INPUT_JSON_DIR = _TEST_DATA_DIR / "input_json"
 _INPUT_YAML_DIR = _TEST_DATA_DIR / "input_yaml"
+_INPUT_ARGS_DIR = _TEST_DATA_DIR / "input_args"
 
 
 # Combinations of YAML and JSON files that go together.
 _YAML_JSON_COMBOS = {
-    # Short name => YAML file, JSON file, model file
+    # Short name => YAML file, JSON file, model file, arguments file
     "answerability_simple": (
         _INPUT_YAML_DIR / "answerability.yaml",
         _INPUT_JSON_DIR / "simple.json",
         "answerability",
+        None,
     ),
     "answerability_extra_params": (
         _INPUT_YAML_DIR / "answerability.yaml",
         _INPUT_JSON_DIR / "extra_params.json",
+        None,
         None,
     ),
     "answerability_answerable": (
         _INPUT_YAML_DIR / "answerability.yaml",
         _INPUT_JSON_DIR / "answerable.json",
         "answerability",
+        None,
     ),
     "answerability_unanswerable": (
         _INPUT_YAML_DIR / "answerability.yaml",
         _INPUT_JSON_DIR / "unanswerable.json",
         "answerability",
+        None,
     ),
     "instruction": (
         _INPUT_YAML_DIR / "instruction.yaml",
         _INPUT_JSON_DIR / "instruction.json",
         None,  # Fake config, no model
+        _INPUT_ARGS_DIR / "instruction.json",
     ),
     "hallucination": (
         _INPUT_YAML_DIR / "hallucination.yaml",
         _INPUT_JSON_DIR / "hallucination.json",
         None,  # TODO: Add model once we have a checkpoint
+        None,
     ),
     "rewrite": (
         _INPUT_YAML_DIR / "rewrite.yaml",
         _INPUT_JSON_DIR / "rewrite.json",
         "query_rewrite",
+        None,
     ),
     "certainty": (
         _INPUT_YAML_DIR / "certainty.yaml",
         _INPUT_JSON_DIR / "certainty.json",
         None,  # TODO: Add model once we have a checkpoint
+        None,
+    ),
+    "context_relevance": (
+        _INPUT_YAML_DIR / "context_relevance.yaml",
+        _INPUT_JSON_DIR / "context_relevance.json",
+        None,  # TODO: Add model once we have a checkpoint
+        _INPUT_ARGS_DIR / "context_relevance.json",
     ),
 }
 
@@ -92,13 +107,14 @@ _YAML_JSON_COMBOS_WITH_MODEL = {
 
 
 @pytest.fixture(name="yaml_json_combo", scope="module", params=_YAML_JSON_COMBOS)
-def _yaml_json_combo(request: pytest.FixtureRequest) -> tuple[str, str, str]:
+def _yaml_json_combo(request: pytest.FixtureRequest) -> tuple[str, str, str, str]:
     """Pytest fixture that allows us to run a given test case repeatedly with multiple
     different combinations of IO configuration and chat completion request.
 
     Uses the files in ``testdata/input_json`` and ``testdata/input_yaml``.
 
-    Returns tuple of short name, YAML file, JSON file, and model directory
+    Returns tuple of short name, YAML file, JSON file, model directory, and
+    arguments file.
     """
     return (request.param,) + _YAML_JSON_COMBOS[request.param]
 
@@ -167,14 +183,19 @@ def test_canned_input(yaml_json_combo):
     Verify that a given combination of chat completion and rewriting config produces
     the expected output
     """
-    short_name, yaml_file, json_file, _ = yaml_json_combo
+    short_name, yaml_file, json_file, _, args_file = yaml_json_combo
+    if args_file:
+        with open(args_file, encoding="utf8") as f:
+            transform_kwargs = json.load(f)
+    else:
+        transform_kwargs = {}
 
     # Temporary: Use a YAML file from local disk
     rewriter = RagAgentLibRewriter(config_file=yaml_file)
 
     json_data = _read_file(json_file)
     before = ChatCompletion.model_validate_json(json_data)
-    after = rewriter.transform(before, test_kwarg="George")
+    after = rewriter.transform(before, **transform_kwargs)
     after_json = after.model_dump_json(indent=2)
 
     expected_file = _CANNED_INPUT_EXPECTED_DIR / f"{short_name}.json"
@@ -192,13 +213,18 @@ def test_openai_compat(yaml_json_combo: str):
     to the OpenAI Python API without raising parsing errors.
     """
 
-    _, yaml_file, json_file, _ = yaml_json_combo
+    _, yaml_file, json_file, _, args_file = yaml_json_combo
+    if args_file:
+        with open(args_file, encoding="utf8") as f:
+            transform_kwargs = json.load(f)
+    else:
+        transform_kwargs = {}
 
     # Temporary: Use a YAML file from local disk
     rewriter = RagAgentLibRewriter(config_file=yaml_file)
     json_data = _read_file(json_file)
     before = ChatCompletion.model_validate_json(json_data)
-    after = rewriter.transform(before, test_kwarg="George")
+    after = rewriter.transform(before, **transform_kwargs)
 
     # Create a fake connection to the API so we can use its request validation code.
     # Note that network access is blocked for this test case.
@@ -224,6 +250,7 @@ _YAML_OUTPUT_COMBOS = {
     "answerability_answerable": _INPUT_YAML_DIR / "answerability.yaml",
     "answerability_unanswerable": _INPUT_YAML_DIR / "answerability.yaml",
     "rewrite": _INPUT_YAML_DIR / "rewrite.yaml",
+    "context_relevance": _INPUT_YAML_DIR / "context_relevance.yaml",
 }
 
 
@@ -331,6 +358,17 @@ def _round_floats(json_data, num_digits: int = 2):
             except ValueError:
                 # flow through
                 pass
+
+            # Test for JSON object or array encoded as a string
+            if value[0] in ("{", "["):
+                try:
+                    str_as_json = json.loads(value)
+                    rounded_json = _round_floats(str_as_json, num_digits)
+                    rounded_json_as_str = json.dumps(rounded_json)
+                    json_util.replace_path(result, path, rounded_json_as_str)
+                except json.JSONDecodeError:
+                    # flow through
+                    pass
     return result
 
 
@@ -338,7 +376,14 @@ def test_run_transformers(yaml_json_combo_with_model):
     """
     Run the target model end-to-end on transformers.
     """
-    short_name, yaml_file, input_file, model_name = yaml_json_combo_with_model
+    short_name, yaml_file, input_file, model_name, args_file = (
+        yaml_json_combo_with_model
+    )
+    if args_file:
+        with open(args_file, encoding="utf8") as f:
+            transform_kwargs = json.load(f)
+    else:
+        transform_kwargs = {}
 
     # Load input request
     with open(input_file, encoding="utf-8") as f:
@@ -359,7 +404,7 @@ def test_run_transformers(yaml_json_combo_with_model):
     result_processor = RagAgentLibResultProcessor(config_file=io_yaml_path)
 
     # Prepare inputs for inference
-    transformed_input = rewriter.transform(model_input)
+    transformed_input = rewriter.transform(model_input, **transform_kwargs)
 
     # Run the model using Hugging Face APIs
     model, tokenizer = granite_common.util.load_transformers_lora(lora_dir)
