@@ -115,7 +115,12 @@ class RagAgentLibRewriter(ChatCompletionRewriter):
             format_args = kwargs.copy()
             if len(messages) > 0:
                 format_args["last_message"] = messages[-1].content
-            instruction_str = self.instruction.format(**format_args)
+            try:
+                instruction_str = self.instruction.format(**format_args)
+            except KeyError as e:
+                raise ValueError(
+                    f"Missing argument for intrinsic's instruction string: {e}"
+                ) from e
             messages.append(UserMessage(content=instruction_str))
             edits["messages"] = messages
         edits.update(self.parameters)
