@@ -99,6 +99,18 @@ _YAML_JSON_COMBOS = {
         None,  # TODO: Add model once we have a checkpoint
         _INPUT_ARGS_DIR / "context_relevance.json",
     ),
+    "answer_relevance_classifier": (
+        _INPUT_YAML_DIR / "answer_relevance_classifier.yaml",
+        _INPUT_JSON_DIR / "answer_relevance_classifier.json",
+        None,  # TODO: Add model once we have a checkpoint
+        None,
+    ),
+    "answer_relevance_rewriter": (
+        _INPUT_YAML_DIR / "answer_relevance_rewriter.yaml",
+        _INPUT_JSON_DIR / "answer_relevance_rewriter.json",
+        None,  # TODO: Add model once we have a checkpoint
+        _INPUT_ARGS_DIR / "answer_relevance_rewriter.json",
+    ),
 }
 
 _YAML_JSON_COMBOS_WITH_MODEL = {

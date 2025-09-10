@@ -13,6 +13,7 @@ import pathlib
 from granite_common import UserMessage
 from granite_common.base.io import ChatCompletionRewriter
 from granite_common.base.types import ChatCompletion, VLLMExtraBody
+from granite_common.util import import_optional
 
 # Local
 from .constants import TOP_LOGPROBS
@@ -33,6 +34,31 @@ def _needs_logprobs(transformations: list | None) -> bool:
     if transformations is None:
         return False
     return any(t["type"] == "likelihood" for t in transformations)
+
+
+def mark_sentence_boundaries(
+    split_strings: list[list[str]], tag_prefix: str
+) -> tuple[str, int]:
+    """
+    Modify one or more input strings by inserting a tag in the form
+    ``<[prefix][number]>``
+    at the location of each sentence boundary.
+
+    :param split_strings: Input string(s), pre-split into sentences
+    :param tag_prefix: String to place before the number part of each tagged
+        sentence boundary.
+
+    :returns: List of input strings with all sentence boundaries marked.
+    """
+    index = 0
+    result = []
+    for sentences in split_strings:
+        to_concat = []
+        for sentence in sentences:
+            to_concat.append(f"<{tag_prefix}{index}> {sentence}")
+            index += 1
+        result.append(" ".join(to_concat))
+    return result
 
 
 class RagAgentLibRewriter(ChatCompletionRewriter):
@@ -105,10 +131,73 @@ class RagAgentLibRewriter(ChatCompletionRewriter):
 
         self.extra_body_parameters["guided_json"] = self.config["response_format"]
 
+        self.sentence_boundaries = self.config["sentence_boundaries"]
+        if self.sentence_boundaries:
+            # Sentence boundary detection requires nltk
+            with import_optional("nltk"):
+                # Third Party
+                import nltk
+            self.sentence_splitter = nltk.tokenize.punkt.PunktSentenceTokenizer()
+
+    def _mark_sentence_boundaries(
+        self, chat_completion: ChatCompletion
+    ) -> ChatCompletion:
+        """
+        Subroutine of :func:`_transform()` that handles sentence boundary detection.
+
+        Should be applied BEFORE adding any instruction messages to the input.
+
+        :param chat_completion: Argument to :func:`_transform()`
+        :type chat_completion: ChatCompletion
+        :return: Copy of original chat completion with sentence boundaries marked in
+            the last message and in documents.
+        :rtype: ChatCompletion
+        """
+        # Mark sentence boundaries in the last message.
+        messages = chat_completion.messages.copy()  # Do not modify input!
+        last_message_as_sentences = list(
+            self.sentence_splitter.tokenize(messages[-1].content)
+        )
+        rewritten_last_message_text = mark_sentence_boundaries(
+            [last_message_as_sentences], "i"
+        )[0]
+        messages[-1].content = rewritten_last_message_text
+        chat_completion = chat_completion.model_copy(update={"messages": messages})
+
+        # Mark sentence boundaries in documents if present
+        if chat_completion.extra_body.documents:
+            docs_as_sentences = [
+                list(self.sentence_splitter.tokenize(d.text))
+                for d in chat_completion.extra_body.documents
+            ]
+            # The documents input to the model consists of the original documents
+            # with each sentence boundary marked with <c0>, <c1>, ... <ck-1>,
+            # where `k` is the number of sentences in ALL documents.
+            rewritten_docs = [
+                doc.model_copy(update={"text": text})
+                for doc, text in zip(
+                    chat_completion.extra_body.documents,
+                    mark_sentence_boundaries(docs_as_sentences, "c"),
+                    strict=True,
+                )
+            ]
+            # Don't modify original input
+            extra_body = chat_completion.extra_body.model_copy(
+                update={"documents": rewritten_docs}
+            )
+            chat_completion = chat_completion.model_copy(
+                update={"extra_body": extra_body}
+            )
+        return chat_completion
+
     def _transform(
         self, chat_completion: ChatCompletion, /, **kwargs
     ) -> ChatCompletion:
         edits = {}
+
+        if self.sentence_boundaries:
+            chat_completion = self._mark_sentence_boundaries(chat_completion)
+
         if self.instruction is not None:
             # Generate and append new user message of instructions
             messages = chat_completion.messages.copy()  # Do not modify input!
@@ -125,7 +214,6 @@ class RagAgentLibRewriter(ChatCompletionRewriter):
             edits["messages"] = messages
         edits.update(self.parameters)
 
-        # TODO: Merge extra params
         extra_body = (
             chat_completion.extra_body.model_dump()
             if chat_completion.extra_body
