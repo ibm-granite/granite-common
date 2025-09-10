@@ -216,7 +216,43 @@ class TokenToFloat(TransformationRule):
         return sum(w * v for w, v in zip(weights, values, strict=True))
 
 
-NAME_TO_RULE = {"likelihood": TokenToFloat}
+class DecodeSentences(TransformationRule):
+    """
+    Transformation rule that decodes references to sentences by number into
+    """
+
+    def __init__(
+        self,
+        input_path_expr: list[str | int | None],
+        output_name: str | None,
+        /,
+        source: str,
+    ):
+        """
+        :param source: Name of the field to replace with decoded sentences.
+        """
+        super().__init__(input_path_expr, output_name)
+        self.source = source
+
+    def _transform(
+        self,
+        value: Any,
+        logprobs: ChatCompletionLogProbs | None,
+        begin_to_token: dict | None,
+    ) -> Any:
+        raise NotImplementedError("This code is currently a stub.")
+
+        # TODO: Modify the base class so that apply() can see the REWRITTEN chat
+        # completion request
+        # TODO: Modify the base class so that there is an optional setup hook in
+        # apply() that creates a lookup table which is then passed to _transform()
+        # TODO: In the setup hook, find the locations of sentence boundary markers
+        # in the REWRITTEN chat completion request
+        # TODO: In _transform(), replace references to sentences by number with the
+        # appropriate (begin, end, sentence) tuples.
+
+
+NAME_TO_RULE = {"likelihood": TokenToFloat, "decode_sentences": DecodeSentences}
 
 
 class RagAgentLibResultProcessor(ChatCompletionResultProcessor):

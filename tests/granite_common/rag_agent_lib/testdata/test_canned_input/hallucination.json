@@ -9,7 +9,7 @@
       "role": "user"
     },
     {
-      "content": "Purple bumble fish are yellow. Green bumble fish are also yellow.",
+      "content": "<i0> Purple bumble fish are yellow. <i1> Green bumble fish are also yellow.",
       "role": "assistant"
     },
     {
@@ -20,7 +20,7 @@
   "extra_body": {
     "documents": [
       {
-        "text": "The only type of fish that is yellow is the purple bumble fish.",
+        "text": "<c0> The only type of fish that is yellow is the purple bumble fish.",
         "doc_id": "1"
       }
     ],

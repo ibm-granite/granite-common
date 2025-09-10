@@ -38,7 +38,9 @@ response_format: |
 transformations:
   # Use logprobs to replace is_faithful flag with a probability
   - type: likelihood
-    positive_label: true
+    categories_to_values:
+      true: 1.0
+      false: 0.0
     input_path: ["*", "is_faithful"]
     output_name: "is_faithful_likelihood"
   # Replace "sentence_num" with sentence location and contents
