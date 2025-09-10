@@ -1,0 +1,30 @@
+# Model name string, or null to use whatever is provided in the chat completion request
+model: ~
+# JSON schema of the model's output
+response_format:  |
+  {
+    "title": "ContextRelevanceOutput",
+    "type": "object",
+    "properties": {
+      "context_relevance": {
+        "type": "string",
+        "description": "Context relevancy judgment.",
+        "enum": ["relevant", "irrelevant", "partially relevant"]
+      }
+    },
+    "required": ["context_relevance"]
+  }
+# Additional turn of instructions to add to the chat
+instruction: |
+  DOCUMENT: {document_content}
+# Data transformations to perform during post-processing
+transformations:
+  - type: likelihood
+    categories_to_values:
+      "relevant": 1.0
+      "irrelevant": 0.0
+      "partially relevant": 0.5
+    input_path: ["context_relevance"]
+    output_name: ~  # Null == no change
+parameters: ~
+sentence_boundaries: false
