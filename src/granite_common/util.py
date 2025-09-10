@@ -12,6 +12,9 @@ import os
 import re
 import uuid
 
+# Third Party
+import pydantic
+
 # First Party
 from granite_common.base.types import (
     ChatCompletionResponse,
@@ -107,7 +110,7 @@ def chat_completion_request_to_transformers_inputs(request, tokenizer=None):
     Translate an OpenAI-style chat completion request into an input for a Transformers
     ``generate()`` call.
 
-    :param request: Request as parsed JSON
+    :param request: Request as parsed JSON or equivalent dataclass
     :param tokenizer: Pointer to the HuggingFace tokenizer that will be used to handle
         this request. Only required if the request uses constrained decoding.
 
@@ -116,6 +119,9 @@ def chat_completion_request_to_transformers_inputs(request, tokenizer=None):
         * kwargs to pass to generation
         * Additional stuff to pass to generate_with_transformers
     """
+    if isinstance(request, pydantic.BaseModel):
+        request = request.model_dump()
+
     tokenizer_input = {
         "conversation": request["messages"],
         "add_generation_prompt": True,
