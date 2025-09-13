@@ -422,7 +422,7 @@ class DecodeSentences(AddFieldsTransformation):
             raise NotImplementedError(
                 "Decoding document sentence boundaries not currently implemented."
             )
-        elif self.source == "last_turn":
+        if self.source == "last_turn":
             tag = self.config["sentence_boundaries"]["last_message"]
 
             # Use second-to-last turn if the input processing added an instruction turn
