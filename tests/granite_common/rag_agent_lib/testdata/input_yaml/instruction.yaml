@@ -15,4 +15,4 @@ instruction: |
   All pets named '{test_kwarg}' are fish.
 parameters:
   temperature: 0.75
-sentence_boundaries: false
+sentence_boundaries: ~

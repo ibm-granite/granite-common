@@ -111,6 +111,12 @@ _YAML_JSON_COMBOS = {
         None,  # TODO: Add model once we have a checkpoint
         _INPUT_ARGS_DIR / "answer_relevance_rewriter.json",
     ),
+    "citations": (
+        _INPUT_YAML_DIR / "citations.yaml",
+        _INPUT_JSON_DIR / "citations.json",
+        None,  # TODO: Add model once we have a checkpoint
+        None,
+    ),
 }
 
 _YAML_JSON_COMBOS_WITH_MODEL = {
@@ -263,6 +269,7 @@ _YAML_OUTPUT_COMBOS = {
     "answerability_unanswerable": _INPUT_YAML_DIR / "answerability.yaml",
     "rewrite": _INPUT_YAML_DIR / "rewrite.yaml",
     "context_relevance": _INPUT_YAML_DIR / "context_relevance.yaml",
+    "hallucination": _INPUT_YAML_DIR / "hallucination.yaml",
 }
 
 

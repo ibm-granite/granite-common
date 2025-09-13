@@ -6,7 +6,6 @@ JSON parsing code used by this package.
 
 # Standard
 from typing import Any
-import abc
 import bisect
 import copy
 import json
@@ -321,77 +320,3 @@ def make_begin_to_token_table(logprobs: ChatCompletionLogProbs | None):
         result[offset] = i
         offset += len(content_elem.token)
     return result
-
-
-class TransformationRule(abc.ABC):
-    """Base class for transformation rules to apply to JSON outputs of intrinsics."""
-
-    def __init__(self, input_name: str):
-        """
-        :param input_name: Name of the field that this rule transforms, or "<root>" to
-         indicate that the transformation should apply at the root of a scalar value.
-        """
-        self.input_name = input_name
-
-    # pylint: disable=unused-argument
-    def apply(
-        self,
-        parsed_json: Any,
-        reparsed_json: Any,
-        logprobs: ChatCompletionLogProbs | None,
-    ) -> Any:
-        """
-        :param parsed_json: Output of running model results through
-            :func:`json.loads()`, plus applying zero or more transformation rules.
-        :param reparsed_json: Output of running the same model results through
-            :func:`json_util.reparse_json_with_offsets()`.
-        :param logprobs: Optional logprobs result associated with the original model
-            output string.
-        :returns: Transformed copy of ``parsed_json`` after applying this rule.
-        """
-        paths = scalar_paths(parsed_json)
-        paths_reparsed = scalar_paths(reparsed_json)
-        if paths != paths_reparsed:
-            # Sanity check; reparsing shouldn't change structure
-            raise ValueError(
-                f"Mismatched paths between parsed and reparsed JSON "
-                f"output of model. "
-                f"{paths=}; {paths_reparsed=}"
-            )
-
-        if self.input_name == "<root>":
-            # Special case: Transformation rule expects a scalar, so there's no dict or
-            # list to modify in place.
-            if len(paths) != 1 and len(paths[0]) != 0:
-                raise ValueError(
-                    f"This rule applies to a scalar JSON value but "
-                    f"received a parsed value of type {type(parsed_json)}"
-                )
-            if isinstance(parsed_json, dict | list):
-                # Belt and suspenders error checking
-                raise TypeError(
-                    f"Attempted to transform non-scalar JSON value {parsed_json} "
-                    f"with a transformation rule that applies only to scalar values."
-                )
-            return self._transform(parsed_json)
-
-        # Filter down to name specified in YAML file
-        paths = [p for p in paths if p[-1] == self.input_name]
-
-        # Don't modify input
-        result = copy.deepcopy(parsed_json)
-
-        for path in paths:
-            original_value = fetch_path(result, path)
-            transformed_value = self._transform(original_value)
-            replace_path(result, path, transformed_value)
-        return result
-
-    @abc.abstractmethod
-    def _transform(self, value: int | float | str | None) -> int | float | str | None:
-        """
-        Subclasses should override this method to transform a single scalar value
-        from a larger JSON expression.
-
-        :param value: Original value pulled out of the JSON expression.
-        """

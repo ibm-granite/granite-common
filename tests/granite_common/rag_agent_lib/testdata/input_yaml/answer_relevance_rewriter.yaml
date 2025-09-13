@@ -14,4 +14,4 @@ transformations: ~
 parameters:
   # Rewritten response could be long.
   max_completion_tokens: 1024
-sentence_boundaries: false
+sentence_boundaries: ~

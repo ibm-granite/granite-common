@@ -1,0 +1,34 @@
+# Model name string, or null to use whatever is provided in the chat completion request
+model: ~
+# JSON schema of the model's output
+response_format: ~
+transformations: ~
+  # Use logprobs to replace "f"" flag with a probability
+  # Disabled until we have actual model output
+  # - type: likelihood
+  #   categories_to_values:
+  #     "faithful": 1.0
+  #     "partial": 0.5
+  #     "unfaithful": 0.0
+  #   input_path: ["*", "f"]
+  # Replace sentence number with sentence location and contents
+  # - type: decode_sentences
+  #   source: "second_to_last_turn"
+  #   input_path: [~, "r"]  # Null in patch means wildcard
+  #   # New fields to add for each sentence
+  #   output_names:
+  #     begin: "sentence_begin"
+  #     end: "sentence_end"
+  #     text: "sentence_text"
+instruction: >
+  Split the last assistant response into individual sentences. 
+  For each sentence in the response, identify the statement IDs from the below 
+  documents that it references. Ensure that your output includes all response 
+  sentence IDs, and for each response sentence ID, provide the list of corresponding 
+  referring document sentence IDs. The output must be a json structure.
+parameters:
+  max_completion_tokens: 4096
+sentence_boundaries:
+  # Mapping from string location to sentence delimiter prefix
+  last_message: "r"  # <r0>, <r1>, etc.
+  documents: "c"

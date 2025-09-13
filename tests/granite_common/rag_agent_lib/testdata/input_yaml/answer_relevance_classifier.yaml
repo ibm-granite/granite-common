@@ -40,4 +40,4 @@ instruction: "answer_relevance"
 # Data transformations to perform during post-processing
 transformations: ~
 parameters: ~
-sentence_boundaries: false
+sentence_boundaries: ~
