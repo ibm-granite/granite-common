@@ -29,7 +29,6 @@ from granite_common.base.types import (
 
 # Local
 from . import json_util
-from .constants import MESSAGE_SENTENCE_TAG
 from .input import sentence_delimiter
 from .util import make_config_dict
 
@@ -46,12 +45,14 @@ class TransformationRule(abc.ABC):
     YAML_NAME = None
     """Subclasses should set this to the name of the rule in YAML config files."""
 
-    def __init__(self, input_path_expr: list[str | int | None]):
+    def __init__(self, config: dict, input_path_expr: list[str | int | None]):
         """
+        :param config: Configuration of the parent output processor, as parsed YAML.
         :param input_path_expr: Path expression that matches all instances of the field
             that this rule transforms. Elements can be strings for object fields,
             ints for list indices, or ``None`` for wildcard matches.
         """
+        self.config = config
         self.input_path_expr = input_path_expr
 
     def _is_input_path(self, path: tuple) -> bool:
@@ -261,6 +262,7 @@ class TokenToFloat(InPlaceTransformation):
 
     def __init__(
         self,
+        config: dict,
         input_path_expr: list[str | int | None],
         /,
         categories_to_values: dict[str | int | bool, float] | None = None,
@@ -270,7 +272,7 @@ class TokenToFloat(InPlaceTransformation):
             values.
         :type categories_to_values: dict[str | int | bool, float]
         """
-        super().__init__(input_path_expr)
+        super().__init__(config, input_path_expr)
         self.categories_to_values = categories_to_values
 
     def _prepare(
@@ -373,6 +375,7 @@ class DecodeSentences(AddFieldsTransformation):
 
     def __init__(
         self,
+        config: dict,
         input_path_expr: list[str | int | None],
         /,
         source: str,
@@ -383,9 +386,9 @@ class DecodeSentences(AddFieldsTransformation):
             "second_to_last_turn", or "documents".
         :param output_names: Names of new result fields to add
         """
-        super().__init__(input_path_expr)
+        super().__init__(config, input_path_expr)
 
-        allowed_sources = ("last_turn", "second_to_last_turn", "documents")
+        allowed_sources = ("last_turn", "documents")
         if source not in allowed_sources:
             raise ValueError(
                 f"'source' argument must be one of {allowed_sources}. "
@@ -419,9 +422,11 @@ class DecodeSentences(AddFieldsTransformation):
             raise NotImplementedError(
                 "Decoding document sentence boundaries not currently implemented."
             )
-        elif self.source in ("last_turn", "second_to_last_turn"):
-            tag = MESSAGE_SENTENCE_TAG
-            message_ix = -1 if self.source == "last_turn" else -2
+        elif self.source == "last_turn":
+            tag = self.config["sentence_boundaries"]["last_message"]
+
+            # Use second-to-last turn if the input processing added an instruction turn
+            message_ix = -2 if self.config["instruction"] else -1
             target_text = chat_completion.messages[message_ix].content
             sentence_num = 0
             # BEGIN code to refactor --------------------------------------------------
@@ -540,7 +545,7 @@ class RagAgentLibResultProcessor(ChatCompletionResultProcessor):
                     for k, v in transform_spec.items()
                     if k not in ("type", "input_path")
                 }
-                self.rules.append(rule_cls(input_path, **rule_kwargs))
+                self.rules.append(rule_cls(self.config, input_path, **rule_kwargs))
 
     # pylint: disable=unused-argument
     def _transform_impl(

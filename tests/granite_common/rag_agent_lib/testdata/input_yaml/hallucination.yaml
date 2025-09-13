@@ -46,7 +46,7 @@ transformations:
   #   input_path: ["*", "f"]
   # Replace sentence number with sentence location and contents
   - type: decode_sentences
-    source: "second_to_last_turn"
+    source: "last_turn"
     input_path: [~, "r"]  # Null in patch means wildcard
     # New fields to add for each sentence
     output_names:
