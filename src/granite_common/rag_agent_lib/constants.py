@@ -34,9 +34,3 @@ BASE_MODEL_TO_CANONICAL_NAME = {
 
 TOP_LOGPROBS = 10
 """Number of logprobs we request per token when decoding logprobs."""
-
-DOCUMENT_SENTENCE_TAG = "c"
-"""String prefix used in sentence boundary tags in documents, i.e. <c123>"""
-
-MESSAGE_SENTENCE_TAG = "i"
-"""String prefix used in sentence boundary tags in messages, i.e. <i123>"""
