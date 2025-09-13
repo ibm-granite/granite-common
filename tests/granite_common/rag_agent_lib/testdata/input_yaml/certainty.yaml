@@ -32,4 +32,4 @@ transformations:
 instruction: ~
 parameters:
   max_completion_tokens: 2
-sentence_boundaries: false
+sentence_boundaries: ~

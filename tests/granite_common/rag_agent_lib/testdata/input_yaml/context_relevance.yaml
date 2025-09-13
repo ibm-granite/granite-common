@@ -25,6 +25,5 @@ transformations:
       "irrelevant": 0.0
       "partially relevant": 0.5
     input_path: ["context_relevance"]
-    output_name: ~  # Null == no change
 parameters: ~
-sentence_boundaries: false
+sentence_boundaries: ~
