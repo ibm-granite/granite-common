@@ -12,8 +12,7 @@ transformations:
       "answerable": 1.0
       "unanswerable": 0.0
     input_path: []
-    output_name: ~  # Null == no change
 instruction: ~
 parameters:
   max_completion_tokens: 6
-sentence_boundaries: false
+sentence_boundaries: ~

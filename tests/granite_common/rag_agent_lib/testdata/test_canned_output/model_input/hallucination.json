@@ -20,7 +20,7 @@
   "extra_body": {
     "documents": [
       {
-        "text": "The only type of fish that is yellow is the purple bumble fish.",
+        "text": "<c0> The only type of fish that is yellow is the purple bumble fish.",
         "doc_id": "1"
       }
     ],
@@ -28,24 +28,24 @@
       "$defs": {
         "HallucinationOutputEntry": {
           "properties": {
-            "r": {
+            "sentence_num": {
               "minimum": 0,
               "title": "Sentence Num",
               "type": "integer"
             },
-            "e": {
+            "reasoning": {
               "title": "Reasoning",
               "type": "string"
             },
-            "f": {
+            "is_faithful": {
               "title": "Is Faithful",
               "type": "boolean"
             }
           },
           "required": [
-            "r",
-            "e",
-            "f"
+            "sentence_num",
+            "reasoning",
+            "is_faithful"
           ],
           "title": "HallucinationOutputEntry",
           "type": "object"
@@ -58,5 +58,7 @@
       "type": "array"
     }
   },
-  "max_completion_tokens": 1024
+  "max_completion_tokens": 1024,
+  "logprobs": true,
+  "top_logprobs": 10
 }

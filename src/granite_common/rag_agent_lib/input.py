@@ -36,6 +36,17 @@ def _needs_logprobs(transformations: list | None) -> bool:
     return any(t["type"] == "likelihood" for t in transformations)
 
 
+def sentence_delimiter(tag, sentence_num) -> str:
+    """
+    :param tag: tag string, i.e. "i" or "c"
+    :param sentence_num: index of sentence
+    :return: Tag string (including trailing space) that identifies the beginning of
+        the indicated sentence in sentence-tagged text.
+    :rtype: str
+    """
+    return f"<{tag}{sentence_num}> "
+
+
 def mark_sentence_boundaries(
     split_strings: list[list[str]], tag_prefix: str
 ) -> tuple[str, int]:
@@ -55,7 +66,7 @@ def mark_sentence_boundaries(
     for sentences in split_strings:
         to_concat = []
         for sentence in sentences:
-            to_concat.append(f"<{tag_prefix}{index}> {sentence}")
+            to_concat.append(f"{sentence_delimiter(tag_prefix, index)}{sentence}")
             index += 1
         result.append(" ".join(to_concat))
     return result
@@ -138,6 +149,23 @@ class RagAgentLibRewriter(ChatCompletionRewriter):
                 # Third Party
                 import nltk
             self.sentence_splitter = nltk.tokenize.punkt.PunktSentenceTokenizer()
+            if not isinstance(self.sentence_boundaries, dict):
+                raise TypeError(
+                    f"'sentence_boundaries', if present, must be a mapping from "
+                    f"location (last_message/documents) to mapping prefix string. "
+                    f"Received {self.sentence_boundaries}."
+                )
+            for k, v in self.sentence_boundaries.items():
+                if k not in ("last_message", "documents"):
+                    raise ValueError(
+                        f"Unexpected location '{k}' in 'sentence_boundaries' field. "
+                        f"Value should be 'last_message' or 'documents'."
+                    )
+                if not isinstance(v, str):
+                    raise TypeError(
+                        f"Prefix string for location '{k}' in sentence_boundaries "
+                        f"field set to {v}, which is not a string."
+                    )
 
     def _mark_sentence_boundaries(
         self, chat_completion: ChatCompletion
@@ -154,18 +182,22 @@ class RagAgentLibRewriter(ChatCompletionRewriter):
         :rtype: ChatCompletion
         """
         # Mark sentence boundaries in the last message.
-        messages = chat_completion.messages.copy()  # Do not modify input!
-        last_message_as_sentences = list(
-            self.sentence_splitter.tokenize(messages[-1].content)
-        )
-        rewritten_last_message_text = mark_sentence_boundaries(
-            [last_message_as_sentences], "i"
-        )[0]
-        messages[-1].content = rewritten_last_message_text
-        chat_completion = chat_completion.model_copy(update={"messages": messages})
+        if "last_message" in self.sentence_boundaries:
+            messages = chat_completion.messages.copy()  # Do not modify input!
+            last_message_as_sentences = list(
+                self.sentence_splitter.tokenize(messages[-1].content)
+            )
+            rewritten_last_message_text = mark_sentence_boundaries(
+                [last_message_as_sentences], self.sentence_boundaries["last_message"]
+            )[0]
+            messages[-1].content = rewritten_last_message_text
+            chat_completion = chat_completion.model_copy(update={"messages": messages})
 
         # Mark sentence boundaries in documents if present
-        if chat_completion.extra_body.documents:
+        if (
+            chat_completion.extra_body.documents
+            and "documents" in self.sentence_boundaries
+        ):
             docs_as_sentences = [
                 list(self.sentence_splitter.tokenize(d.text))
                 for d in chat_completion.extra_body.documents
@@ -177,7 +209,9 @@ class RagAgentLibRewriter(ChatCompletionRewriter):
                 doc.model_copy(update={"text": text})
                 for doc, text in zip(
                     chat_completion.extra_body.documents,
-                    mark_sentence_boundaries(docs_as_sentences, "c"),
+                    mark_sentence_boundaries(
+                        docs_as_sentences, self.sentence_boundaries["documents"]
+                    ),
                     strict=True,
                 )
             ]
