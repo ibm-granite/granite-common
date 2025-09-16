@@ -241,6 +241,24 @@ def scalar_paths(parsed_json) -> list[tuple]:
     return result
 
 
+def all_paths(parsed_json) -> list[tuple]:
+    """
+    :param parsed_json: JSON data parsed into native Python objects
+
+    :returns: A list of paths to elements of the parse tree of ``parsed_json``,
+        where each path is expressed as a tuple. The root element of a bare scalar is
+        an empty tuple.
+    """
+    result = [tuple()]
+    if isinstance(parsed_json, dict):
+        for key, value in parsed_json.items():
+            result.extend([(key,) + t for t in all_paths(value)])
+    elif isinstance(parsed_json, list):
+        for i, value in enumerate(parsed_json):
+            result.extend([(i,) + t for t in all_paths(value)])
+    return result
+
+
 def fetch_path(json_value: Any, path: tuple):
     """
     :param json_value: Parsed JSON value
