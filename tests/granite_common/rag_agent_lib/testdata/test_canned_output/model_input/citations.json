@@ -24,38 +24,7 @@
         "doc_id": "1"
       }
     ],
-    "guided_json": {
-      "$defs": {
-        "_MODEL_OUTPUT_ENTRY": {
-          "properties": {
-            "r": {
-              "minimum": 0,
-              "title": "R",
-              "type": "integer"
-            },
-            "c": {
-              "items": {
-                "minimum": 0,
-                "type": "integer"
-              },
-              "title": "C",
-              "type": "array"
-            }
-          },
-          "required": [
-            "r",
-            "c"
-          ],
-          "title": "_MODEL_OUTPUT_ENTRY",
-          "type": "object"
-        }
-      },
-      "items": {
-        "$ref": "#/$defs/_MODEL_OUTPUT_ENTRY"
-      },
-      "title": "_MODEL_OUTPUT",
-      "type": "array"
-    }
+    "guided_json": null
   },
   "max_completion_tokens": 4096
 }

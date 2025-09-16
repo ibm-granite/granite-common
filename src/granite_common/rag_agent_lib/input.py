@@ -140,7 +140,8 @@ class RagAgentLibRewriter(ChatCompletionRewriter):
             self.parameters["top_logprobs"] = TOP_LOGPROBS
         self.instruction = self.config["instruction"]
 
-        self.extra_body_parameters["guided_json"] = self.config["response_format"]
+        if self.config["response_format"] is not None:
+            self.extra_body_parameters["guided_json"] = self.config["response_format"]
 
         self.sentence_boundaries = self.config["sentence_boundaries"]
         if self.sentence_boundaries:

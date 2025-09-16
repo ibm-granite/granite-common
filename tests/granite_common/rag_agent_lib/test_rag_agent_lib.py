@@ -270,6 +270,7 @@ _YAML_OUTPUT_COMBOS = {
     "rewrite": _INPUT_YAML_DIR / "rewrite.yaml",
     "context_relevance": _INPUT_YAML_DIR / "context_relevance.yaml",
     "hallucination": _INPUT_YAML_DIR / "hallucination.yaml",
+    "citations": _INPUT_YAML_DIR / "citations.yaml",
 }
 
 

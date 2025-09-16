@@ -3,7 +3,7 @@
         {
             "index": 0,
             "message": {
-                "content": "[{\"r\": 0,\"e\": \"This sentence makes a factual claim about the impact of the Biggert-Waters Act on NFIP rates. The document does not explicitly state that the Act moves NFIP  toward charging more full-risk rates, but it does mention that GAO is conducting a study on privatizing NFIP, which implies a shift towards full-risk rates. The sentence is a reasonable interpretation of the Act's intent, but it is not directly supported by the provided context.\", \"f\": \"partial\"}, {\"r\": 1, \"e\": \"This sentence makes a factual claim about the Biggert-Waters Act mandating a GAO study. The document explicitly states that 'The Biggert-Waters Flood Insurance Reform Act of 2012 (Biggert-Waters Act) mandated that GAO conduct a number of studies, including this study on assessing a broad range of options, methods, and strategies for privatizing the National Flood Insurance Program (NFIP).' The sentence accurately reflects the information in the document.\", \"f\": \"faithful\"}]",
+                "content": "[{\"r\": 0,\"e\": \"Explanation 1.\", \"f\": \"partial\"}, {\"r\": 1, \"e\": \"Explanation 2.\", \"f\": \"faithful\"}]",
                 "role": "assistant"
             }
         }
