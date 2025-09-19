@@ -33,13 +33,18 @@
               "title": "Sentence Num",
               "type": "integer"
             },
+            "f": {
+              "title": "Is Faithful",
+              "type": "string",
+              "enum": [
+                "faithful",
+                "partial",
+                "unfaithful"
+              ]
+            },
             "e": {
               "title": "Reasoning",
               "type": "string"
-            },
-            "f": {
-              "title": "Is Faithful",
-              "type": "boolean"
             }
           },
           "required": [
@@ -58,5 +63,7 @@
       "type": "array"
     }
   },
-  "max_completion_tokens": 1024
+  "max_completion_tokens": 4096,
+  "logprobs": true,
+  "top_logprobs": 10
 }

@@ -75,28 +75,34 @@ _YAML_JSON_COMBOS = {
         None,  # Fake config, no model
         _INPUT_ARGS_DIR / "instruction.json",
     ),
-    "hallucination": (
-        _INPUT_YAML_DIR / "hallucination.yaml",
-        _INPUT_JSON_DIR / "hallucination.json",
-        None,  # TODO: Add model once we have a checkpoint
+    "hallucination_detection": (
+        _INPUT_YAML_DIR / "hallucination_detection.yaml",
+        _INPUT_JSON_DIR / "hallucination_detection.json",
+        "hallucination_detection",
         None,
     ),
-    "rewrite": (
-        _INPUT_YAML_DIR / "rewrite.yaml",
-        _INPUT_JSON_DIR / "rewrite.json",
+    "query_rewrite": (
+        _INPUT_YAML_DIR / "query_rewrite.yaml",
+        _INPUT_JSON_DIR / "query_rewrite.json",
         "query_rewrite",
         None,
     ),
-    "certainty": (
-        _INPUT_YAML_DIR / "certainty.yaml",
-        _INPUT_JSON_DIR / "certainty.json",
-        None,  # TODO: Add model once we have a checkpoint
+    "requirement_check": (
+        _INPUT_YAML_DIR / "requirement_check.yaml",
+        _INPUT_JSON_DIR / "requirement_check.json",
+        "requirement_check",
+        _INPUT_ARGS_DIR / "requirement_check.json",
+    ),
+    "uncertainty": (
+        _INPUT_YAML_DIR / "uncertainty.yaml",
+        _INPUT_JSON_DIR / "uncertainty.json",
+        "uncertainty",
         None,
     ),
     "context_relevance": (
         _INPUT_YAML_DIR / "context_relevance.yaml",
         _INPUT_JSON_DIR / "context_relevance.json",
-        None,  # TODO: Add model once we have a checkpoint
+        None,  # TODO: Add model once we have a 2b-size checkpoint
         _INPUT_ARGS_DIR / "context_relevance.json",
     ),
     "answer_relevance_classifier": (
@@ -114,7 +120,7 @@ _YAML_JSON_COMBOS = {
     "citations": (
         _INPUT_YAML_DIR / "citations.yaml",
         _INPUT_JSON_DIR / "citations.json",
-        None,  # TODO: Add model once we have a checkpoint
+        "citations",
         None,
     ),
 }
@@ -175,7 +181,7 @@ def test_read_yaml():
     # Read from local disk
     with open(_INPUT_YAML_DIR / "answerability.yaml", encoding="utf8") as file:
         data = yaml.safe_load(file)
-    assert data["model"] == "answerability"
+    assert data["model"] is None
 
     # Read from local disk
     RagAgentLibRewriter(config_file=_INPUT_YAML_DIR / "answerability.yaml")
@@ -267,10 +273,11 @@ _YAML_OUTPUT_COMBOS = {
     # Short name => YAML file
     "answerability_answerable": _INPUT_YAML_DIR / "answerability.yaml",
     "answerability_unanswerable": _INPUT_YAML_DIR / "answerability.yaml",
-    "rewrite": _INPUT_YAML_DIR / "rewrite.yaml",
+    "query_rewrite": _INPUT_YAML_DIR / "query_rewrite.yaml",
     "context_relevance": _INPUT_YAML_DIR / "context_relevance.yaml",
-    "hallucination": _INPUT_YAML_DIR / "hallucination.yaml",
+    "hallucination_detection": _INPUT_YAML_DIR / "hallucination_detection.yaml",
     "citations": _INPUT_YAML_DIR / "citations.yaml",
+    "requirement_check": _INPUT_YAML_DIR / "requirement_check.yaml",
 }
 
 
@@ -417,7 +424,7 @@ def test_run_transformers(yaml_json_combo_with_model):
 
     # Load IO config YAML for this model
     io_yaml_path = lora_dir / "io.yaml"
-    if os.path.exists(io_yaml_path):
+    if not os.path.exists(io_yaml_path):
         # Use local files until proper configs are up on Hugging Face
         io_yaml_path = yaml_file
     rewriter = RagAgentLibRewriter(config_file=io_yaml_path)
@@ -438,7 +445,7 @@ def test_run_transformers(yaml_json_combo_with_model):
     )
 
     # Output processing
-    transformed_responses = result_processor.transform(responses)
+    transformed_responses = result_processor.transform(responses, transformed_input)
 
     # Pull this string out of the debugger to create a fresh expected file.
     transformed_str = transformed_responses.model_dump_json(indent=4)

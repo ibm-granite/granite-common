@@ -5,7 +5,7 @@
       "role": "user"
     }
   ],
-  "model": "answerability",
+  "model": "original-model-name",
   "extra_body": {
     "guided_json": {
       "type": "string",
