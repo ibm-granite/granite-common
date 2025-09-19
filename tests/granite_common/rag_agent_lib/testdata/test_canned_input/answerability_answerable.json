@@ -9,7 +9,6 @@
       "role": "user"
     }
   ],
-  "model": "answerability",
   "extra_body": {
     "documents": [
       {

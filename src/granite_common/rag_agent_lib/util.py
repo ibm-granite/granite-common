@@ -60,6 +60,7 @@ def obtain_lora(
     target_model_name: str,
     alora: bool = False,
     cache_dir: str | None = None,
+    file_glob: str = "*",
 ) -> pathlib.Path:
     """
     Downloads a cached copy of a LoRA or aLoRA adapter from the
@@ -72,6 +73,7 @@ def obtain_lora(
     :param alora: If ``True``, load aLoRA version of intrinsic; otherwise use LoRA
     :param cache_dir: Local directory to use as a cache (in Hugging Face Hub format),
         or ``None`` to use the Hugging Face Hub default location.
+    :param file_glob: Only files that match this glob will be downloaded to the cache.
 
     :returns: the full path to the local copy of the specified (a)LoRA adapter.
     This path is suitable for passing to commands that will serve the adapter.
@@ -94,8 +96,35 @@ def obtain_lora(
     # Download just the files for this LoRA if not already present
     local_root_path = huggingface_hub.snapshot_download(
         repo_id=INTRINSICS_LIB_REPO_NAME,
-        allow_patterns=f"{lora_subdir_name}/*",
+        allow_patterns=f"{lora_subdir_name}/{file_glob}",
         cache_dir=cache_dir,
     )
 
     return pathlib.Path(local_root_path) / lora_subdir_name
+
+
+def obtain_io_yaml(
+    intrinsic_name: str,
+    target_model_name: str,
+    alora: bool = False,
+    cache_dir: str | None = None,
+) -> pathlib.Path:
+    """
+    Downloads a cached copy of an ``io.yaml`` configuration file for an intrinsic in
+    the [Granite Intrinsics Library](
+    https://huggingface.co/ibm-granite/granite-3.3-8b-rag-agent-lib) if one is not
+    already in the local cache.
+
+    :param intrinsic_name: Short name of the intrinsic model, such as "certainty".
+    :param target_model_name: Name of the base model for the LoRA or aLoRA adapter.
+    :param alora: If ``True``, load aLoRA version of intrinsic; otherwise use LoRA
+    :param cache_dir: Local directory to use as a cache (in Hugging Face Hub format),
+        or ``None`` to use the Hugging Face Hub default location.
+
+    :returns: the full path to the local copy of the specified (a)LoRA adapter.
+    This path is suitable for passing to commands that will serve the adapter.
+    """
+    lora_dir = obtain_lora(
+        intrinsic_name, target_model_name, alora, cache_dir, file_glob="io.yaml"
+    )
+    return lora_dir / "io.yaml"

@@ -5,7 +5,7 @@
       "role": "assistant"
     },
     {
-      "content": "What is the population of Australia?",
+      "content": "Which of my pets have fleas?",
       "role": "user"
     }
   ],
@@ -21,14 +21,22 @@
       }
     ],
     "guided_json": {
-      "type": "string",
+      "type": "integer",
       "enum": [
-        "answerable",
-        "unanswerable"
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
       ]
     }
   },
-  "max_completion_tokens": 6,
+  "max_completion_tokens": 2,
   "logprobs": true,
   "top_logprobs": 10
 }

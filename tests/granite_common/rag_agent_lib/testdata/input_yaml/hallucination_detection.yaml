@@ -11,13 +11,14 @@ response_format: |
             "title": "Sentence Num",
             "type": "integer"
           },
+          "f": {
+            "title": "Is Faithful",
+            "type": "string",
+            "enum": ["faithful", "partial", "unfaithful"]
+          },
           "e": {
             "title": "Reasoning",
             "type": "string"
-          },
-          "f": {
-            "title": "Is Faithful",
-            "type": "boolean"
           }
         },
         "required": [
@@ -37,17 +38,16 @@ response_format: |
   }
 transformations:
   # Use logprobs to replace "f" flag with a probability
-  # Disabled until we have actual model output
-  # - type: likelihood
-  #   categories_to_values:
-  #     "faithful": 1.0
-  #     "partial": 0.5
-  #     "unfaithful": 0.0
-  #   input_path: ["*", "f"]
+  - type: likelihood
+    categories_to_values:
+      "faithful": 1.0
+      "partial": 0.5
+      "unfaithful": 0.0
+    input_path: [~, "f"]  # Null in path means wildcard
   # Replace sentence number with sentence location and contents
   - type: decode_sentences
     source: "last_message"
-    input_path: [~, "r"]  # Null in patch means wildcard
+    input_path: [~, "r"]  # Null in path means wildcard
     # New fields to add for each sentence
     output_names:
       begin: "response_begin"
@@ -60,7 +60,7 @@ transformations:
       "response_begin": "response_begin"
       "response_end": "response_end"
       "response_text": "response_text"
-      "f": "faithfulness"
+      "f": "faithfulness_likelihood"
       "e": "explanation"
 instruction: >
   Split the last assistant response into individual sentences.
@@ -72,6 +72,7 @@ instruction: >
   reasoning and faithfulness decision.
   The output must be a json structure.
 parameters:
-  max_completion_tokens: 1024
+  # Current LoRA can be quite verbose in its explanations.
+  max_completion_tokens: 4096
 sentence_boundaries:
   last_message: "i"

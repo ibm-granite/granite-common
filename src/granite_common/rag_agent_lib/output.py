@@ -709,6 +709,29 @@ class Project(InPlaceTransformation):
         ]
 
 
+class Nest(InPlaceTransformation):
+    """Convert a value within a JSON structure into a record with a single field."""
+
+    YAML_NAME = "nest"
+
+    def __init__(self, config, input_path_expr, /, field_name):
+        """
+        :param config: Parsed YAML config for IO processing
+        :param input_path_expr: Path expression for the values to nest
+        :param field_name: name of the single field in the JSON object that this rule
+            will wrap around each matching value.
+        """
+        super().__init__(config, input_path_expr)
+        self._type_check("field_name", field_name, str)
+        self.field_name = field_name
+
+    def _transform(self, value, path, prepare_output):
+        # Note that we don't check the type of the target value. This rule will happily
+        # nest a collection of very different values. We may want to revisit this
+        # design in the future. Or we might not.
+        return {self.field_name: value}
+
+
 class MergeSpans(InPlaceTransformation):
     """Merge adjacent spans into larger spans."""
 
@@ -862,12 +885,14 @@ class MergeSpans(InPlaceTransformation):
 
 
 ALL_RULES = [
-    TokenToFloat,
+    # Try to keep these in alphabetical order, please
     DecodeSentences,
-    Explode,
     DropDuplicates,
-    Project,
+    Explode,
     MergeSpans,
+    Nest,
+    Project,
+    TokenToFloat,
 ]
 NAME_TO_RULE = {cls.YAML_NAME: cls for cls in ALL_RULES}
 
