@@ -1,9 +1,3 @@
-#######################################################################################
-# Input/output processing configuration for the certainty intrinsic.
-# 
-# Shared processing code resides in https://github.com/ibm-granite/granite-common
-#######################################################################################
-
 # Model name string, or null to use whatever is provided in the chat completion request
 model: ~
 # JSON schema of the model's output
@@ -28,7 +22,10 @@ transformations:
       8: 0.85
       9: 0.95
     input_path: []
-    output_name: ~  # Null == no change
+  # Convert scalar value to a record for consistency with other intrinsics
+  - type: nest
+    input_path: []
+    field_name: "certainty"
 instruction: ~
 parameters:
   max_completion_tokens: 2

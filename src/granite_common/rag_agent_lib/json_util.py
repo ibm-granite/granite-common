@@ -139,8 +139,12 @@ def reparse_value(tokens, offset) -> tuple[Any, int]:
         if value == "[":
             return reparse_list(tokens, offset + 1)
         raise ValueError(f"Unexpected token '{value}' found at {begin}")
-    if type_ in ("string", "number", "bool", "null"):
+    if type_ == "string":
         return JsonLiteralWithPosition(value=value, begin=begin, end=end), offset + 1
+    if type_ in ("number", "bool", "null"):
+        return JsonLiteralWithPosition(
+            value=json.loads(value), begin=begin, end=end
+        ), offset + 1
     raise ValueError(f"Unexpected type string {type_}")
 
 
