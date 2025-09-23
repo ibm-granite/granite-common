@@ -102,19 +102,19 @@ _YAML_JSON_COMBOS = {
     "context_relevance": (
         _INPUT_YAML_DIR / "context_relevance.yaml",
         _INPUT_JSON_DIR / "context_relevance.json",
-        None,  # TODO: Add model once we have a 2b-size checkpoint
+        "context_relevance",
         _INPUT_ARGS_DIR / "context_relevance.json",
     ),
     "answer_relevance_classifier": (
         _INPUT_YAML_DIR / "answer_relevance_classifier.yaml",
         _INPUT_JSON_DIR / "answer_relevance_classifier.json",
-        None,  # TODO: Add model once we have a checkpoint
+        "answer_relevance_classifier",
         None,
     ),
     "answer_relevance_rewriter": (
         _INPUT_YAML_DIR / "answer_relevance_rewriter.yaml",
         _INPUT_JSON_DIR / "answer_relevance_rewriter.json",
-        None,  # TODO: Add model once we have a checkpoint
+        "answer_relevance_rewriter",
         _INPUT_ARGS_DIR / "answer_relevance_rewriter.json",
     ),
     "citations": (
@@ -278,6 +278,8 @@ _YAML_OUTPUT_COMBOS = {
     "hallucination_detection": _INPUT_YAML_DIR / "hallucination_detection.yaml",
     "citations": _INPUT_YAML_DIR / "citations.yaml",
     "requirement_check": _INPUT_YAML_DIR / "requirement_check.yaml",
+    "answer_relevance_classifier": _INPUT_YAML_DIR / "answer_relevance_classifier.yaml",
+    "answer_relevance_rewriter": _INPUT_YAML_DIR / "answer_relevance_rewriter.yaml",
 }
 
 

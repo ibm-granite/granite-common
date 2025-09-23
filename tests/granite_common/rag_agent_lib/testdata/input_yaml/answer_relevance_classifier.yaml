@@ -38,6 +38,21 @@ response_format:  |
 # Additional turn of instructions to add to the chat
 instruction: "answer_relevance"
 # Data transformations to perform during post-processing
-transformations: ~
-parameters: ~
+transformations:
+  # Convert categorical answer to continuous value by decoding logprobs
+  - type: likelihood
+    categories_to_values:
+      true: 1.0
+      false: 0.0
+    input_path: ["answer_relevance_judgment"]
+  # Rename answer_relevance_judgment column to reflect likelihood transformation
+  - type: project
+    input_path: []
+    retained_fields:
+      "answer_relevance_analysis": "answer_relevance_analysis"
+      "answer_relevance_category": "answer_relevance_category"
+      "answer_relevance_judgment": "answer_relevance_likelihood"
+parameters:
+  # Current LoRA can be quite verbose in its explanations.
+  max_completion_tokens: 1024
 sentence_boundaries: ~

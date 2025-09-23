@@ -1,0 +1,11 @@
+{
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "content": "{\"answer_relevance_analysis\": \"The inquiry asks who attended the meeting. The response provides a general statement about many people attending the meeting, which is not specific to the meeting in question. The documents do not provide information about the attendees of the meeting.\", \"answer_relevance_category\": \"No attempt\", \"answer_relevance_likelihood\": 0.0}",
+                "role": "assistant"
+            }
+        }
+    ]
+}

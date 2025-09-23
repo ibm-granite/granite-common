@@ -23,19 +23,7 @@
         "text": "Meeting time: 9:00 am to 11:00 am.",
         "doc_id": "2"
       }
-    ],
-    "guided_json": {
-      "properties": {
-        "answer_relevance_rewrite": {
-          "title": "Rewritten answer",
-          "type": "string"
-        }
-      },
-      "required": [
-        "answer_relevance_rewrite"
-      ],
-      "type": "object"
-    }
+    ]
   },
   "temperature": 0.0,
   "max_completion_tokens": 1024

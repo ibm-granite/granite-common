@@ -1,7 +1,19 @@
 # Model name string, or null to use whatever is provided in the chat completion request
 model: ~
 # JSON schema of the model's output, or null if constrained decoding is not needed
-response_format: ~
+response_format: |
+  {
+    "properties": {
+      "answer_relevance_rewrite": {
+        "title": "Rewritten answer",
+        "type": "string"
+      }
+    },
+    "required": [
+      "answer_relevance_rewrite"
+    ],
+    "type": "object"
+  }
 # Additional turn of instructions to add to the chat
 instruction: |
   Rewrite the response for relevance.

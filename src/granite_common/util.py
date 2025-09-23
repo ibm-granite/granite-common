@@ -6,6 +6,7 @@ Common utility functions for internal use by the library and its tests.
 
 # Standard
 import contextlib
+import itertools
 import json
 import logging
 import os
@@ -105,7 +106,9 @@ def load_transformers_lora(local_or_remote_path):
     return model, tokenizer
 
 
-def chat_completion_request_to_transformers_inputs(request, tokenizer=None):
+def chat_completion_request_to_transformers_inputs(
+    request, tokenizer=None
+) -> tuple[dict, dict, dict]:
     """
     Translate an OpenAI-style chat completion request into an input for a Transformers
     ``generate()`` call.
@@ -272,21 +275,15 @@ def generate_with_transformers(
         # The decode() method doesn't return offsets.
         # The only supported API to get offsets is to retokenize the string and hope you
         # get back the same tokenization.
-        retokenized = tokenizer(response_string, return_offsets_mapping=True)
-        if (
-            len(retokenized["input_ids"]) != len(response_tokens)
-            or not torch.all(
-                torch.tensor(retokenized["input_ids"]) == response_tokens
-            ).item()
-        ):
-            # Tokenizer doesn't guarantee a 1-1 onto mapping between strings and tokens.
-            raise ValueError(
-                f"Tokens {response_tokens.tolist()} decode to "
-                f"'{response_string}', which encodes to "
-                f"{retokenized['input_ids']}, which is a different sequence "
-                f"of tokens."
+        # This supported API doesn't work reliably, so we fall back on the unsupported
+        # method of pulling token lengths out of the tokenizer.
+        ends = list(
+            itertools.accumulate(
+                [len(s) for s in tokenizer.batch_decode(response_tokens)]
             )
-        token_offsets = retokenized["offset_mapping"]
+        )
+        begins = [0] + ends[:-1]
+        token_offsets = list(zip(begins, ends, strict=True))
 
         if generated_scores is None:
             logprobs_content = None

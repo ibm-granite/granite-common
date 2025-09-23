@@ -697,16 +697,19 @@ class Project(InPlaceTransformation):
 
     def _transform(self, value, path, prepare_output):
         # Lots of error checking here because the input has no type constraints.
-        if not isinstance(value, list):
-            raise TypeError(
-                f"Matching element at path {path} is not a list. "
-                f"Matching paths of an '{self.rule_name()}' rule must be "
-                f"lists."
-            )
-        return [
-            {self.retained_fields[k]: element.get(k) for k in self.retained_fields}
-            for element in value
-        ]
+        if isinstance(value, dict):
+            # Single record
+            return {self.retained_fields[k]: value.get(k) for k in self.retained_fields}
+        if isinstance(value, list):
+            return [
+                {self.retained_fields[k]: element.get(k) for k in self.retained_fields}
+                for element in value
+            ]
+        raise TypeError(
+            f"Matching element at path {path} is not a list or a dictionary. "
+            f"Matching paths of an '{self.rule_name()}' rule must contain "
+            f"one or more records."
+        )
 
 
 class Nest(InPlaceTransformation):
