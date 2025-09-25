@@ -18,11 +18,11 @@ import requests
 import yaml
 
 # First Party
-from granite_common import ChatCompletion, RagAgentLibRewriter
+from granite_common import ChatCompletion, IntrinsicsRewriter
 from granite_common.base.types import ChatCompletionResponse
 from granite_common.intrinsics import json_util, util
 from granite_common.intrinsics.constants import INTRINSICS_LIB_REPO_NAME
-from granite_common.intrinsics.output import RagAgentLibResultProcessor
+from granite_common.intrinsics.output import IntrinsicsResultProcessor
 import granite_common.util
 
 
@@ -184,7 +184,7 @@ def test_read_yaml():
     assert data["model"] is None
 
     # Read from local disk
-    RagAgentLibRewriter(config_file=_INPUT_YAML_DIR / "answerability.yaml")
+    IntrinsicsRewriter(config_file=_INPUT_YAML_DIR / "answerability.yaml")
 
     # Read from Hugging Face hub.
     # Requires "hf auth login" with read token while repo is private.
@@ -196,7 +196,7 @@ def test_read_yaml():
         )
     except requests.exceptions.HTTPError:
         pytest.xfail("Downloads fail on CI server because repo is private")
-    RagAgentLibRewriter(config_file=f"{local_path}/{path_suffix}")
+    IntrinsicsRewriter(config_file=f"{local_path}/{path_suffix}")
 
 
 _CANNED_INPUT_EXPECTED_DIR = _TEST_DATA_DIR / "test_canned_input"
@@ -215,7 +215,7 @@ def test_canned_input(yaml_json_combo):
         transform_kwargs = {}
 
     # Temporary: Use a YAML file from local disk
-    rewriter = RagAgentLibRewriter(config_file=yaml_file)
+    rewriter = IntrinsicsRewriter(config_file=yaml_file)
 
     json_data = _read_file(json_file)
     before = ChatCompletion.model_validate_json(json_data)
@@ -245,7 +245,7 @@ def test_openai_compat(yaml_json_combo: str):
         transform_kwargs = {}
 
     # Temporary: Use a YAML file from local disk
-    rewriter = RagAgentLibRewriter(config_file=yaml_file)
+    rewriter = IntrinsicsRewriter(config_file=yaml_file)
     json_data = _read_file(json_file)
     before = ChatCompletion.model_validate_json(json_data)
     after = rewriter.transform(before, **transform_kwargs)
@@ -318,7 +318,7 @@ def test_canned_output(yaml_output_combo):
     """
     _, yaml_file, input_file, output_file, expected_file = yaml_output_combo
 
-    processor = RagAgentLibResultProcessor(config_file=yaml_file)
+    processor = IntrinsicsResultProcessor(config_file=yaml_file)
     with open(input_file, encoding="utf-8") as f:
         model_input = ChatCompletion.model_validate_json(f.read())
     with open(output_file, encoding="utf-8") as f:
@@ -429,8 +429,8 @@ def test_run_transformers(yaml_json_combo_with_model):
     if not os.path.exists(io_yaml_path):
         # Use local files until proper configs are up on Hugging Face
         io_yaml_path = yaml_file
-    rewriter = RagAgentLibRewriter(config_file=io_yaml_path)
-    result_processor = RagAgentLibResultProcessor(config_file=io_yaml_path)
+    rewriter = IntrinsicsRewriter(config_file=io_yaml_path)
+    result_processor = IntrinsicsResultProcessor(config_file=io_yaml_path)
 
     # Prepare inputs for inference
     transformed_input = rewriter.transform(model_input, **transform_kwargs)
@@ -439,7 +439,7 @@ def test_run_transformers(yaml_json_combo_with_model):
     model, tokenizer = granite_common.util.load_transformers_lora(lora_dir)
     tokenizer_input, generate_input, other_input = (
         granite_common.util.chat_completion_request_to_transformers_inputs(
-            transformed_input.model_dump(), tokenizer
+            transformed_input.model_dump(), tokenizer, model
         )
     )
     responses = granite_common.util.generate_with_transformers(

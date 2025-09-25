@@ -903,7 +903,7 @@ NAME_TO_RULE = {cls.YAML_NAME: cls for cls in ALL_RULES}
 ############################################
 
 
-class RagAgentLibResultProcessor(ChatCompletionResultProcessor):
+class IntrinsicsResultProcessor(ChatCompletionResultProcessor):
     """General-purpose chat completion result processor for use with the models in the
     RAG Agent Library. Reads parameters of the model's input and output formats
     from a YAML configuration file and edits the input chat completion appropriately.

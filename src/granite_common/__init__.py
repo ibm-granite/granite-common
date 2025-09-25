@@ -26,7 +26,7 @@ from .granite3.granite33 import (
     Granite33InputProcessor,
     Granite33OutputProcessor,
 )
-from .intrinsics import RagAgentLibResultProcessor, RagAgentLibRewriter
+from .intrinsics import IntrinsicsResultProcessor, IntrinsicsRewriter
 
 # The contents of __all__ must be strings
 __all__ = (
@@ -43,8 +43,8 @@ __all__ = (
         Granite33InputProcessor,
         Granite33OutputProcessor,
         GraniteChatCompletion,
-        RagAgentLibRewriter,
-        RagAgentLibResultProcessor,
+        IntrinsicsRewriter,
+        IntrinsicsResultProcessor,
         VLLMExtraBody,
     )
 )

@@ -5,7 +5,7 @@ Support for the intrinsics in the RAG Agent Library.
 """
 
 # Local
-from .input import RagAgentLibRewriter
-from .output import RagAgentLibResultProcessor
+from .input import IntrinsicsRewriter
+from .output import IntrinsicsResultProcessor
 
-__all__ = ("RagAgentLibRewriter", "RagAgentLibResultProcessor")
+__all__ = ("IntrinsicsRewriter", "IntrinsicsResultProcessor")
