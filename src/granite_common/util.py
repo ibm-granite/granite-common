@@ -217,6 +217,10 @@ def generate_with_transformers(
 
     input_tokens = tokenizer.apply_chat_template(**tokenizer_input, return_tensors="pt")
 
+    # generate() will fail with many different creative error messages if tokens aren't
+    # on the right device.
+    input_tokens = input_tokens.to(model.device)
+
     # The generate() method sometimes needs to know what is the integer ID
     # of the padding token, and for some reason this critical piece of information
     # isn't included in the serialized model. We get it from the tokenizer.

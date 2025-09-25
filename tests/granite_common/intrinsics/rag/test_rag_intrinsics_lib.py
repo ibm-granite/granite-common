@@ -20,9 +20,9 @@ import yaml
 # First Party
 from granite_common import ChatCompletion, RagAgentLibRewriter
 from granite_common.base.types import ChatCompletionResponse
-from granite_common.rag_agent_lib import json_util, util
-from granite_common.rag_agent_lib.constants import INTRINSICS_LIB_REPO_NAME
-from granite_common.rag_agent_lib.output import RagAgentLibResultProcessor
+from granite_common.intrinsics import json_util, util
+from granite_common.intrinsics.constants import INTRINSICS_LIB_REPO_NAME
+from granite_common.intrinsics.output import RagAgentLibResultProcessor
 import granite_common.util
 
 

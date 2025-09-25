@@ -44,6 +44,11 @@ transformers = [
 nltk = [
     "nltk~=3.9.1",
 ]
+gpt-oss = [
+    "triton>=3.4",
+    "accelerate",
+    "kernels"
+]
 dev = [
     "isort==6.0.1",
     "pre-commit>=3.0.4,<5.0",
@@ -62,6 +67,7 @@ dev = [
     "openai",
     "granite-common[transformers]",
     "granite-common[nltk]",
+    "granite-common[gpt-oss]"
 ]
 
 # Dependencies needed for running notebooks. Update as required.
