@@ -5,7 +5,7 @@ Constants relating to of input and output processing for LoRA adapters in IBM's
 `rag-agent-lib` library of intrinsics.
 """
 
-RAG_AGENT_LIB_REPO_ID = "ibm-granite/granite-3.3-8b-rag-agent-lib"
+INTRINSICS_LIB_REPO_ID = "ibm-granite/granite-3.3-8b-rag-agent-lib"
 YAML_REQUIRED_FIELDS = [
     "model",
     "response_format",
@@ -29,8 +29,12 @@ BASE_MODEL_TO_CANONICAL_NAME = {
     "ibm-granite/granite-3.3-2b-instruct": "granite-3.3-2b-instruct",
     "granite-3.3-8b-instruct": "granite-3.3-8b-instruct",
     "granite-3.3-2b-instruct": "granite-3.3-2b-instruct",
+    "openai/gpt-oss-20b": "gpt-oss-20b",
+    "gpt-oss-20b": "gpt-oss-20b",
 }
-"""Base model names that we accept for LoRA/aLoRA adapters in intrinsics-lib."""
+"""Base model names that we accept for LoRA/aLoRA adapters in intrinsics-lib.
+Each model name maps to the name of the directory that contains (a)LoRA adapters for
+that model."""
 
 TOP_LOGPROBS = 10
 """Number of logprobs we request per token when decoding logprobs."""

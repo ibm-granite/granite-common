@@ -26,7 +26,7 @@ from .granite3.granite33 import (
     Granite33InputProcessor,
     Granite33OutputProcessor,
 )
-from .rag_agent_lib import RagAgentLibResultProcessor, RagAgentLibRewriter
+from .intrinsics import RagAgentLibResultProcessor, RagAgentLibRewriter
 
 # The contents of __all__ must be strings
 __all__ = (
