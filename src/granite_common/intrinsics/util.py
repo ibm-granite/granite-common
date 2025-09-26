@@ -11,6 +11,9 @@ import pathlib
 # Third Party
 import yaml
 
+# First Party
+from granite_common.base.types import ChatCompletion, UserMessage, VLLMExtraBody
+
 # Local
 from .constants import (
     BASE_MODEL_TO_CANONICAL_NAME,
@@ -128,3 +131,58 @@ def obtain_io_yaml(
         intrinsic_name, target_model_name, alora, cache_dir, file_glob="io.yaml"
     )
     return lora_dir / "io.yaml"
+
+
+def move_documents_to_message(
+    chat_completion: ChatCompletion | dict,
+) -> ChatCompletion | dict:
+    """
+    By convention, our canned JSON requests place RAG documents in extra_body/documents.
+    Some models do not accept this parameter.
+    This function edits a request by putting the documents into the first turn of the
+    messages.
+
+    :param chat_completion: A chat completion request as dataclass or parsed JSON
+
+    :returns: A copy of ``chat_completion`` with any documents under ``extra_body``
+        moved to the first message. Returned type will be the same as the input type.
+        May return original object if no edits are necessary.
+    """
+    if isinstance(chat_completion, ChatCompletion):
+        should_return_dataclass = True
+    elif isinstance(chat_completion, dict):
+        should_return_dataclass = False
+        chat_completion = ChatCompletion.model_validate(chat_completion)
+    else:
+        raise TypeError(
+            f"Unexpected type '{type(chat_completion)}' for 'chat_completion' "
+            f"argument. Should be ChatCompletion or dict."
+        )
+
+    if (
+        chat_completion.extra_body is not None
+        and chat_completion.extra_body.documents is not None
+    ):
+        docs_list = chat_completion.extra_body.documents
+        doc_text = "\n\n".join([f"[Document {d.doc_id}]\n{d.text}" for d in docs_list])
+        new_messages = [
+            UserMessage(
+                content="You have access to the following documents:\n\n" + doc_text
+            )
+        ] + chat_completion.messages
+
+        # Round-trip through parsed JSON so that extra_body.documents will be unset
+        new_extra_body = VLLMExtraBody.model_validate(
+            {
+                k: v
+                for k, v in chat_completion.extra_body.model_dump().items()
+                if k != "documents"
+            }
+        )
+        chat_completion = chat_completion.model_copy(
+            update={"messages": new_messages, "extra_body": new_extra_body}
+        )
+
+    if should_return_dataclass:
+        return chat_completion
+    return chat_completion.model_dump()

@@ -107,7 +107,7 @@ def load_transformers_lora(local_or_remote_path):
 
 
 def chat_completion_request_to_transformers_inputs(
-    request, tokenizer=None
+    request, tokenizer=None, model=None
 ) -> tuple[dict, dict, dict]:
     """
     Translate an OpenAI-style chat completion request into an input for a Transformers
@@ -115,6 +115,8 @@ def chat_completion_request_to_transformers_inputs(
 
     :param request: Request as parsed JSON or equivalent dataclass
     :param tokenizer: Pointer to the HuggingFace tokenizer that will be used to handle
+        this request. Only required if the request uses constrained decoding.
+    :param model: Pointer to the HuggingFace model that will be used to handle
         this request. Only required if the request uses constrained decoding.
 
     :returns: Tuple of:
@@ -168,11 +170,20 @@ def chat_completion_request_to_transformers_inputs(
                 "Request specifies constrained decoding, but no "
                 "tokenizer object was passed to this function."
             )
+        if model is None:
+            raise ValueError(
+                "Request specifies constrained decoding, but no "
+                "tokenizer object was passed to this function."
+            )
+
+        # Different parts of a Hugging Face model will have different opinions about
+        # the number of tokens in the tokenizer's vocabulary, because of course they do.
+        # Gather together all the possibilities and pick the biggest one.
+        vocab_size = max(tokenizer.vocab_size, len(tokenizer), model.vocab_size)
+
         tokenizer_info = xgr.TokenizerInfo.from_huggingface(
             tokenizer,
-            # Tokenizer.vocab_size doesn't return the size of the tokenizer's
-            # vocabulary, because of course it doesn't.
-            vocab_size=len(tokenizer),
+            vocab_size=vocab_size,
         )
         grammar_compiler = xgr.GrammarCompiler(tokenizer_info)
         compiled_grammar = grammar_compiler.compile_json_schema(

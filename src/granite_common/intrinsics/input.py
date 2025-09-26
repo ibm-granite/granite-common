@@ -72,7 +72,7 @@ def mark_sentence_boundaries(
     return result
 
 
-class RagAgentLibRewriter(ChatCompletionRewriter):
+class IntrinsicsRewriter(ChatCompletionRewriter):
     """General-purpose chat completion rewriter for use with the models in the
     RAG Agent Library. Reads parameters of the model's input and output formats
     from a YAML configuration file and edits the input chat completion appropriately.
