@@ -10,11 +10,17 @@ YAML_REQUIRED_FIELDS = [
     "model",
     "response_format",
     "transformations",
+]
+"""Fields that must be present in every intrinsic's YAML configuration file."""
+
+YAML_OPTIONAL_FIELDS = [
+    "docs_as_message",
     "instruction",
     "parameters",
     "sentence_boundaries",
 ]
-"""Fields that must be present in every intrinsic's YAML configuration file."""
+"""Fields that may be present in every intrinsic's YAML configuration file. If 
+not present, the parsed config dictionary will contain a null value in thier place."""
 
 YAML_JSON_FIELDS = [
     "response_format",
