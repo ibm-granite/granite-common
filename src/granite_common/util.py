@@ -15,7 +15,6 @@ import uuid
 
 # Third Party
 import pydantic
-import torch
 
 # First Party
 from granite_common.base.types import (
@@ -126,6 +125,10 @@ def chat_completion_request_to_transformers_inputs(
         * kwargs to pass to generation
         * Additional stuff to pass to generate_with_transformers
     """
+    with import_optional("torch"):
+        # Third Party
+        import torch
+
     if isinstance(request, pydantic.BaseModel):
         request = request.model_dump()
 
