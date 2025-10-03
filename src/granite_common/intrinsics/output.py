@@ -26,6 +26,7 @@ from granite_common.base.types import (
     ChatCompletionLogProbs,
     ChatCompletionResponse,
     ChatCompletionResponseChoice,
+    Document,
 )
 
 # Local
@@ -470,6 +471,13 @@ class DecodeSentences(AddFieldsTransformation):
         self.text_name = output_names.get("text")
         self.document_id_name = output_names.get("document_id")
 
+        if config["docs_as_message"] and config["docs_as_message"] != "json":
+            raise ValueError(
+                f"Decoding sentences from message with document "
+                f"encoding method '{config['docs_as_message']}' is "
+                f"not yet supported."
+            )
+
     def _prepare(
         self,
         parsed_json: Any,
@@ -492,7 +500,19 @@ class DecodeSentences(AddFieldsTransformation):
                     f"the entry that tells how to tag document sentence boundaries."
                 )
 
-            documents = chat_completion.extra_body.documents
+            if not self.config["docs_as_message"]:
+                # Most common path: Documents from extra_body
+                documents = chat_completion.extra_body.documents
+            else:
+                # Model requires documents in a user message. Decode the message.
+                # Currently onli JSON format is supported.
+                if self.config["docs_as_message"] != "json":
+                    raise ValueError(
+                        f"Unsupported doc type {self.config['docs_as_message']}"
+                    )
+                documents_json = json.loads(chat_completion.messages[0].content)
+                documents = [Document.model_validate(d) for d in documents_json]
+
             if documents is None:
                 documents = []
 

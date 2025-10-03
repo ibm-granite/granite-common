@@ -15,6 +15,7 @@ import uuid
 
 # Third Party
 import pydantic
+import torch
 
 # First Party
 from granite_common.base.types import (
@@ -22,7 +23,7 @@ from granite_common.base.types import (
     ChatCompletionResponseChoice,
 )
 
-_NLTK_INSTALL_INSTRUCTIONS = """
+NLTK_INSTALL_INSTRUCTIONS = """
 Please install nltk with:
     pip install nltk
 In some environments you may also need to manually download model weights with:
@@ -57,7 +58,7 @@ def nltk_check(feature_name: str):
         raise ImportError(
             f"'nltk' package not installed. This package is required for "
             f"{feature_name} in the 'granite_io' library."
-            f"{_NLTK_INSTALL_INSTRUCTIONS}"
+            f"{NLTK_INSTALL_INSTRUCTIONS}"
         ) from err
 
 
@@ -107,7 +108,7 @@ def load_transformers_lora(local_or_remote_path):
 
 
 def chat_completion_request_to_transformers_inputs(
-    request, tokenizer=None, model=None
+    request, tokenizer=None, model=None, constrained_decoding_prefix=None
 ) -> tuple[dict, dict, dict]:
     """
     Translate an OpenAI-style chat completion request into an input for a Transformers
@@ -118,14 +119,20 @@ def chat_completion_request_to_transformers_inputs(
         this request. Only required if the request uses constrained decoding.
     :param model: Pointer to the HuggingFace model that will be used to handle
         this request. Only required if the request uses constrained decoding.
+    :param constrained_decoding_prefix: Optional generation prefix to append to the
+        prompt
 
     :returns: Tuple of:
-        * kwargs to pass to tokenizer
         * kwargs to pass to generation
         * Additional stuff to pass to generate_with_transformers
     """
     if isinstance(request, pydantic.BaseModel):
         request = request.model_dump()
+
+    generate_input = {
+        # Always return dict, else downstream code will need lots type checks
+        "return_dict_in_generate": True
+    }
 
     tokenizer_input = {
         "conversation": request["messages"],
@@ -139,10 +146,33 @@ def chat_completion_request_to_transformers_inputs(
     ):
         tokenizer_input["documents"] = request["extra_body"]["documents"]
 
-    generate_input = {
-        # Always return dict, else downstream code will need lots type checks
-        "return_dict_in_generate": True
-    }
+    input_tokens = tokenizer.apply_chat_template(**tokenizer_input, return_tensors="pt")
+
+    # generate() will fail with many different creative error messages if tokens aren't
+    # on the right device.
+    input_tokens = input_tokens.to(model.device)
+    generate_input["input_tokens"] = input_tokens
+
+    # The generate() method sometimes needs to know what is the integer ID
+    # of the padding token, and for some reason this critical piece of information
+    # isn't included in the serialized model. We get it from the tokenizer.
+    # And of course some tokenizers don't set this parameter, in which case
+    # we use the end of string token and hope for the best.
+    pad_token_id = tokenizer.pad_token_id
+    if pad_token_id is None:
+        pad_token_id = tokenizer.eos_token_id
+    if pad_token_id is None:
+        # Raise an error here because the some branches of the generate
+        # method won't complain about an invalid value of this parameter,
+        # while others will raise a cryptic exception from deep within
+        # their beam search code.
+        raise ValueError(f"Couldn't figure out padding token for tokenizer {tokenizer}")
+    generate_input["pad_token_id"] = pad_token_id
+
+    # Make sure you specify this parameter explicitly, or you will have
+    # a bad time.
+    generate_input["eos_token_id"] = (tokenizer.eos_token_id,)
+
     other_input = {}
 
     if "logprobs" in request and request["logprobs"]:
@@ -194,13 +224,43 @@ def chat_completion_request_to_transformers_inputs(
         # The "logits_processor" argument to generate() must be a list.
         generate_input["logits_processor"] = [logits_processor]
 
-    return tokenizer_input, generate_input, other_input
+        if constrained_decoding_prefix is not None:
+            # Some models generate boilerplate before getting to the place where the
+            # logits processor should activate. Append that boilerplate to the prompt,
+            # since the logits processor we just created will
+            addl_tokens = tokenizer(
+                constrained_decoding_prefix, return_tensors="pt"
+            ).to(model.device)["input_ids"]
+            generate_input["input_tokens"] = torch.cat(
+                [generate_input["input_tokens"], addl_tokens], dim=1
+            )
+
+    # Translate beam search parameters
+    if request.get("temperature") is not None:
+        if request["temperature"] == 0.0:
+            # No beam search
+            generate_input["do_sample"] = False
+        else:
+            # Beam search
+            generate_input["do_sample"] = True
+            generate_input["temperature"] = request["temperature"]
+
+    if request.get("n") is not None:
+        generate_input["num_return_sequences"] = request["n"]
+
+    for param in (
+        "top_k",
+        "top_p",
+    ):
+        if request.get(param) is not None:
+            generate_input[param] = request[param]
+
+    return generate_input, other_input
 
 
 def generate_with_transformers(
     tokenizer,
     model,
-    tokenizer_input: dict,
     generate_input: dict,
     other_input: dict,
 ) -> ChatCompletionResponse:
@@ -212,8 +272,6 @@ def generate_with_transformers(
 
     :param tokenizer: Tokenizer for the model, required at several stages of generation
     :param model: Initialized model object.
-    :param tokenizer_input: Parameters to pass to the tokenizer, usually generated by
-        :func:`chat_completion_request_to_transformers_inputs()`
     :param generate_input: Parameters to pass to the generate() method, usually
         generated by :func:`chat_completion_request_to_transformers_inputs()`
     :param other_input: Additional kwargs that
@@ -226,31 +284,11 @@ def generate_with_transformers(
         # Third Party
         import torch
 
-    input_tokens = tokenizer.apply_chat_template(**tokenizer_input, return_tensors="pt")
-
-    # generate() will fail with many different creative error messages if tokens aren't
-    # on the right device.
-    input_tokens = input_tokens.to(model.device)
-
-    # The generate() method sometimes needs to know what is the integer ID
-    # of the padding token, and for some reason this critical piece of information
-    # isn't included in the serialized model. We get it from the tokenizer.
-    # And of course some tokenizers don't set this parameter, in which case
-    # we use the end of string token and hope for the best.
-    pad_token_id = tokenizer.pad_token_id
-    if pad_token_id is None:
-        pad_token_id = tokenizer.eos_token_id
-    if pad_token_id is None:
-        # Raise an error here because the some branches of the generate
-        # method won't complain about an invalid value of this parameter,
-        # while others will raise a cryptic exception from deep within
-        # their beam search code.
-        raise ValueError(f"Couldn't figure out padding token for tokenizer {tokenizer}")
-    generate_input["pad_token_id"] = pad_token_id
-
-    # Make sure you specify this parameter explicitly, or you will have
-    # a bad time.
-    generate_input["eos_token_id"] = (tokenizer.eos_token_id,)
+    # Input tokens must be passed to generate() as a positional argument, not a named
+    # argument.
+    input_tokens = generate_input["input_tokens"]
+    generate_input = generate_input.copy()
+    del generate_input["input_tokens"]
 
     generate_result = model.generate(input_tokens, **generate_input)
 
