@@ -6,19 +6,18 @@ Common utility functions for this package.
 
 # Standard
 import json
+import os
 import pathlib
 
 # Third Party
 import yaml
-
-# First Party
-from granite_common.base.types import ChatCompletion, UserMessage, VLLMExtraBody
 
 # Local
 from .constants import (
     BASE_MODEL_TO_CANONICAL_NAME,
     INTRINSICS_LIB_REPO_NAME,
     YAML_JSON_FIELDS,
+    YAML_OPTIONAL_FIELDS,
     YAML_REQUIRED_FIELDS,
 )
 
@@ -35,12 +34,27 @@ def make_config_dict(
     ):
         raise ValueError("Exactly one of config_file and config_dict must be set.")
 
+    all_fields = sorted(YAML_REQUIRED_FIELDS + YAML_OPTIONAL_FIELDS)
+
     if config_file:
         with open(config_file, encoding="utf8") as file:
             config_dict = yaml.safe_load(file)
+
+    # Validate top-level field names. No schema checking for YAML, so we need to do this
+    # manually.
     for field in YAML_REQUIRED_FIELDS:
         if field not in config_dict:
             raise ValueError(f"Configuration is missing required field '{field}'")
+    for name in config_dict:
+        if name not in all_fields:
+            raise ValueError(
+                f"Configuration contains unexpected top-level field "
+                f"'{name}'. Known top level fields are: {all_fields}"
+            )
+    for name in YAML_OPTIONAL_FIELDS:
+        # Optional fields should be None if not present, to simplify downstream code.
+        if name not in config_dict:
+            config_dict[name] = None
 
     # Parse fields that contain JSON data.
     for name in YAML_JSON_FIELDS:
@@ -102,8 +116,18 @@ def obtain_lora(
         allow_patterns=f"{lora_subdir_name}/{file_glob}",
         cache_dir=cache_dir,
     )
+    lora_dir = pathlib.Path(local_root_path) / lora_subdir_name
 
-    return pathlib.Path(local_root_path) / lora_subdir_name
+    # Hugging Face Hub API will happily download nothing. Check whether that happened.
+    if not os.path.exists(lora_dir):
+        raise ValueError(
+            f"Intrinsic '{intrinsic_name}' as "
+            f"{'aLoRA' if alora else 'LoRA'} adapter on base model "
+            f"'{target_model_name}' not found in "
+            f"{INTRINSICS_LIB_REPO_NAME} repository on Hugging Face Hub."
+        )
+
+    return lora_dir
 
 
 def obtain_io_yaml(
@@ -131,58 +155,3 @@ def obtain_io_yaml(
         intrinsic_name, target_model_name, alora, cache_dir, file_glob="io.yaml"
     )
     return lora_dir / "io.yaml"
-
-
-def move_documents_to_message(
-    chat_completion: ChatCompletion | dict,
-) -> ChatCompletion | dict:
-    """
-    By convention, our canned JSON requests place RAG documents in extra_body/documents.
-    Some models do not accept this parameter.
-    This function edits a request by putting the documents into the first turn of the
-    messages.
-
-    :param chat_completion: A chat completion request as dataclass or parsed JSON
-
-    :returns: A copy of ``chat_completion`` with any documents under ``extra_body``
-        moved to the first message. Returned type will be the same as the input type.
-        May return original object if no edits are necessary.
-    """
-    if isinstance(chat_completion, ChatCompletion):
-        should_return_dataclass = True
-    elif isinstance(chat_completion, dict):
-        should_return_dataclass = False
-        chat_completion = ChatCompletion.model_validate(chat_completion)
-    else:
-        raise TypeError(
-            f"Unexpected type '{type(chat_completion)}' for 'chat_completion' "
-            f"argument. Should be ChatCompletion or dict."
-        )
-
-    if (
-        chat_completion.extra_body is not None
-        and chat_completion.extra_body.documents is not None
-    ):
-        docs_list = chat_completion.extra_body.documents
-        doc_text = "\n\n".join([f"[Document {d.doc_id}]\n{d.text}" for d in docs_list])
-        new_messages = [
-            UserMessage(
-                content="You have access to the following documents:\n\n" + doc_text
-            )
-        ] + chat_completion.messages
-
-        # Round-trip through parsed JSON so that extra_body.documents will be unset
-        new_extra_body = VLLMExtraBody.model_validate(
-            {
-                k: v
-                for k, v in chat_completion.extra_body.model_dump().items()
-                if k != "documents"
-            }
-        )
-        chat_completion = chat_completion.model_copy(
-            update={"messages": new_messages, "extra_body": new_extra_body}
-        )
-
-    if should_return_dataclass:
-        return chat_completion
-    return chat_completion.model_dump()

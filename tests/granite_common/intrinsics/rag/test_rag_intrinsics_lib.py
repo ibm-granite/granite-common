@@ -437,13 +437,13 @@ def test_run_transformers(yaml_json_combo_with_model):
 
     # Run the model using Hugging Face APIs
     model, tokenizer = granite_common.util.load_transformers_lora(lora_dir)
-    tokenizer_input, generate_input, other_input = (
+    generate_input, other_input = (
         granite_common.util.chat_completion_request_to_transformers_inputs(
             transformed_input.model_dump(), tokenizer, model
         )
     )
     responses = granite_common.util.generate_with_transformers(
-        tokenizer, model, tokenizer_input, generate_input, other_input
+        tokenizer, model, generate_input, other_input
     )
 
     # Output processing

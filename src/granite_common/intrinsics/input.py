@@ -7,6 +7,7 @@ LoRA adapters in IBM's `rag-agent-lib` library of intrinsics.
 
 
 # Standard
+import json
 import pathlib
 
 # First Party
@@ -72,6 +73,72 @@ def mark_sentence_boundaries(
     return result
 
 
+def move_documents_to_message(
+    chat_completion: ChatCompletion | dict, how: str = "string"
+) -> ChatCompletion | dict:
+    """
+    By convention, our canned JSON requests place RAG documents in extra_body/documents.
+    Some models do not accept this parameter.
+    This function edits a request by putting the documents into the first turn of the
+    messages.
+
+    :param chat_completion: A chat completion request as dataclass or parsed JSON
+    :param how: How to serialize the documents; supported values are "string" and "json"
+
+    :returns: A copy of ``chat_completion`` with any documents under ``extra_body``
+        moved to the first message. Returned type will be the same as the input type.
+        May return original object if no edits are necessary.
+    """
+    if isinstance(chat_completion, ChatCompletion):
+        should_return_dataclass = True
+    elif isinstance(chat_completion, dict):
+        should_return_dataclass = False
+        chat_completion = ChatCompletion.model_validate(chat_completion)
+    else:
+        raise TypeError(
+            f"Unexpected type '{type(chat_completion)}' for 'chat_completion' "
+            f"argument. Should be ChatCompletion or dict."
+        )
+
+    if (
+        chat_completion.extra_body is not None
+        and chat_completion.extra_body.documents is not None
+    ):
+        docs_list = chat_completion.extra_body.documents
+
+        if how == "string":
+            doc_text = "\n\n".join(
+                [f"[Document {d.doc_id}]\n{d.text}" for d in docs_list]
+            )
+            doc_message_text = (
+                "You have access to the following documents:\n\n" + doc_text
+            )
+        elif how == "json":
+            doc_message_text = json.dumps([d.model_dump() for d in docs_list])
+        else:
+            raise ValueError(f"Unknown document serialization method '{how}'")
+
+        new_messages = [
+            UserMessage(content=doc_message_text)
+        ] + chat_completion.messages
+
+        # Round-trip through parsed JSON so that extra_body.documents will be unset
+        new_extra_body = VLLMExtraBody.model_validate(
+            {
+                k: v
+                for k, v in chat_completion.extra_body.model_dump().items()
+                if k != "documents"
+            }
+        )
+        chat_completion = chat_completion.model_copy(
+            update={"messages": new_messages, "extra_body": new_extra_body}
+        )
+
+    if should_return_dataclass:
+        return chat_completion
+    return chat_completion.model_dump()
+
+
 class IntrinsicsRewriter(ChatCompletionRewriter):
     """General-purpose chat completion rewriter for use with the models in the
     RAG Agent Library. Reads parameters of the model's input and output formats
@@ -96,6 +163,20 @@ class IntrinsicsRewriter(ChatCompletionRewriter):
     instruction: str | None
     """Optional instruction template. If present, a new user message will be added with
     the indicated instruction."""
+
+    sentence_boundaries: dict[str, str] | None
+    """
+    Optional sentence boundary marking specification, as a mapping from sentence 
+    location (i.e. "last_message", "documents") to marker string (i.e. "c" for the
+    first sentence to be marked with "<c0>").
+    """
+
+    docs_as_message: str | None
+    """
+    Optional specification for moving documents from ``extra_body/documents`` to a 
+    user message at the beginning of the messages list. Value specifies how to serialize
+    the documents into the message: "string" or "json".
+    """
 
     def __init__(
         self,
@@ -168,6 +249,14 @@ class IntrinsicsRewriter(ChatCompletionRewriter):
                         f"field set to {v}, which is not a string."
                     )
 
+        self.docs_as_message = self.config["docs_as_message"]
+        valid_docs_as_message = ["string", "json"]
+        if self.docs_as_message and self.docs_as_message not in valid_docs_as_message:
+            raise ValueError(
+                f"docs_as_message parameter set to '{self.docs_as_message}', which is "
+                f"not one of the valid options {valid_docs_as_message}"
+            )
+
     def _mark_sentence_boundaries(
         self, chat_completion: ChatCompletion
     ) -> ChatCompletion:
@@ -232,6 +321,13 @@ class IntrinsicsRewriter(ChatCompletionRewriter):
 
         if self.sentence_boundaries:
             chat_completion = self._mark_sentence_boundaries(chat_completion)
+
+        if self.docs_as_message:
+            # Note that it's important for this transformation to happen after sentence
+            # boundaries are inserted into the documents.
+            chat_completion = move_documents_to_message(
+                chat_completion, self.docs_as_message
+            )
 
         if self.instruction is not None:
             # Generate and append new user message of instructions
