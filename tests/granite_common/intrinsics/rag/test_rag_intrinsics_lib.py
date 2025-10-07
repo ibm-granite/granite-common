@@ -21,7 +21,7 @@ import yaml
 from granite_common import ChatCompletion, IntrinsicsRewriter
 from granite_common.base.types import ChatCompletionResponse
 from granite_common.intrinsics import json_util, util
-from granite_common.intrinsics.constants import INTRINSICS_LIB_REPO_NAME
+from granite_common.intrinsics.constants import RAG_INTRINSICS_LIB_REPO_NAME
 from granite_common.intrinsics.output import IntrinsicsResultProcessor
 import granite_common.util
 
@@ -264,7 +264,7 @@ def test_read_yaml():
     path_suffix = "answerability/lora/granite-3.3-2b-instruct/io.yaml"
     try:
         local_path = huggingface_hub.snapshot_download(
-            repo_id=INTRINSICS_LIB_REPO_NAME,
+            repo_id=RAG_INTRINSICS_LIB_REPO_NAME,
             allow_patterns=path_suffix,
         )
     except requests.exceptions.HTTPError:
