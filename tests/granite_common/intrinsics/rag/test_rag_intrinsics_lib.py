@@ -150,12 +150,26 @@ _YAML_JSON_COMBOS = {
         None,
         False,
     ),
+    "answer_relevance_classifier_alora": (
+        _INPUT_YAML_DIR / "answer_relevance_classifier.yaml",
+        _INPUT_JSON_DIR / "answer_relevance_classifier.json",
+        "answer_relevance_classifier",
+        None,
+        True,
+    ),
     "answer_relevance_rewriter": (
         _INPUT_YAML_DIR / "answer_relevance_rewriter.yaml",
         _INPUT_JSON_DIR / "answer_relevance_rewriter.json",
         "answer_relevance_rewriter",
         _INPUT_ARGS_DIR / "answer_relevance_rewriter.json",
         False,
+    ),
+    "answer_relevance_rewriter_alora": (
+        _INPUT_YAML_DIR / "answer_relevance_rewriter.yaml",
+        _INPUT_JSON_DIR / "answer_relevance_rewriter.json",
+        "answer_relevance_rewriter",
+        _INPUT_ARGS_DIR / "answer_relevance_rewriter.json",
+        True,
     ),
     "citations": (
         _INPUT_YAML_DIR / "citations.yaml",
