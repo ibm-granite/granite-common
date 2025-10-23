@@ -3,7 +3,7 @@
         {
             "index": 0,
             "message": {
-                "content": "{\"context_relevance\": 0.00493293826222853}",
+                "content": "{\"context_relevance\": 0.005}",
                 "role": "assistant"
             }
         }
