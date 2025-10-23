@@ -15,7 +15,7 @@ import yaml
 # Local
 from .constants import (
     BASE_MODEL_TO_CANONICAL_NAME,
-    INTRINSICS_LIB_REPO_NAME,
+    RAG_INTRINSICS_LIB_REPO_NAME,
     YAML_JSON_FIELDS,
     YAML_OPTIONAL_FIELDS,
     YAML_REQUIRED_FIELDS,
@@ -75,7 +75,9 @@ def make_config_dict(
 def obtain_lora(
     intrinsic_name: str,
     target_model_name: str,
+    /,
     alora: bool = False,
+    repo_id=RAG_INTRINSICS_LIB_REPO_NAME,
     cache_dir: str | None = None,
     file_glob: str = "*",
 ) -> pathlib.Path:
@@ -88,6 +90,9 @@ def obtain_lora(
     :param intrinsic_name: Short name of the intrinsic model, such as "certainty".
     :param target_model_name: Name of the base model for the LoRA or aLoRA adapter.
     :param alora: If ``True``, load aLoRA version of intrinsic; otherwise use LoRA
+    :param repo_id: Optional name of Hugging Face Hub repository containing a collection
+        of LoRA and/or aLoRA adapters for intrinsics.
+        Default is to use rag-intrinsics-lib.
     :param cache_dir: Local directory to use as a cache (in Hugging Face Hub format),
         or ``None`` to use the Hugging Face Hub default location.
     :param file_glob: Only files that match this glob will be downloaded to the cache.
@@ -112,7 +117,7 @@ def obtain_lora(
 
     # Download just the files for this LoRA if not already present
     local_root_path = huggingface_hub.snapshot_download(
-        repo_id=INTRINSICS_LIB_REPO_NAME,
+        repo_id=repo_id,
         allow_patterns=f"{lora_subdir_name}/{file_glob}",
         cache_dir=cache_dir,
     )
@@ -124,7 +129,7 @@ def obtain_lora(
             f"Intrinsic '{intrinsic_name}' as "
             f"{'aLoRA' if alora else 'LoRA'} adapter on base model "
             f"'{target_model_name}' not found in "
-            f"{INTRINSICS_LIB_REPO_NAME} repository on Hugging Face Hub."
+            f"{repo_id} repository on Hugging Face Hub."
         )
 
     return lora_dir
@@ -133,7 +138,9 @@ def obtain_lora(
 def obtain_io_yaml(
     intrinsic_name: str,
     target_model_name: str,
+    /,
     alora: bool = False,
+    repo_id=RAG_INTRINSICS_LIB_REPO_NAME,
     cache_dir: str | None = None,
 ) -> pathlib.Path:
     """
@@ -145,6 +152,9 @@ def obtain_io_yaml(
     :param intrinsic_name: Short name of the intrinsic model, such as "certainty".
     :param target_model_name: Name of the base model for the LoRA or aLoRA adapter.
     :param alora: If ``True``, load aLoRA version of intrinsic; otherwise use LoRA
+    :param repo_id: Optional name of Hugging Face Hub repository containing a collection
+        of LoRA and/or aLoRA adapters for intrinsics.
+        Default is to use rag-intrinsics-lib.
     :param cache_dir: Local directory to use as a cache (in Hugging Face Hub format),
         or ``None`` to use the Hugging Face Hub default location.
 
@@ -152,6 +162,11 @@ def obtain_io_yaml(
     This path is suitable for passing to commands that will serve the adapter.
     """
     lora_dir = obtain_lora(
-        intrinsic_name, target_model_name, alora, cache_dir, file_glob="io.yaml"
+        intrinsic_name,
+        target_model_name,
+        alora,
+        repo_id=repo_id,
+        cache_dir=cache_dir,
+        file_glob="io.yaml",
     )
     return lora_dir / "io.yaml"

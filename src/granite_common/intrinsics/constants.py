@@ -27,8 +27,8 @@ YAML_JSON_FIELDS = [
 ]
 """Fields of the YAML file that contain JSON values as strings"""
 
-INTRINSICS_LIB_REPO_NAME = "ibm-granite/intrinsics-lib"
-"""Location of the intrinsics library on Huggingface Hub"""
+RAG_INTRINSICS_LIB_REPO_NAME = "ibm-granite/rag-intrinsics-lib"
+"""Location of the RAG intrinsics library on Huggingface Hub"""
 
 BASE_MODEL_TO_CANONICAL_NAME = {
     "ibm-granite/granite-3.3-8b-instruct": "granite-3.3-8b-instruct",
