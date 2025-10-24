@@ -10,12 +10,6 @@
     }
   ],
   "extra_body": {
-    "documents": [
-      {
-        "text": "Dummy document for testing.",
-        "doc_id": "1"
-      }
-    ],
     "guided_json": {
       "title": "ContextRelevanceOutput",
       "type": "object",
