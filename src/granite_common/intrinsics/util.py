@@ -5,6 +5,7 @@ Common utility functions for this package.
 """
 
 # Standard
+import copy
 import json
 import os
 import pathlib
@@ -36,6 +37,9 @@ def make_config_dict(
 
     all_fields = sorted(YAML_REQUIRED_FIELDS + YAML_OPTIONAL_FIELDS)
 
+    if config_dict:
+        # Don't modify input
+        config_dict = copy.deepcopy(config_dict)
     if config_file:
         with open(config_file, encoding="utf8") as file:
             config_dict = yaml.safe_load(file)
@@ -60,14 +64,16 @@ def make_config_dict(
     for name in YAML_JSON_FIELDS:
         if config_dict[name]:
             value = config_dict[name]
-            if not isinstance(value, str):
-                raise TypeError(f"'{name}' field must be a string or null (~ in YAML)")
-            try:
-                config_dict[name] = json.loads(value)
-            except json.JSONDecodeError as e:
-                raise ValueError(
-                    f"Error parsing JSON in '{name}' field. Raw value was '{value}'"
-                ) from e
+            # Users seem to be intent on passing YAML data through this function
+            # multiple times, so we assume that values other than a string have already
+            # been parsed by a previous call of this function.
+            if isinstance(value, str):
+                try:
+                    config_dict[name] = json.loads(value)
+                except json.JSONDecodeError as e:
+                    raise ValueError(
+                        f"Error parsing JSON in '{name}' field. Raw value was '{value}'"
+                    ) from e
 
     return config_dict
 

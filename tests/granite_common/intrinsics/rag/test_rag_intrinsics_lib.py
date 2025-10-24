@@ -270,6 +270,19 @@ def test_read_yaml():
         data = yaml.safe_load(file)
     assert data["model"] is None
 
+    original_data = copy.deepcopy(data)
+
+    # Instantiate directly from dictionary
+    IntrinsicsRewriter(config_dict=data)
+
+    # Data shouldn't be modified
+    assert original_data == data
+
+    # Manually run through the make_config_dict() function, because apparently users
+    # will try to do this.
+    data2 = util.make_config_dict(_INPUT_YAML_DIR / "answerability.yaml")
+    IntrinsicsRewriter(config_dict=data2)
+
     # Read from local disk
     IntrinsicsRewriter(config_file=_INPUT_YAML_DIR / "answerability.yaml")
 
