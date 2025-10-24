@@ -4,13 +4,5 @@
       "content": "Who is the CEO of Microsoft?",
       "role": "user"
     }
-  ],
-  "extra_body": {
-    "documents": [
-      {
-          "doc_id": "1",
-          "text": "Dummy document for testing."
-      }
-    ]
-  }
+  ]
 }
