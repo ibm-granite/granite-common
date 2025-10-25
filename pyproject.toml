@@ -50,6 +50,7 @@ gpt-oss = [
     "kernels"
 ]
 dev = [
+    "elasticsearch>=8.0.0,<9.0.0",
     "isort==6.0.1",
     "pre-commit>=3.0.4,<5.0",
     "pylint>=2.16.2,<4.0",
