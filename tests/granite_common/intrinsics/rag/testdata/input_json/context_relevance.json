@@ -4,13 +4,5 @@
       "content": "Who is the CEO of Microsoft?",
       "role": "user"
     }
-  ],
-  "extra_body": {
-    "documents": [
-      {
-          "doc_id": "1",
-          "text": "This document has nothing to do with the certainty check and is only here for testing."
-      }
-    ]
-  }
+  ]
 }

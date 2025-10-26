@@ -321,6 +321,18 @@ class TokenToFloat(InPlaceTransformation):
             value_str_offset += 1
 
         if value_str_offset not in begin_to_token:
+            # Categorical value didn't start on a token boundary. Check whether the
+            # value was the suffix of a token.
+            prev_token_offset = value_str_offset
+            while prev_token_offset > 0 and prev_token_offset not in begin_to_token:
+                prev_token_offset -= 1
+            prev_token_ix = begin_to_token[prev_token_offset]
+            prev_token = logprobs.content[prev_token_ix].token
+            if prev_token.endswith(json.dumps(json_literal.value)):
+                # Can't decode other tokens since we don't have logprobs for the
+                # beginning of the literal.
+                return self.categories_to_values[json_literal.value]
+
             raise ValueError(
                 f"Value '{json_literal}' starts at position "
                 f"{value_str_offset}, "

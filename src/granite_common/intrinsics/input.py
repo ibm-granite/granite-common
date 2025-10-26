@@ -187,7 +187,8 @@ class IntrinsicsRewriter(ChatCompletionRewriter):
     ):
         """
         :param config_file: (optional) Location of YAML configuration file
-        :param config_dict: (optional) Parsed contents of YAML configuration file
+        :param config_dict: (optional) Contents of YAML configuration file that the
+            caller has parsed by calling ``yaml.safe_load()``.
         :param model_name: (optional) model name to put into chat completion requests,
          or ``None`` to use default model name from the configuration
         """

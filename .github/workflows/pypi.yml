@@ -44,7 +44,7 @@ jobs:
                   # for setuptools-scm
                   fetch-depth: 0
 
-            - uses: hynek/build-and-inspect-python-package@c52c3a4710070b50470d903818a7b25115dcd076 # v2.13.0
+            - uses: hynek/build-and-inspect-python-package@efb823f52190ad02594531168b7a2d5790e66516 # v2.14.0
 
     # push to Test PyPI on
     # - a new GitHub release is published
@@ -71,7 +71,7 @@ jobs:
                   egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
 
             - name: Fetch build artifacts
-              uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+              uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
               with:
                   name: Packages
                   path: dist
@@ -104,12 +104,12 @@ jobs:
                   egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
 
             - name: Fetch build artifacts
-              uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+              uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
               with:
                   name: Packages
                   path: dist
 
-            - uses: sigstore/gh-action-sigstore-python@f7ad0af51a5648d09a20d00370f0a91c3bdf8f84 # v3.0.1
+            - uses: sigstore/gh-action-sigstore-python@f832326173235dcb00dd5d92cd3f353de3188e6c # v3.1.0
               with:
                   inputs: >-
                       ./dist/*.tar.gz
