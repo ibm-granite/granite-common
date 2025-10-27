@@ -10,5 +10,19 @@
             "finish_reason": "stop"
         }
     ],
-    "prompt_logprobs": null
+    "prompt_logprobs": null,
+    "id": "chatcmpl-8c3505e704e644d9bb484d12288ed3a6",
+    "created": 1758654279,
+    "model": "answer_relevance_classifier",
+    "object": "chat.completion",
+    "service_tier": null,
+    "system_fingerprint": null,
+    "usage": {
+        "completion_tokens": 71,
+        "prompt_tokens": 186,
+        "total_tokens": 257,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+    },
+    "kv_transfer_params": null
 }
