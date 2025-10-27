@@ -110,12 +110,8 @@ def obtain_lora(
     import huggingface_hub
 
     # Normalize target model name.
-    if target_model_name not in BASE_MODEL_TO_CANONICAL_NAME:
-        raise ValueError(
-            f"Unknown target model {target_model_name}. Known names are: "
-            f"{list(BASE_MODEL_TO_CANONICAL_NAME.keys())}"
-        )
-    target_model_name = BASE_MODEL_TO_CANONICAL_NAME[target_model_name]
+    if target_model_name in BASE_MODEL_TO_CANONICAL_NAME:
+        target_model_name = BASE_MODEL_TO_CANONICAL_NAME[target_model_name]
 
     lora_str = "alora" if alora else "lora"
 
@@ -135,7 +131,8 @@ def obtain_lora(
             f"Intrinsic '{intrinsic_name}' as "
             f"{'aLoRA' if alora else 'LoRA'} adapter on base model "
             f"'{target_model_name}' not found in "
-            f"{repo_id} repository on Hugging Face Hub."
+            f"{repo_id} repository on Hugging Face Hub. "
+            f"Searched for path {lora_subdir_name}/{file_glob}"
         )
 
     return lora_dir
