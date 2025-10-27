@@ -452,6 +452,6 @@ class ChatCompletionResponse(pydantic.BaseModel, NoDefaultsMixin):
 
     model_config = pydantic.ConfigDict(
         # Actual response objects will contain additional fields which this library
-        # ignores.
-        extra="ignore",
+        # ignores, but we need to pass them through when transforming data.
+        extra="allow",
     )

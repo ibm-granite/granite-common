@@ -15,9 +15,6 @@ import json
 import math
 import pathlib
 
-# Third Party
-import pydantic
-
 # First Party
 from granite_common.base.io import ChatCompletionResultProcessor
 from granite_common.base.types import (
@@ -980,7 +977,7 @@ class IntrinsicsResultProcessor(ChatCompletionResultProcessor):
     # pylint: disable=unused-argument
     def _transform_impl(
         self,
-        chat_completion_response: ChatCompletionResponse | dict | pydantic.BaseModel,
+        chat_completion_response: ChatCompletionResponse,
         chat_completion: ChatCompletion | None = None,
     ) -> ChatCompletionResponse:
         transformed_choices = [
