@@ -110,8 +110,10 @@ def obtain_lora(
     import huggingface_hub
 
     # Normalize target model name.
-    if target_model_name in BASE_MODEL_TO_CANONICAL_NAME:
-        target_model_name = BASE_MODEL_TO_CANONICAL_NAME[target_model_name]
+    # Confusing syntax here brought to you by pylint.
+    target_model_name = BASE_MODEL_TO_CANONICAL_NAME.get(
+        target_model_name, target_model_name
+    )
 
     lora_str = "alora" if alora else "lora"
 
