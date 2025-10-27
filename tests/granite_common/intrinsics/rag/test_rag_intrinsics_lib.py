@@ -564,5 +564,7 @@ def test_run_transformers(yaml_json_combo_with_model):
     transformed_json = _round_floats(
         json_util.parse_inline_json(transformed_responses.model_dump())
     )
-    expected_json = _round_floats(json_util.parse_inline_json(expected.model_dump()))
+    expected_json = _round_floats(
+        json_util.parse_inline_json(expected.model_dump()), num_digits=1
+    )
     assert transformed_json == expected_json
