@@ -5,7 +5,8 @@
             "message": {
                 "content": "{\"requirement_likelihood\": 1.0}",
                 "role": "assistant",
-                "tool_calls": []
+                "tool_calls": [],
+                "reasoning_content": null
             },
             "finish_reason": "stop"
         }

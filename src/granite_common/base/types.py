@@ -160,8 +160,18 @@ class SystemMessage(_ChatMessageBase):
     role: Literal["system"] = "system"
 
 
+class DeveloperMessage(_ChatMessageBase):
+    """Developer system message for a chat completion request."""
+
+    role: Literal["developer"] = "developer"
+
+
 ChatMessage: TypeAlias = (
-    UserMessage | AssistantMessage | ToolResultMessage | SystemMessage
+    UserMessage
+    | AssistantMessage
+    | ToolResultMessage
+    | SystemMessage
+    | DeveloperMessage
 )
 """Type alias for all message types. We use this Union instead of the actual base class
 :class:`_ChatMessageBase` so that Pydantic can parse the message list from JSON."""
