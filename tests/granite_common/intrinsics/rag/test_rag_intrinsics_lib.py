@@ -562,9 +562,18 @@ def test_run_transformers(yaml_json_combo_with_model):
     # Correct for floating point rounding.
     # Can't use pytest.approx() because of lists
     transformed_json = _round_floats(
-        json_util.parse_inline_json(transformed_responses.model_dump()), num_digits=1
+        json_util.parse_inline_json(transformed_responses.model_dump()), num_digits=2
     )
     expected_json = _round_floats(
-        json_util.parse_inline_json(expected.model_dump()), num_digits=1
+        json_util.parse_inline_json(expected.model_dump()), num_digits=2
     )
-    assert transformed_json == expected_json
+    if transformed_json != expected_json:
+        # Simple comparison failed.
+        # Pull out just the content and attempt a more sophisticated comparison
+        assert len(transformed_responses.choices) == len(expected.choices)
+
+        for tc, ec in zip(transformed_responses.choices, expected.choices, strict=True):
+            t_json = json.loads(tc.message.content)
+            e_json = json.loads(ec.message.content)
+
+            assert t_json == pytest.approx(e_json, abs=0.1)

@@ -5,7 +5,8 @@
             "message": {
                 "content": "{\"answerability_likelihood\": 0.00020351838117683546}",
                 "role": "assistant",
-                "tool_calls": []
+                "tool_calls": [],
+                "reasoning_content": null
             },
             "finish_reason": "length"
         }

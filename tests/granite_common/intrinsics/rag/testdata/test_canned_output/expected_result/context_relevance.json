@@ -5,7 +5,8 @@
             "message": {
                 "content": "{\"context_relevance\": 0.47131842717316647}",
                 "role": "assistant",
-                "tool_calls": []
+                "tool_calls": [],
+                "reasoning_content": null
             },
             "finish_reason": "stop"
         }
