@@ -141,6 +141,7 @@ class AssistantMessage(_ChatMessageBase):
 
     role: Literal["assistant"] = "assistant"
     tool_calls: list[ToolCall] | None = None
+    reasoning_content: str | None = None
 
 
 class ToolResultMessage(_ChatMessageBase):
