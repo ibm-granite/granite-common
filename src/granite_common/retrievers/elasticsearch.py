@@ -1,3 +1,10 @@
+# SPDX-License-Identifier: Apache-2.0
+
+__doc__ = """
+Classes and functions that implement the ElasticsearchRetriever.
+"""
+
+
 class ElasticsearchRetriever:
     """Retriever for documents hosted on an ElasticSearch server."""
 
