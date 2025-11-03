@@ -22,9 +22,6 @@ from .constants import (
     YAML_REQUIRED_FIELDS,
 )
 
-# Create this as needed and cache it
-intrinsics_name_repo_id_mapping = None
-
 
 def make_config_dict(
     config_file: str | pathlib.Path | None = None, config_dict: dict | None = None
@@ -142,9 +139,7 @@ def obtain_lora(
     # Third Party
     import huggingface_hub
 
-    global intrinsics_name_repo_id_mapping
-    if not intrinsics_name_repo_id_mapping:
-        intrinsics_name_repo_id_mapping = get_lora_repo_id_mapping(INTRINSICS_HF_ORG)
+    intrinsics_name_repo_id_mapping = get_lora_repo_id_mapping(INTRINSICS_HF_ORG)
 
     # Normalize target model name.
     # Confusing syntax here brought to you by pylint.

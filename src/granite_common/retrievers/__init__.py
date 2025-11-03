@@ -20,7 +20,6 @@ __all__ = [
     "Retriever",
     "InMemoryRetriever",
     "ElasticsearchRetriever",
-    "RetrievalRequestProcessor",
     "compute_embeddings",
     "write_embeddings",
     "util",
