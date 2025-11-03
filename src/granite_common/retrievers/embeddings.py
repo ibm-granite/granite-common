@@ -266,15 +266,16 @@ class InMemoryRetriever:
         scores = [r["score"] for r in raw_result[0]]
         result = self._data_table.take(row_nums)
         result = result.append_column("score", pa.array(scores))
-        # return result.select(["id", "title", "url", "begin", "end", "text", "score"])
+        rows = result.select(["id", "title", "url", "begin", "end", "text", "score"])
 
         # TODO: Wrap this in the Retriever Processor
         documents = []
-        for row in result.to_pylist():
-            print(row)
+        for row in rows.to_pylist():
             document = {
-                "doc_id": str(row["id"]),
+                "doc_id": str(row["id"]),  # Non-string values crash vLLM
                 "text": row["text"],
                 "score": str(row["score"]),  # Non-string values crash vLLM
             }
             documents.append(document)
+
+        return documents

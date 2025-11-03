@@ -3,7 +3,6 @@
 
 # First Party
 from granite_common.base.io import (
-    RetrievalRequestProcessor,
     Retriever,
 )
 from granite_common.retrievers import util
