@@ -1,0 +1,71 @@
+name: 'Test Setup'
+description: 'Setup Ollama'
+runs:
+  using: "composite"
+  steps:
+    - name: Install Ollama and start server
+      shell: bash
+      run: |
+        curl -fsSL https://ollama.com/install.sh | sudo -E sh
+
+    - name: Wait for Ollama server
+      shell: bash
+      run: |
+        sleep 10
+        time curl -i http://localhost:11434
+
+    - name: Download granite3.2:2b model
+      shell: bash
+      run: |
+        ollama pull granite3.2:2b
+
+    - name: Download granite3.2:8b model
+      shell: bash
+      run: |
+        ollama pull granite3.2:8b
+
+    - name: Download granite3.3:2b model
+      shell: bash
+      run: |
+        ollama pull granite3.3:2b
+
+    - name: Download granite3.3:8b model
+      shell: bash
+      run: |
+        ollama pull granite3.3:8b
+
+    - name: Wait for granite3.2:2b download
+      shell: bash
+      run: |
+        sleep 10
+        until ollama list granite3.2:2b
+        do
+          sleep 5
+        done
+
+    - name: Wait for granite3.2:8b download
+      shell: bash
+      run: |
+        sleep 10
+        until ollama list granite3.2:8b
+        do
+          sleep 5
+        done
+
+    - name: Wait for granite3.3:2b download
+      shell: bash
+      run: |
+        sleep 10
+        until ollama list granite3.3:2b
+        do
+          sleep 5
+        done
+
+    - name: Wait for granite3.3:8b download
+      shell: bash
+      run: |
+        sleep 10
+        until ollama list granite3.3:8b
+        do
+          sleep 5
+        done
