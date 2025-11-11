@@ -38,8 +38,8 @@ jobs:
     strategy:
       matrix:
         python:
-          - "3.10"
-          - "3.11"
+          # - "3.10"
+          # - "3.11"
           - "3.12"
         platform:
           - "ubuntu-latest"
@@ -67,13 +67,16 @@ jobs:
           cache-dependency-path: |
             **/pyproject.toml
 
-      # - name: Setup Ollama server
-      #   uses: ./.github/actions/ollama-setup
-
       - name: "Install tox"
         run: |
           python -m pip install --upgrade pip
           python -m pip install tox tox-gh>=1.2
+
+      - name: Setup Ollama server
+        uses: ./.github/actions/ollama-setup
+
+      - name: Setup intrinsics on Ollama server
+        uses: ./.github/actions/ollama-setup-intrinsics
 
       - name: "Test notebooks"
         id: testnotebooks
