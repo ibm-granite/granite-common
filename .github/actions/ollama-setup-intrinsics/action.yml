@@ -6,8 +6,7 @@ runs:
     - name: Clone HF intrinsics repo
       shell: bash
       run: |
-        HF_REPO="https://huggingface.co/generative-computing/rag-intrinsics-lib"
-        git clone -b feat/ollama-loras https://user:$HF_TOKEN@${HF_REPO#https://}
+        git clone -b feat/ollama-loras https://huggingface.co/generative-computing/rag-intrinsics-lib
 
     - name: List cloned files
       shell: bash
