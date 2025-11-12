@@ -20,8 +20,19 @@ runs:
       shell: bash
       run: ls -lah rag-intrinsics-lib
 
-    - name: Convert weights to GGUF and deploy on Ollama
+    - name: Install dependencies
       shell: bash
       run: |
         cd rag-intrinsics-lib/_ollama
+        pip install -r requirements.txt
+
+    - name: Convert weights to GGUF and deploy on Ollama
+      shell: bash
+      run: |
         bash convert_and_load_intrinsics.sh
+
+    - name: Clean up
+      shell: bash
+      run: |
+        cd ../..
+        rm -rf rag-intrinsics-lib
