@@ -20,6 +20,10 @@ on:
       - 'pyproject.toml'
       - 'tox.ini'
       - '.github/workflows/test_notebooks.*' # This workflow
+  workflow_call:
+    secrets:
+      HF_TOKEN:
+        required: true
 
 env:
   LC_ALL: en_US.UTF-8
@@ -43,21 +47,20 @@ jobs:
           - "3.12"
         platform:
           - "ubuntu-latest"
-
     steps:
-      - name: "Harden Runner"
-        uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
-        with:
-          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+      # - name: "Harden Runner"
+      #   uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+      #   with:
+      #     egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
 
-      - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          # https://github.com/actions/checkout/issues/249
-          fetch-depth: 0
+      # - name: Checkout
+      #   uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      #   with:
+      #     # https://github.com/actions/checkout/issues/249
+      #     fetch-depth: 0
 
-      - name: Free disk space
-        uses: ./.github/actions/free-disk-space
+      # - name: Free disk space
+      #   uses: ./.github/actions/free-disk-space
 
       - name: Setup Python ${{ matrix.python }}
         uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
@@ -72,11 +75,13 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install tox tox-gh>=1.2
 
-      - name: Setup Ollama server
-        uses: ./.github/actions/ollama-setup
+      # - name: Setup Ollama server
+      #   uses: ./.github/actions/ollama-setup
 
       - name: Setup intrinsics on Ollama server
         uses: ./.github/actions/ollama-setup-intrinsics
+        with:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
       - name: "Test notebooks"
         id: testnotebooks

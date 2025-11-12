@@ -5,11 +5,10 @@ runs:
   steps:
     - name: Clone HF intrinsics repo
       shell: bash
-      env:
-        HF_TOKEN: ${{ secrets.HF_TOKEN }}  # Repo settings > Secrets > Actions
       run: |
         HF_REPO="https://huggingface.co/generative-computing/rag-intrinsics-lib"
         git clone -b feat/ollama-loras https://user:$HF_TOKEN@${HF_REPO#https://}
 
     - name: List cloned files
+      shell: bash
       run: ls -R rag-intrinsics-lib || true
