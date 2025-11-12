@@ -59,9 +59,10 @@ jobs:
       - name: Free disk space
         uses: ./.github/actions/free-disk-space
 
-      - name: Install uv and set the Python version
+      - name: Install uv and set the Python version ${{ matrix.python }}
         uses: astral-sh/setup-uv@v6
         with:
+          version: "0.9.8"
           python-version: ${{ matrix.python }}
           enable-cache: true
 
