@@ -31,7 +31,7 @@ runs:
       shell: bash
       run: |
         cd rag-intrinsics-lib/_ollama
-        bash convert_and_load_intrinsics.sh
+        uv run bash convert_and_load_intrinsics.sh
 
     - name: Clean up
       shell: bash
