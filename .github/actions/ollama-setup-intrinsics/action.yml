@@ -3,11 +3,6 @@ description: 'Convert intrinsics and serve on Ollama'
 runs:
   using: "composite"
   steps:
-    - name: Install Git LFS
-      run: |
-        sudo apt-get update
-        sudo apt-get install git-lfs
-        git lfs install
     - name: Clone HF intrinsics repo
       shell: bash
       env:
@@ -15,5 +10,6 @@ runs:
       run: |
         HF_REPO="https://huggingface.co/generative-computing/rag-intrinsics-lib"
         git clone -b feat/ollama-loras https://user:$HF_TOKEN@${HF_REPO#https://}
+
     - name: List cloned files
       run: ls -R rag-intrinsics-lib || true
