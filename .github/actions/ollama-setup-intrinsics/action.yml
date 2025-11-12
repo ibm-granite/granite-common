@@ -19,3 +19,9 @@ runs:
     - name: List cloned files
       shell: bash
       run: ls -lah rag-intrinsics-lib
+
+    - name: Convert weights to GGUF and deploy on Ollama
+      shell: bash
+      run: |
+        cd rag-intrinsics-lib/_ollama
+        bash convert_and_load_intrinsics.sh
