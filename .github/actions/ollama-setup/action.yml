@@ -8,7 +8,7 @@ runs:
       run: |
         curl -fsSL https://ollama.com/download/ollama-linux-amd64.tgz \
           | sudo tar zx -C /usr
-        OLLAMA_HOST="localhost:55555" ollama serve
+        OLLAMA_HOST="localhost:55555" ollama serve &
 
     - name: Wait for Ollama server
       shell: bash
