@@ -6,13 +6,14 @@ runs:
     - name: Install Ollama and start server
       shell: bash
       run: |
+        export OLLAMA_HOST="localhost:55555"
         curl -fsSL https://ollama.com/install.sh | sudo -E sh
 
     - name: Wait for Ollama server
       shell: bash
       run: |
         sleep 10
-        time curl -i http://localhost:11434
+        time curl -i http://localhost:55555
 
     - name: Download granite3.3:2b model
       shell: bash
