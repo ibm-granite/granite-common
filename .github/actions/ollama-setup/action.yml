@@ -6,8 +6,7 @@ runs:
     - name: Install Ollama and start server
       shell: bash
       run: |
-        export OLLAMA_HOST="localhost:55555"
-        curl -fsSL https://ollama.com/install.sh | sudo -E sh
+        curl -fsSL https://ollama.com/install.sh | OLLAMA_HOST="localhost:55555" sudo -E sh
 
     - name: Wait for Ollama server
       shell: bash
