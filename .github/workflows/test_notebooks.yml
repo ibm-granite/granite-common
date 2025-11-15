@@ -1,0 +1,84 @@
+# SPDX-License-Identifier: Apache-2.0
+
+name: Test notebooks
+on:
+  push:
+    branches:
+      - "main"
+      - "release-**"
+    paths:
+      - 'src/**.py'
+      - 'pyproject.toml'
+      - 'tox.ini'
+      - '.github/workflows/test_notebooks.*' # This workflow
+  pull_request:
+    branches:
+      - "main"
+      - "release-**"
+    paths:
+      - 'src/**.py'
+      - 'pyproject.toml'
+      - 'tox.ini'
+      - '.github/workflows/test_notebooks.*' # This workflow
+  workflow_call:
+    secrets:
+      HF_TOKEN:
+        required: true
+
+env:
+  LC_ALL: en_US.UTF-8
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
+
+jobs:
+  test_notebooks:
+    name: "test-notebooks: using ${{ matrix.python }} on ${{ matrix.platform }}"
+    runs-on: "${{ matrix.platform }}"
+    strategy:
+      matrix:
+        python:
+          - "3.12"
+        platform:
+          - "ubuntu-latest"
+    steps:
+      - name: "Harden Runner"
+        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Free disk space
+        uses: ./.github/actions/free-disk-space
+
+      - name: Setup Python ${{ matrix.python }}
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: |
+            **/pyproject.toml
+
+      - name: "Install tox"
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install tox tox-gh>=1.2
+
+      - name: Setup Ollama server
+        uses: ./.github/actions/ollama-setup
+
+      - name: Setup intrinsics on Ollama server
+        uses: ./.github/actions/ollama-setup-intrinsics
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+
+      - name: "Test notebooks"
+        id: testnotebooks
+        run: |
+          tox -e notebooks
