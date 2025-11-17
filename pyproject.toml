@@ -74,6 +74,9 @@ dev = [
 notebook = [
     "notebook",
     "aiohttp",  # For AIO in notebooks
+    "openai",
+    "nltk",
+    "huggingface-hub",
 ]
 all = [
     "granite-common[dev]",
