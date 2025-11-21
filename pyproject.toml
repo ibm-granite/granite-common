@@ -60,7 +60,7 @@ dev = [
     "pytest-retry~=1.7",
     "pytest-xdist",
     "pytest-recording",  # Used for blocking network access
-    "ruff==0.14.4",
+    "ruff==0.14.6",
     "tox",
     "anywidget",
     "ipywidgets",
