@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 __doc__ = """
-Classes and functions that implement common aspects of input and output string 
+Classes and functions that implement common aspects of input and output string
 processing for all Granite models.
 """
 
@@ -12,7 +12,12 @@ import abc
 import pydantic
 
 # Local
-from .types import AssistantMessage, ChatCompletion, ChatCompletionResponse
+from .types import (
+    AssistantMessage,
+    ChatCompletion,
+    ChatCompletionResponse,
+    Document,
+)
 
 
 class InputProcessor(abc.ABC):
@@ -163,4 +168,22 @@ class ChatCompletionResultProcessor(abc.ABC):
         """
         Subclasses must override this method with an implementation of
         :func:`transform()`.
+        """
+
+
+class Retriever(abc.ABC):
+    """
+    Base class for document retrievers. Provides APIs for searching by text snippet and
+    for inserting new documents.
+    """
+
+    @abc.abstractmethod
+    def retrieve(self, query: str, top_k: int = 10) -> list[Document]:
+        """Retrieve the top k matches of a query from the corpus.
+
+        :param query: Query string to use for lookup
+        :param top_k: Number of top-k results to return
+
+        :returns: Pyarrow table with fields: "id", "title", "url", "begin", "end",
+            "text", "score"
         """
