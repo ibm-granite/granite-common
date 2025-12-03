@@ -1,10 +1,9 @@
 name: 'Setup intrinsics for Ollama'
 description: 'Convert intrinsics and serve on Ollama'
-on:
-  workflow_call:
-    secrets:
-      HF_TOKEN:
-        required: true
+
+inputs:
+  HF_TOKEN:
+    required: true
 
 runs:
   using: "composite"
@@ -13,11 +12,9 @@ runs:
       shell: bash
       run: |
         git config --global credential.helper store
-        echo "https://user:${HF_TOKEN}@huggingface.co" > ~/.git-credentials
+        echo "https://user:${{ inputs.HF_TOKEN }}@huggingface.co" > ~/.git-credentials
         git config --global user.email "github-actions@github.com"
         git config --global user.name "GitHub Actions"
-      env:
-        HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
     - name: Clone HF intrinsics repo
       shell: bash

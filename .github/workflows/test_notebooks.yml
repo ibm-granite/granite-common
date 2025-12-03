@@ -41,8 +41,6 @@ jobs:
           - "3.12"
         platform:
           - "ubuntu-latest"
-    secrets:
-      HF_TOKEN: ${{ secrets.HF_TOKEN }}
     steps:
       - name: "Harden Runner"
         uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
@@ -73,6 +71,8 @@ jobs:
 
       - name: Setup intrinsics on Ollama server
         uses: ./.github/actions/ollama-setup-intrinsics
+        with:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
       - name: "Test notebooks"
         id: testnotebooks
