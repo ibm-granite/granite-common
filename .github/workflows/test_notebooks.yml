@@ -75,7 +75,7 @@ jobs:
 
       - name: Setup intrinsics on Ollama server
         uses: ./.github/actions/ollama-setup-intrinsics
-        env:
+        with:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
       - name: "Test notebooks"
