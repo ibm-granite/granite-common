@@ -77,5 +77,5 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          echo "$HF_TOKEN" | huggingface-cli login --token
+          echo "$HF_TOKEN" | hf login --token
           tox -e unit -- -n 1
