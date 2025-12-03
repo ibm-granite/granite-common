@@ -57,7 +57,7 @@ retriever = [
 dev = [
     "isort==6.0.1",
     "pre-commit>=3.0.4,<5.0",
-    "pylint>=2.16.2,<4.0",
+    "pylint>=2.16.2,<5.0",
     "pylint-pydantic",
     "pytest",
     "pytest-cov",
@@ -65,7 +65,7 @@ dev = [
     "pytest-retry~=1.7",
     "pytest-xdist",
     "pytest-recording",  # Used for blocking network access
-    "ruff==0.14.2",
+    "ruff==0.14.4",
     "tox",
     "anywidget",
     "ipywidgets",
@@ -80,6 +80,9 @@ dev = [
 notebook = [
     "notebook",
     "aiohttp",  # For AIO in notebooks
+    "openai",
+    "nltk",
+    "huggingface-hub",
 ]
 all = [
     "granite-common[dev]",

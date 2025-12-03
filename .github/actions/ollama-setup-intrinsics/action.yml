@@ -1,0 +1,37 @@
+name: 'Setup intrinsics for Ollama'
+description: 'Convert intrinsics and serve on Ollama'
+
+inputs:
+  HF_TOKEN:
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Git credentials for HF
+      shell: bash
+      run: |
+        git config --global credential.helper store
+        echo "https://user:${{ inputs.HF_TOKEN }}@huggingface.co" > ~/.git-credentials
+        git config --global user.email "github-actions@github.com"
+        git config --global user.name "GitHub Actions"
+
+    - name: Clone HF intrinsics repo
+      shell: bash
+      run: |
+        git clone https://huggingface.co/generative-computing/rag-intrinsics-lib
+
+    - name: List cloned files
+      shell: bash
+      run: ls -lah rag-intrinsics-lib
+
+    - name: Convert weights to GGUF and deploy on Ollama
+      shell: bash
+      run: |
+        cd rag-intrinsics-lib
+        bash run_ollama.sh
+
+    - name: Clean up
+      shell: bash
+      run: |
+        rm -rf rag-intrinsics-lib

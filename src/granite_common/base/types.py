@@ -5,7 +5,7 @@ Common shared types
 """
 
 # Standard
-from typing import Literal, Self, TypeAlias
+from typing import Literal, TypeAlias
 
 # Third Party
 from pydantic import Field
@@ -316,7 +316,7 @@ class GraniteChatCompletion(ChatCompletion):
     """
 
     @pydantic.model_validator(mode="after")
-    def _validate_vllm_stuff_in_extra_body(self) -> Self:
+    def _validate_vllm_stuff_in_extra_body(self):
         """
         Non-standard VLLM fields should be passed via the ``extra_body`` parameter.
         Make sure the user didn't stuff them into the root, which is currently set up
@@ -335,7 +335,7 @@ class GraniteChatCompletion(ChatCompletion):
         return self
 
     @pydantic.model_validator(mode="after")
-    def _validate_documents_at_top_level(self) -> Self:
+    def _validate_documents_at_top_level(self):
         """Documents for a Granite model chat completion request should be passed in the
         ``documents`` argument at the top level of the ``extra_body`` portion of the
         request.
