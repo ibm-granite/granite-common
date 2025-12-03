@@ -20,10 +20,6 @@ on:
       - 'pyproject.toml'
       - 'tox.ini'
       - '.github/workflows/test_notebooks.*' # This workflow
-  workflow_call:
-    secrets:
-      HF_TOKEN:
-        required: true
 
 env:
   LC_ALL: en_US.UTF-8
@@ -75,7 +71,7 @@ jobs:
 
       - name: Setup intrinsics on Ollama server
         uses: ./.github/actions/ollama-setup-intrinsics
-        with:
+        secrets:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
       - name: "Test notebooks"
