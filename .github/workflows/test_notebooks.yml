@@ -20,10 +20,6 @@ on:
       - 'pyproject.toml'
       - 'tox.ini'
       - '.github/workflows/test_notebooks.*' # This workflow
-  workflow_call:
-    secrets:
-      HF_TOKEN:
-        required: true
 
 env:
   LC_ALL: en_US.UTF-8
@@ -52,7 +48,7 @@ jobs:
           egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
 
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Free disk space
         uses: ./.github/actions/free-disk-space
@@ -75,10 +71,12 @@ jobs:
 
       - name: Setup intrinsics on Ollama server
         uses: ./.github/actions/ollama-setup-intrinsics
-        env:
+        with:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
       - name: "Test notebooks"
         id: testnotebooks
         run: |
           tox -e notebooks
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}

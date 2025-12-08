@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 __doc__ = """
-Constants relating to of input and output processing for LoRA adapters in IBM's 
+Constants relating to of input and output processing for LoRA adapters in IBM's
 `rag-agent-lib` library of intrinsics.
 """
 
@@ -19,7 +19,7 @@ YAML_OPTIONAL_FIELDS = [
     "parameters",
     "sentence_boundaries",
 ]
-"""Fields that may be present in every intrinsic's YAML configuration file. If 
+"""Fields that may be present in every intrinsic's YAML configuration file. If
 not present, the parsed config dictionary will contain a null value in thier place."""
 
 YAML_JSON_FIELDS = [
@@ -27,8 +27,8 @@ YAML_JSON_FIELDS = [
 ]
 """Fields of the YAML file that contain JSON values as strings"""
 
-RAG_INTRINSICS_LIB_REPO_NAME = "ibm-granite/rag-intrinsics-lib"
-"""Location of the RAG intrinsics library on Huggingface Hub"""
+INTRINSICS_HF_ORG = "generative-computing"
+"""Location of the RAG intrinsics libraries on Huggingface Hub"""
 
 BASE_MODEL_TO_CANONICAL_NAME = {
     "ibm-granite/granite-3.3-8b-instruct": "granite-3.3-8b-instruct",

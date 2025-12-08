@@ -16,7 +16,7 @@ import yaml
 # Local
 from .constants import (
     BASE_MODEL_TO_CANONICAL_NAME,
-    RAG_INTRINSICS_LIB_REPO_NAME,
+    INTRINSICS_HF_ORG,
     YAML_JSON_FIELDS,
     YAML_OPTIONAL_FIELDS,
     YAML_REQUIRED_FIELDS,
@@ -78,12 +78,42 @@ def make_config_dict(
     return config_dict
 
 
+def get_lora_repo_id_mapping(hf_org: str) -> dict:
+    """
+    Loads the available LoRA models across the different orgs and create a
+    mapping from the LoRA model name to its repo ID.
+
+    Args:
+        hf_org (str): Organization with the LoRA models on Huggingface Hub.
+
+    Returns:
+        dict: Mapping from intrinsic model name to its repo ID.
+    """
+    # Third Party
+    from huggingface_hub import HfApi, HfFileSystem
+
+    api = HfApi()
+    models = api.list_models(author=hf_org)
+
+    fs = HfFileSystem()
+
+    intrinsics_name_mapping = {}
+    for model_info in models:
+        contents = fs.ls(model_info.id, detail=True)
+        mappings = {
+            item["name"].split("/")[-1]: item["name"].rsplit("/", 1)[0]
+            for item in contents
+            if item["type"] == "directory"
+        }
+        intrinsics_name_mapping |= mappings
+    return intrinsics_name_mapping
+
+
 def obtain_lora(
     intrinsic_name: str,
     target_model_name: str,
     /,
     alora: bool = False,
-    repo_id=RAG_INTRINSICS_LIB_REPO_NAME,
     cache_dir: str | None = None,
     file_glob: str = "*",
 ) -> pathlib.Path:
@@ -109,6 +139,8 @@ def obtain_lora(
     # Third Party
     import huggingface_hub
 
+    intrinsics_name_repo_id_mapping = get_lora_repo_id_mapping(INTRINSICS_HF_ORG)
+
     # Normalize target model name.
     # Confusing syntax here brought to you by pylint.
     target_model_name = BASE_MODEL_TO_CANONICAL_NAME.get(
@@ -120,6 +152,7 @@ def obtain_lora(
     lora_subdir_name = f"{intrinsic_name}/{lora_str}/{target_model_name}"
 
     # Download just the files for this LoRA if not already present
+    repo_id = intrinsics_name_repo_id_mapping[intrinsic_name]
     local_root_path = huggingface_hub.snapshot_download(
         repo_id=repo_id,
         allow_patterns=f"{lora_subdir_name}/{file_glob}",
@@ -145,7 +178,6 @@ def obtain_io_yaml(
     target_model_name: str,
     /,
     alora: bool = False,
-    repo_id=RAG_INTRINSICS_LIB_REPO_NAME,
     cache_dir: str | None = None,
 ) -> pathlib.Path:
     """
@@ -170,7 +202,6 @@ def obtain_io_yaml(
         intrinsic_name,
         target_model_name,
         alora,
-        repo_id=repo_id,
         cache_dir=cache_dir,
         file_glob="io.yaml",
     )
