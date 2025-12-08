@@ -66,13 +66,13 @@ _YAML_JSON_COMBOS = {
         None,
         False,
     ),
-    "answerability_answerable_alora": (
-        _INPUT_YAML_DIR / "answerability.yaml",
-        _INPUT_JSON_DIR / "answerable.json",
-        "answerability",
-        None,
-        True,
-    ),
+    # "answerability_answerable_alora": (
+    #     _INPUT_YAML_DIR / "answerability.yaml",
+    #     _INPUT_JSON_DIR / "answerable.json",
+    #     "answerability",
+    #     None,
+    #     True,
+    # ),
     "answerability_unanswerable": (
         _INPUT_YAML_DIR / "answerability.yaml",
         _INPUT_JSON_DIR / "unanswerable.json",
@@ -80,13 +80,13 @@ _YAML_JSON_COMBOS = {
         None,
         False,
     ),
-    "answerability_unanswerable_alora": (
-        _INPUT_YAML_DIR / "answerability.yaml",
-        _INPUT_JSON_DIR / "unanswerable.json",
-        "answerability",
-        None,
-        True,
-    ),
+    # "answerability_unanswerable_alora": (
+    #     _INPUT_YAML_DIR / "answerability.yaml",
+    #     _INPUT_JSON_DIR / "unanswerable.json",
+    #     "answerability",
+    #     None,
+    #     True,
+    # ),
     "instruction": (
         _INPUT_YAML_DIR / "instruction.yaml",
         _INPUT_JSON_DIR / "instruction.json",
@@ -115,13 +115,13 @@ _YAML_JSON_COMBOS = {
         _INPUT_ARGS_DIR / "requirement_check.json",
         False,
     ),
-    "requirement_check_alora": (
-        _INPUT_YAML_DIR / "requirement_check.yaml",
-        _INPUT_JSON_DIR / "requirement_check.json",
-        "requirement_check",
-        _INPUT_ARGS_DIR / "requirement_check.json",
-        True,
-    ),
+    # "requirement_check_alora": (
+    #     _INPUT_YAML_DIR / "requirement_check.yaml",
+    #     _INPUT_JSON_DIR / "requirement_check.json",
+    #     "requirement_check",
+    #     _INPUT_ARGS_DIR / "requirement_check.json",
+    #     True,
+    # ),
     "uncertainty": (
         _INPUT_YAML_DIR / "uncertainty.yaml",
         _INPUT_JSON_DIR / "uncertainty.json",
@@ -129,13 +129,13 @@ _YAML_JSON_COMBOS = {
         None,
         False,
     ),
-    "uncertainty_alora": (
-        _INPUT_YAML_DIR / "uncertainty.yaml",
-        _INPUT_JSON_DIR / "uncertainty.json",
-        "uncertainty",
-        None,
-        True,
-    ),
+    # "uncertainty_alora": (
+    #     _INPUT_YAML_DIR / "uncertainty.yaml",
+    #     _INPUT_JSON_DIR / "uncertainty.json",
+    #     "uncertainty",
+    #     None,
+    #     True,
+    # ),
     "context_relevance": (
         _INPUT_YAML_DIR / "context_relevance.yaml",
         _INPUT_JSON_DIR / "context_relevance.json",
@@ -150,13 +150,13 @@ _YAML_JSON_COMBOS = {
         None,
         False,
     ),
-    "answer_relevance_classifier_alora": (
-        _INPUT_YAML_DIR / "answer_relevance_classifier.yaml",
-        _INPUT_JSON_DIR / "answer_relevance_classifier.json",
-        "answer_relevance_classifier",
-        None,
-        True,
-    ),
+    # "answer_relevance_classifier_alora": (
+    #     _INPUT_YAML_DIR / "answer_relevance_classifier.yaml",
+    #     _INPUT_JSON_DIR / "answer_relevance_classifier.json",
+    #     "answer_relevance_classifier",
+    #     None,
+    #     True,
+    # ),
     "answer_relevance_rewriter": (
         _INPUT_YAML_DIR / "answer_relevance_rewriter.yaml",
         _INPUT_JSON_DIR / "answer_relevance_rewriter.json",
@@ -164,13 +164,13 @@ _YAML_JSON_COMBOS = {
         _INPUT_ARGS_DIR / "answer_relevance_rewriter.json",
         False,
     ),
-    "answer_relevance_rewriter_alora": (
-        _INPUT_YAML_DIR / "answer_relevance_rewriter.yaml",
-        _INPUT_JSON_DIR / "answer_relevance_rewriter.json",
-        "answer_relevance_rewriter",
-        _INPUT_ARGS_DIR / "answer_relevance_rewriter.json",
-        True,
-    ),
+    # "answer_relevance_rewriter_alora": (
+    #     _INPUT_YAML_DIR / "answer_relevance_rewriter.yaml",
+    #     _INPUT_JSON_DIR / "answer_relevance_rewriter.json",
+    #     "answer_relevance_rewriter",
+    #     _INPUT_ARGS_DIR / "answer_relevance_rewriter.json",
+    #     True,
+    # ),
     "citations": (
         _INPUT_YAML_DIR / "citations.yaml",
         _INPUT_JSON_DIR / "citations.json",
@@ -178,13 +178,13 @@ _YAML_JSON_COMBOS = {
         None,
         False,
     ),
-    "citations_alora": (
-        _INPUT_YAML_DIR / "citations.yaml",
-        _INPUT_JSON_DIR / "citations.json",
-        "citations",
-        None,
-        True,
-    ),
+    # "citations_alora": (
+    #     _INPUT_YAML_DIR / "citations.yaml",
+    #     _INPUT_JSON_DIR / "citations.json",
+    #     "citations",
+    #     None,
+    #     True,
+    # ),
 }
 
 
