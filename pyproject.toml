@@ -70,6 +70,7 @@ dev = [
     "anywidget",
     "ipywidgets",
     "openai",
+    "huggingface-hub",
     "granite-common[transformers]",
     "granite-common[nltk]",
     "granite-common[gpt-oss]",

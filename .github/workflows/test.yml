@@ -74,7 +74,7 @@ jobs:
 
       - name: "Run unit tests"
         # -n 1 to avoid running out of memory.
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           tox -e unit -- -n 1
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}

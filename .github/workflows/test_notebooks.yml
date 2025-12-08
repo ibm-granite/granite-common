@@ -78,3 +78,5 @@ jobs:
         id: testnotebooks
         run: |
           tox -e notebooks
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
