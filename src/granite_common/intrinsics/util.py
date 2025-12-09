@@ -176,8 +176,8 @@ def obtain_io_yaml(
     lora_dir = obtain_lora(
         intrinsic_name,
         target_model_name,
-        alora,
-        repo_id=repo_id,
+        repo_id,
+        alora=alora,
         cache_dir=cache_dir,
         file_glob="io.yaml",
     )

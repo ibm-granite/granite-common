@@ -258,9 +258,9 @@ def _yaml_json_combo_with_model(request: pytest.FixtureRequest) -> YamlJsonCombo
 def test_no_orphan_files():
     """Check whether there are input files that aren't used by any test."""
     used_json_files = set(t.inputs_file for t in _YAML_JSON_COMBOS.values())
-    all_json_files = [f for f in _INPUT_JSON_DIR.iterdir()]
+    all_json_files = list(_INPUT_JSON_DIR.iterdir())
     used_yaml_files = set(t.yaml_file for t in _YAML_JSON_COMBOS.values())
-    all_yaml_files = [f for f in _INPUT_YAML_DIR.iterdir()]
+    all_yaml_files = list(_INPUT_YAML_DIR.iterdir())
 
     for f in all_json_files:
         if f not in used_json_files:
