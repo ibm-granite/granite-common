@@ -13,6 +13,7 @@ import pathlib
 # Third Party
 import huggingface_hub
 import openai
+import pydantic
 import pytest
 import requests
 import yaml
@@ -21,7 +22,6 @@ import yaml
 from granite_common import ChatCompletion, IntrinsicsRewriter
 from granite_common.base.types import ChatCompletionResponse
 from granite_common.intrinsics import json_util, util
-from granite_common.intrinsics.constants import RAG_INTRINSICS_LIB_REPO_NAME
 from granite_common.intrinsics.output import IntrinsicsResultProcessor
 import granite_common.util
 
@@ -37,179 +37,192 @@ _TEST_DATA_DIR = pathlib.Path(os.path.dirname(__file__)) / "testdata"
 # server.
 _BASE_MODEL = "granite-3.3-2b-instruct"
 
+# Location from which our tests download adapters and YAML files
+_RAG_INTRINSICS_REPO_NAME = "ibm-granite/rag-intrinsics-lib"
+
 _INPUT_JSON_DIR = _TEST_DATA_DIR / "input_json"
 _INPUT_YAML_DIR = _TEST_DATA_DIR / "input_yaml"
 _INPUT_ARGS_DIR = _TEST_DATA_DIR / "input_args"
 
 
-# Combinations of YAML and JSON files that go together.
-_YAML_JSON_COMBOS = {
+class YamlJsonCombo(pydantic.BaseModel):
+    """Dataclass that drives configuration for most tests in this file."""
+
+    short_name: str
+    """Short name for the test scenario, for printing to the logs."""
+    yaml_file: pathlib.Path | None = None
+    """Location of local YAML file, or ``None`` to download from remote repo."""
+    inputs_file: pathlib.Path
+    """Location of local JSON input file."""
+    arguments_file: pathlib.Path | None = None
+    """Location of local JSON file of arguments, or ``None`` if no arguments."""
+    task: str | None = None
+    """Name of target task, used for loading adapters. ``None`` means no adapter and
+    no inference tests."""
+    is_alora: bool = False
+    """``True`` to use the activated LoRA variant of the model for inference tests."""
+
+
+_YAML_JSON_COMBOS_LIST = [
     # Short name => YAML file, JSON file, model file, arguments file, is aLoRA
-    "answerability_simple": (
-        _INPUT_YAML_DIR / "answerability.yaml",
-        _INPUT_JSON_DIR / "simple.json",
-        "answerability",
-        None,
-        False,
+    YamlJsonCombo(
+        short_name="answerability_simple",
+        yaml_file=_INPUT_YAML_DIR / "answerability.yaml",
+        inputs_file=_INPUT_JSON_DIR / "simple.json",
+        task="answerability",
     ),
-    "answerability_extra_params": (
-        _INPUT_YAML_DIR / "answerability.yaml",
-        _INPUT_JSON_DIR / "extra_params.json",
-        None,
-        None,
-        False,
+    YamlJsonCombo(
+        short_name="answerability_extra_params",
+        yaml_file=_INPUT_YAML_DIR / "answerability.yaml",
+        inputs_file=_INPUT_JSON_DIR / "extra_params.json",
+        task=None,  # Fake config, no inference
     ),
-    "answerability_answerable": (
-        _INPUT_YAML_DIR / "answerability.yaml",
-        _INPUT_JSON_DIR / "answerable.json",
-        "answerability",
-        None,
-        False,
+    YamlJsonCombo(
+        short_name="answerability_answerable",
+        yaml_file=_INPUT_YAML_DIR / "answerability.yaml",
+        inputs_file=_INPUT_JSON_DIR / "answerable.json",
+        task="answerability",
     ),
-    # "answerability_answerable_alora": (
-    #     _INPUT_YAML_DIR / "answerability.yaml",
-    #     _INPUT_JSON_DIR / "answerable.json",
-    #     "answerability",
-    #     None,
-    #     True,
+    # YamlJsonCombo(
+    #     short_name="answerability_answerable_alora"
+    #     yaml_file=_INPUT_YAML_DIR / "answerability.yaml",
+    #     inputs_file=_INPUT_JSON_DIR / "answerable.json",
+    #     task="answerability",
+    #     is_alora=True,
     # ),
-    "answerability_unanswerable": (
-        _INPUT_YAML_DIR / "answerability.yaml",
-        _INPUT_JSON_DIR / "unanswerable.json",
-        "answerability",
-        None,
-        False,
+    YamlJsonCombo(
+        short_name="answerability_unanswerable",
+        yaml_file=_INPUT_YAML_DIR / "answerability.yaml",
+        inputs_file=_INPUT_JSON_DIR / "unanswerable.json",
+        task="answerability",
     ),
-    # "answerability_unanswerable_alora": (
-    #     _INPUT_YAML_DIR / "answerability.yaml",
-    #     _INPUT_JSON_DIR / "unanswerable.json",
-    #     "answerability",
-    #     None,
-    #     True,
+    # YamlJsonCombo(
+    #     short_name="answerability_unanswerable_alora"
+    #     yaml_file=_INPUT_YAML_DIR / "answerability.yaml",
+    #     inputs_file=_INPUT_JSON_DIR / "unanswerable.json",
+    #     task="answerability",
+    #     is_alora=True,
     # ),
-    "instruction": (
-        _INPUT_YAML_DIR / "instruction.yaml",
-        _INPUT_JSON_DIR / "instruction.json",
-        None,  # Fake config, no model
-        _INPUT_ARGS_DIR / "instruction.json",
-        False,  # No model -> no aLoRA
+    YamlJsonCombo(
+        short_name="instruction",
+        yaml_file=_INPUT_YAML_DIR / "instruction.yaml",
+        inputs_file=_INPUT_JSON_DIR / "instruction.json",
+        arguments_file=_INPUT_ARGS_DIR / "instruction.json",
+        task=None,  # Fake config, no model
     ),
-    "hallucination_detection": (
-        _INPUT_YAML_DIR / "hallucination_detection.yaml",
-        _INPUT_JSON_DIR / "hallucination_detection.json",
-        "hallucination_detection",
-        None,
-        False,
+    YamlJsonCombo(
+        short_name="hallucination_detection",
+        yaml_file=_INPUT_YAML_DIR / "hallucination_detection.yaml",
+        inputs_file=_INPUT_JSON_DIR / "hallucination_detection.json",
+        task="hallucination_detection",
     ),
-    "query_rewrite": (
-        _INPUT_YAML_DIR / "query_rewrite.yaml",
-        _INPUT_JSON_DIR / "query_rewrite.json",
-        "query_rewrite",
-        None,
-        False,
+    YamlJsonCombo(
+        short_name="query_rewrite",
+        yaml_file=_INPUT_YAML_DIR / "query_rewrite.yaml",
+        inputs_file=_INPUT_JSON_DIR / "query_rewrite.json",
+        task="query_rewrite",
     ),
-    "requirement_check": (
-        _INPUT_YAML_DIR / "requirement_check.yaml",
-        _INPUT_JSON_DIR / "requirement_check.json",
-        "requirement_check",
-        _INPUT_ARGS_DIR / "requirement_check.json",
-        False,
+    YamlJsonCombo(
+        short_name="requirement_check",
+        yaml_file=_INPUT_YAML_DIR / "requirement_check.yaml",
+        inputs_file=_INPUT_JSON_DIR / "requirement_check.json",
+        arguments_file=_INPUT_ARGS_DIR / "requirement_check.json",
+        task="requirement_check",
     ),
-    # "requirement_check_alora": (
-    #     _INPUT_YAML_DIR / "requirement_check.yaml",
-    #     _INPUT_JSON_DIR / "requirement_check.json",
-    #     "requirement_check",
-    #     _INPUT_ARGS_DIR / "requirement_check.json",
-    #     True,
+    # YamlJsonCombo(
+    #     short_name="requirement_check_alora",
+    #     yaml_file=_INPUT_YAML_DIR / "requirement_check.yaml",
+    #     inputs_file=_INPUT_JSON_DIR / "requirement_check.json",
+    #     arguments_file=_INPUT_ARGS_DIR / "requirement_check.json",
+    #     task="requirement_check",
+    #     is_alora=True,
     # ),
-    "uncertainty": (
-        _INPUT_YAML_DIR / "uncertainty.yaml",
-        _INPUT_JSON_DIR / "uncertainty.json",
-        "uncertainty",
-        None,
-        False,
+    YamlJsonCombo(
+        short_name="uncertainty",
+        yaml_file=_INPUT_YAML_DIR / "uncertainty.yaml",
+        inputs_file=_INPUT_JSON_DIR / "uncertainty.json",
+        task="uncertainty",
     ),
-    # "uncertainty_alora": (
-    #     _INPUT_YAML_DIR / "uncertainty.yaml",
-    #     _INPUT_JSON_DIR / "uncertainty.json",
-    #     "uncertainty",
-    #     None,
-    #     True,
+    # YamlJsonCombo(
+    #     short_name="uncertainty_alora"
+    #     yaml_file=_INPUT_YAML_DIR / "uncertainty.yaml",
+    #     inputs_file=_INPUT_JSON_DIR / "uncertainty.json",
+    #     task="uncertainty",
+    #     is_alora=True,
     # ),
-    "context_relevance": (
-        _INPUT_YAML_DIR / "context_relevance.yaml",
-        _INPUT_JSON_DIR / "context_relevance.json",
-        "context_relevance",
-        _INPUT_ARGS_DIR / "context_relevance.json",
-        False,
+    YamlJsonCombo(
+        short_name="context_relevance",
+        yaml_file=_INPUT_YAML_DIR / "context_relevance.yaml",
+        inputs_file=_INPUT_JSON_DIR / "context_relevance.json",
+        arguments_file=_INPUT_ARGS_DIR / "context_relevance.json",
+        task="context_relevance",
     ),
-    "answer_relevance_classifier": (
-        _INPUT_YAML_DIR / "answer_relevance_classifier.yaml",
-        _INPUT_JSON_DIR / "answer_relevance_classifier.json",
-        "answer_relevance_classifier",
-        None,
-        False,
+    YamlJsonCombo(
+        short_name="answer_relevance_classifier",
+        yaml_file=_INPUT_YAML_DIR / "answer_relevance_classifier.yaml",
+        inputs_file=_INPUT_JSON_DIR / "answer_relevance_classifier.json",
+        task="answer_relevance_classifier",
     ),
-    # "answer_relevance_classifier_alora": (
-    #     _INPUT_YAML_DIR / "answer_relevance_classifier.yaml",
-    #     _INPUT_JSON_DIR / "answer_relevance_classifier.json",
-    #     "answer_relevance_classifier",
-    #     None,
-    #     True,
+    # YamlJsonCombo(
+    #     short_name="answer_relevance_classifier_alora"
+    #     yaml_file=_INPUT_YAML_DIR / "answer_relevance_classifier.yaml",
+    #     inputs_file=_INPUT_JSON_DIR / "answer_relevance_classifier.json",
+    #     task="answer_relevance_classifier",
+    #     is_alora=True,
     # ),
-    "answer_relevance_rewriter": (
-        _INPUT_YAML_DIR / "answer_relevance_rewriter.yaml",
-        _INPUT_JSON_DIR / "answer_relevance_rewriter.json",
-        "answer_relevance_rewriter",
-        _INPUT_ARGS_DIR / "answer_relevance_rewriter.json",
-        False,
+    YamlJsonCombo(
+        short_name="answer_relevance_rewriter",
+        yaml_file=_INPUT_YAML_DIR / "answer_relevance_rewriter.yaml",
+        inputs_file=_INPUT_JSON_DIR / "answer_relevance_rewriter.json",
+        arguments_file=_INPUT_ARGS_DIR / "answer_relevance_rewriter.json",
+        task="answer_relevance_rewriter",
     ),
-    # "answer_relevance_rewriter_alora": (
-    #     _INPUT_YAML_DIR / "answer_relevance_rewriter.yaml",
-    #     _INPUT_JSON_DIR / "answer_relevance_rewriter.json",
-    #     "answer_relevance_rewriter",
-    #     _INPUT_ARGS_DIR / "answer_relevance_rewriter.json",
-    #     True,
+    # YamlJsonCombo(
+    #     short_name="answer_relevance_rewriter_alora"
+    #     yaml_file=_INPUT_YAML_DIR / "answer_relevance_rewriter.yaml",
+    #     inputs_file=_INPUT_JSON_DIR / "answer_relevance_rewriter.json",
+    #     arguments_file=_INPUT_ARGS_DIR / "answer_relevance_rewriter.json",
+    #     task="answer_relevance_rewriter",
+    #     is_alora=True,
     # ),
-    "citations": (
-        _INPUT_YAML_DIR / "citations.yaml",
-        _INPUT_JSON_DIR / "citations.json",
-        "citations",
-        None,
-        False,
+    YamlJsonCombo(
+        short_name="citations",
+        yaml_file=_INPUT_YAML_DIR / "citations.yaml",
+        inputs_file=_INPUT_JSON_DIR / "citations.json",
+        task="citations",
     ),
-    # "citations_alora": (
-    #     _INPUT_YAML_DIR / "citations.yaml",
-    #     _INPUT_JSON_DIR / "citations.json",
-    #     "citations",
-    #     None,
-    #     True,
+    # YamlJsonCombo(
+    #     short_name="citations_alora"
+    #     yaml_file=_INPUT_YAML_DIR / "citations.yaml",
+    #     inputs_file=_INPUT_JSON_DIR / "citations.json",
+    #     task="citations",
+    #     is_alora=True,
     # ),
-}
+]
+_YAML_JSON_COMBOS = {c.short_name: c for c in _YAML_JSON_COMBOS_LIST}
 
 
 # All combinations of input and model
 _YAML_JSON_COMBOS_WITH_MODEL = {
-    k: v for k, v in _YAML_JSON_COMBOS.items() if v[2] is not None
+    k: v for k, v in _YAML_JSON_COMBOS.items() if v.task is not None
 }
 
 # All combinations of input and model that are not aLoRA models (includes no model)
 _YAML_JSON_COMBOS_NO_ALORA = {
-    k: v[:4] for k, v in _YAML_JSON_COMBOS.items() if not v[4]
+    k: v for k, v in _YAML_JSON_COMBOS.items() if not v.is_alora
 }
 
 
 @pytest.fixture(name="yaml_json_combo", scope="module", params=_YAML_JSON_COMBOS)
-def _yaml_json_combo(request: pytest.FixtureRequest) -> tuple[str, str, str, str]:
+def _yaml_json_combo(request: pytest.FixtureRequest) -> YamlJsonCombo:
     """Pytest fixture that allows us to run a given test case repeatedly with multiple
     different combinations of IO configuration and chat completion request.
 
     Uses the files in ``testdata/input_json`` and ``testdata/input_yaml``.
 
-    Returns tuple of short name, YAML file, JSON file, model directory, and
-    arguments file.
+    Returns test configuration.
     """
-    return (request.param,) + _YAML_JSON_COMBOS[request.param]
+    return _YAML_JSON_COMBOS[request.param]
 
 
 @pytest.fixture(
@@ -217,7 +230,7 @@ def _yaml_json_combo(request: pytest.FixtureRequest) -> tuple[str, str, str, str
 )
 def _yaml_json_combo_no_alora(
     request: pytest.FixtureRequest,
-) -> tuple[str, str, str, str]:
+) -> YamlJsonCombo:
     """Pytest fixture that allows us to run a given test case repeatedly with multiple
     different combinations of IO configuration and chat completion request. Ignores
     model configs that use the aLoRA variant of the model.
@@ -227,7 +240,7 @@ def _yaml_json_combo_no_alora(
     Returns tuple of short name, YAML file, JSON file, model directory, and
     arguments file.
     """
-    return (request.param,) + _YAML_JSON_COMBOS_NO_ALORA[request.param]
+    return _YAML_JSON_COMBOS_NO_ALORA[request.param]
 
 
 @pytest.fixture(
@@ -235,19 +248,19 @@ def _yaml_json_combo_no_alora(
     scope="module",
     params=_YAML_JSON_COMBOS_WITH_MODEL,
 )
-def _yaml_json_combo_with_model(request: pytest.FixtureRequest) -> tuple[str, str, str]:
+def _yaml_json_combo_with_model(request: pytest.FixtureRequest) -> YamlJsonCombo:
     """Version of :func:`_yaml_json_combo()` fixture with only the inputs that have
     models. Includes an additional flag for whether the model is LoRA or aLoRA
     """
-    return (request.param,) + _YAML_JSON_COMBOS_WITH_MODEL[request.param]
+    return _YAML_JSON_COMBOS_WITH_MODEL[request.param]
 
 
 def test_no_orphan_files():
     """Check whether there are input files that aren't used by any test."""
-    used_json_files = set(t[1].name for t in _YAML_JSON_COMBOS.values())
-    all_json_files = os.listdir(_INPUT_JSON_DIR)
-    used_yaml_files = set(t[0].name for t in _YAML_JSON_COMBOS.values())
-    all_yaml_files = os.listdir(_INPUT_YAML_DIR)
+    used_json_files = set(t.inputs_file for t in _YAML_JSON_COMBOS.values())
+    all_json_files = [f for f in _INPUT_JSON_DIR.iterdir()]
+    used_yaml_files = set(t.yaml_file for t in _YAML_JSON_COMBOS.values())
+    all_yaml_files = [f for f in _INPUT_YAML_DIR.iterdir()]
 
     for f in all_json_files:
         if f not in used_json_files:
@@ -291,7 +304,7 @@ def test_read_yaml():
     path_suffix = "answerability/lora/granite-3.3-2b-instruct/io.yaml"
     try:
         local_path = huggingface_hub.snapshot_download(
-            repo_id=RAG_INTRINSICS_LIB_REPO_NAME,
+            repo_id=_RAG_INTRINSICS_REPO_NAME,
             allow_patterns=path_suffix,
         )
     except requests.exceptions.HTTPError:
@@ -307,22 +320,22 @@ def test_canned_input(yaml_json_combo_no_alora):
     Verify that a given combination of chat completion and rewriting config produces
     the expected output
     """
-    short_name, yaml_file, json_file, _, args_file = yaml_json_combo_no_alora
-    if args_file:
-        with open(args_file, encoding="utf8") as f:
+    cfg = yaml_json_combo_no_alora
+    if cfg.arguments_file:
+        with open(cfg.arguments_file, encoding="utf8") as f:
             transform_kwargs = json.load(f)
     else:
         transform_kwargs = {}
 
     # Temporary: Use a YAML file from local disk
-    rewriter = IntrinsicsRewriter(config_file=yaml_file)
+    rewriter = IntrinsicsRewriter(config_file=cfg.yaml_file)
 
-    json_data = _read_file(json_file)
+    json_data = _read_file(cfg.inputs_file)
     before = ChatCompletion.model_validate_json(json_data)
     after = rewriter.transform(before, **transform_kwargs)
     after_json = after.model_dump_json(indent=2)
 
-    expected_file = _CANNED_INPUT_EXPECTED_DIR / f"{short_name}.json"
+    expected_file = _CANNED_INPUT_EXPECTED_DIR / f"{cfg.short_name}.json"
     with open(expected_file, encoding="utf-8") as f:
         expected_json = f.read()
 
@@ -331,22 +344,21 @@ def test_canned_input(yaml_json_combo_no_alora):
 
 
 @pytest.mark.block_network
-def test_openai_compat(yaml_json_combo_no_alora: str):
+def test_openai_compat(yaml_json_combo_no_alora):
     """
     Verify that the dataclasses for intrinsics chat completions can be directly passed
     to the OpenAI Python API without raising parsing errors.
     """
-
-    _, yaml_file, json_file, _, args_file = yaml_json_combo_no_alora
-    if args_file:
-        with open(args_file, encoding="utf8") as f:
+    cfg = yaml_json_combo_no_alora
+    if cfg.arguments_file:
+        with open(cfg.arguments_file, encoding="utf8") as f:
             transform_kwargs = json.load(f)
     else:
         transform_kwargs = {}
 
     # Temporary: Use a YAML file from local disk
-    rewriter = IntrinsicsRewriter(config_file=yaml_file)
-    json_data = _read_file(json_file)
+    rewriter = IntrinsicsRewriter(config_file=cfg.yaml_file)
+    json_data = _read_file(cfg.inputs_file)
     before = ChatCompletion.model_validate_json(json_data)
     after = rewriter.transform(before, **transform_kwargs)
 
@@ -505,22 +517,22 @@ def test_run_transformers(yaml_json_combo_with_model):
     """
     Run the target model end-to-end on transformers.
     """
-    short_name, yaml_file, input_file, model_name, args_file, alora = (
-        yaml_json_combo_with_model
-    )
-    if args_file:
-        with open(args_file, encoding="utf8") as f:
+    cfg = yaml_json_combo_with_model
+    if cfg.arguments_file:
+        with open(cfg.arguments_file, encoding="utf8") as f:
             transform_kwargs = json.load(f)
     else:
         transform_kwargs = {}
 
     # Load input request
-    with open(input_file, encoding="utf-8") as f:
+    with open(cfg.inputs_file, encoding="utf-8") as f:
         model_input = ChatCompletion.model_validate_json(f.read())
 
     # Download files from Hugging Face Hub
     try:
-        lora_dir = util.obtain_lora(model_name, _BASE_MODEL, alora=alora)
+        lora_dir = util.obtain_lora(
+            cfg.task, _BASE_MODEL, _RAG_INTRINSICS_REPO_NAME, alora=cfg.is_alora
+        )
     except requests.exceptions.HTTPError:
         pytest.xfail("Downloads fail on CI server because repo is private")
 
@@ -528,7 +540,7 @@ def test_run_transformers(yaml_json_combo_with_model):
     io_yaml_path = lora_dir / "io.yaml"
     if not os.path.exists(io_yaml_path):
         # Use local files until proper configs are up on Hugging Face
-        io_yaml_path = yaml_file
+        io_yaml_path = cfg.yaml_file
     rewriter = IntrinsicsRewriter(config_file=io_yaml_path)
     result_processor = IntrinsicsResultProcessor(config_file=io_yaml_path)
 
@@ -554,7 +566,8 @@ def test_run_transformers(yaml_json_combo_with_model):
     print(transformed_str)
 
     with open(
-        _TEST_DATA_DIR / f"test_run_transformers/{short_name}.json", encoding="utf-8"
+        _TEST_DATA_DIR / f"test_run_transformers/{cfg.short_name}.json",
+        encoding="utf-8",
     ) as f:
         expected = ChatCompletionResponse.model_validate_json(f.read())
     # expected_str = expected.model_dump_json(indent=4)
