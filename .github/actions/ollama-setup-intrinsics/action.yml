@@ -19,7 +19,7 @@ runs:
     - name: Clone HF intrinsics repo
       shell: bash
       run: |
-        git clone https://huggingface.co/generative-computing/rag-intrinsics-lib
+        git clone https://huggingface.co/ibm-granite/rag-intrinsics-lib
 
     - name: List cloned files
       shell: bash
