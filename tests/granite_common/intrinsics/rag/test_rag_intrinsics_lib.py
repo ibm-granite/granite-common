@@ -11,7 +11,6 @@ import os
 import pathlib
 
 # Third Party
-import huggingface_hub
 import openai
 import pydantic
 import pytest
@@ -33,12 +32,9 @@ def _read_file(name):
 
 _TEST_DATA_DIR = pathlib.Path(os.path.dirname(__file__)) / "testdata"
 
-# Base model to use for testing; should be small enough to run in memory on the CI
-# server.
-_BASE_MODEL = "granite-3.3-2b-instruct"
-
 # Location from which our tests download adapters and YAML files
-_RAG_INTRINSICS_REPO_NAME = "ibm-granite/rag-intrinsics-lib"
+_RAG_INTRINSICS_REPO_NAME = "ibm-granite/granite-lib-rag-r1.0"
+
 
 _INPUT_JSON_DIR = _TEST_DATA_DIR / "input_json"
 _INPUT_YAML_DIR = _TEST_DATA_DIR / "input_yaml"
@@ -61,13 +57,18 @@ class YamlJsonCombo(pydantic.BaseModel):
     no inference tests."""
     is_alora: bool = False
     """``True`` to use the activated LoRA variant of the model for inference tests."""
+    repo_id: str = _RAG_INTRINSICS_REPO_NAME
+    """Repo on Hugging Face Hub from which the adapter for this intrinsic should be
+    loaded."""
+    base_model_id: str = "ibm-granite/granite-4.0-micro"
+    """Base model on which the target adapter was trained. Should be small enough to
+    run on the CI server."""
 
 
 _YAML_JSON_COMBOS_LIST = [
     # Short name => YAML file, JSON file, model file, arguments file, is aLoRA
     YamlJsonCombo(
         short_name="answerability_simple",
-        yaml_file=_INPUT_YAML_DIR / "answerability.yaml",
         inputs_file=_INPUT_JSON_DIR / "simple.json",
         task="answerability",
     ),
@@ -79,30 +80,20 @@ _YAML_JSON_COMBOS_LIST = [
     ),
     YamlJsonCombo(
         short_name="answerability_answerable",
-        yaml_file=_INPUT_YAML_DIR / "answerability.yaml",
         inputs_file=_INPUT_JSON_DIR / "answerable.json",
         task="answerability",
     ),
-    # YamlJsonCombo(
-    #     short_name="answerability_answerable_alora"
-    #     yaml_file=_INPUT_YAML_DIR / "answerability.yaml",
-    #     inputs_file=_INPUT_JSON_DIR / "answerable.json",
-    #     task="answerability",
-    #     is_alora=True,
-    # ),
+    YamlJsonCombo(
+        short_name="answerability_answerable_alora",
+        inputs_file=_INPUT_JSON_DIR / "answerable.json",
+        task="answerability",
+        is_alora=True,
+    ),
     YamlJsonCombo(
         short_name="answerability_unanswerable",
-        yaml_file=_INPUT_YAML_DIR / "answerability.yaml",
         inputs_file=_INPUT_JSON_DIR / "unanswerable.json",
         task="answerability",
     ),
-    # YamlJsonCombo(
-    #     short_name="answerability_unanswerable_alora"
-    #     yaml_file=_INPUT_YAML_DIR / "answerability.yaml",
-    #     inputs_file=_INPUT_JSON_DIR / "unanswerable.json",
-    #     task="answerability",
-    #     is_alora=True,
-    # ),
     YamlJsonCombo(
         short_name="instruction",
         yaml_file=_INPUT_YAML_DIR / "instruction.yaml",
@@ -112,74 +103,91 @@ _YAML_JSON_COMBOS_LIST = [
     ),
     YamlJsonCombo(
         short_name="hallucination_detection",
-        yaml_file=_INPUT_YAML_DIR / "hallucination_detection.yaml",
         inputs_file=_INPUT_JSON_DIR / "hallucination_detection.json",
         task="hallucination_detection",
     ),
+    # aLoRA adapter for this intrinsic not currently available
+    # YamlJsonCombo(
+    #     short_name="hallucination_detection_alora",
+    #     inputs_file=_INPUT_JSON_DIR / "hallucination_detection.json",
+    #     task="hallucination_detection",
+    #     is_alora=True
+    # ),
     YamlJsonCombo(
         short_name="query_rewrite",
-        yaml_file=_INPUT_YAML_DIR / "query_rewrite.yaml",
         inputs_file=_INPUT_JSON_DIR / "query_rewrite.json",
         task="query_rewrite",
     ),
     YamlJsonCombo(
         short_name="requirement_check",
-        yaml_file=_INPUT_YAML_DIR / "requirement_check.yaml",
         inputs_file=_INPUT_JSON_DIR / "requirement_check.json",
         arguments_file=_INPUT_ARGS_DIR / "requirement_check.json",
         task="requirement_check",
+        # Granite 4.0 adapters not currently available
+        repo_id="ibm-granite/rag-intrinsics-lib",
+        base_model_id="ibm-granite/granite-3.3-2b-instruct",
     ),
-    # YamlJsonCombo(
-    #     short_name="requirement_check_alora",
-    #     yaml_file=_INPUT_YAML_DIR / "requirement_check.yaml",
-    #     inputs_file=_INPUT_JSON_DIR / "requirement_check.json",
-    #     arguments_file=_INPUT_ARGS_DIR / "requirement_check.json",
-    #     task="requirement_check",
-    #     is_alora=True,
-    # ),
+    YamlJsonCombo(
+        short_name="requirement_check_alora",
+        inputs_file=_INPUT_JSON_DIR / "requirement_check.json",
+        arguments_file=_INPUT_ARGS_DIR / "requirement_check.json",
+        task="requirement_check",
+        is_alora=True,
+        # Granite 4.0 adapters not currently available
+        repo_id="ibm-granite/rag-intrinsics-lib",
+        base_model_id="ibm-granite/granite-3.3-2b-instruct",
+    ),
     YamlJsonCombo(
         short_name="uncertainty",
-        yaml_file=_INPUT_YAML_DIR / "uncertainty.yaml",
         inputs_file=_INPUT_JSON_DIR / "uncertainty.json",
         task="uncertainty",
+        # Granite 4.0 adapters not currently available
+        repo_id="ibm-granite/rag-intrinsics-lib",
+        base_model_id="ibm-granite/granite-3.3-2b-instruct",
     ),
-    # YamlJsonCombo(
-    #     short_name="uncertainty_alora"
-    #     yaml_file=_INPUT_YAML_DIR / "uncertainty.yaml",
-    #     inputs_file=_INPUT_JSON_DIR / "uncertainty.json",
-    #     task="uncertainty",
-    #     is_alora=True,
-    # ),
+    YamlJsonCombo(
+        short_name="uncertainty_alora",
+        inputs_file=_INPUT_JSON_DIR / "uncertainty.json",
+        task="uncertainty",
+        is_alora=True,
+        # Granite 4.0 adapters not currently available
+        repo_id="ibm-granite/rag-intrinsics-lib",
+        base_model_id="ibm-granite/granite-3.3-2b-instruct",
+    ),
     YamlJsonCombo(
         short_name="context_relevance",
-        yaml_file=_INPUT_YAML_DIR / "context_relevance.yaml",
         inputs_file=_INPUT_JSON_DIR / "context_relevance.json",
         arguments_file=_INPUT_ARGS_DIR / "context_relevance.json",
         task="context_relevance",
     ),
     YamlJsonCombo(
+        short_name="context_relevance_alora",
+        inputs_file=_INPUT_JSON_DIR / "context_relevance.json",
+        arguments_file=_INPUT_ARGS_DIR / "context_relevance.json",
+        task="context_relevance",
+        is_alora=True,
+    ),
+    YamlJsonCombo(
         short_name="answer_relevance_classifier",
-        yaml_file=_INPUT_YAML_DIR / "answer_relevance_classifier.yaml",
         inputs_file=_INPUT_JSON_DIR / "answer_relevance_classifier.json",
         task="answer_relevance_classifier",
     ),
+    # aLoRA adapter for this intrinsic not currently available
     # YamlJsonCombo(
-    #     short_name="answer_relevance_classifier_alora"
-    #     yaml_file=_INPUT_YAML_DIR / "answer_relevance_classifier.yaml",
+    #     short_name="answer_relevance_classifier_alora",
     #     inputs_file=_INPUT_JSON_DIR / "answer_relevance_classifier.json",
     #     task="answer_relevance_classifier",
     #     is_alora=True,
     # ),
     YamlJsonCombo(
         short_name="answer_relevance_rewriter",
-        yaml_file=_INPUT_YAML_DIR / "answer_relevance_rewriter.yaml",
         inputs_file=_INPUT_JSON_DIR / "answer_relevance_rewriter.json",
         arguments_file=_INPUT_ARGS_DIR / "answer_relevance_rewriter.json",
         task="answer_relevance_rewriter",
     ),
+    # aLoRA adapter for this intrinsic not currently available
     # YamlJsonCombo(
-    #     short_name="answer_relevance_rewriter_alora"
-    #     yaml_file=_INPUT_YAML_DIR / "answer_relevance_rewriter.yaml",
+    #     short_name="answer_relevance_rewriter_alora",
     #     inputs_file=_INPUT_JSON_DIR / "answer_relevance_rewriter.json",
     #     arguments_file=_INPUT_ARGS_DIR / "answer_relevance_rewriter.json",
     #     task="answer_relevance_rewriter",
@@ -187,13 +195,12 @@ _YAML_JSON_COMBOS_LIST = [
     # ),
     YamlJsonCombo(
         short_name="citations",
-        yaml_file=_INPUT_YAML_DIR / "citations.yaml",
         inputs_file=_INPUT_JSON_DIR / "citations.json",
         task="citations",
     ),
+    # aLoRA adapter for this intrinsic not currently available
     # YamlJsonCombo(
-    #     short_name="citations_alora"
-    #     yaml_file=_INPUT_YAML_DIR / "citations.yaml",
+    #     short_name="citations_alora",
     #     inputs_file=_INPUT_JSON_DIR / "citations.json",
     #     task="citations",
     #     is_alora=True,
@@ -300,16 +307,10 @@ def test_read_yaml():
     IntrinsicsRewriter(config_file=_INPUT_YAML_DIR / "answerability.yaml")
 
     # Read from Hugging Face hub.
-    # Requires "hf auth login" with read token while repo is private.
-    path_suffix = "answerability/lora/granite-3.3-2b-instruct/io.yaml"
-    try:
-        local_path = huggingface_hub.snapshot_download(
-            repo_id=_RAG_INTRINSICS_REPO_NAME,
-            allow_patterns=path_suffix,
-        )
-    except requests.exceptions.HTTPError:
-        pytest.xfail("Downloads fail on CI server because repo is private")
-    IntrinsicsRewriter(config_file=f"{local_path}/{path_suffix}")
+    local_path = util.obtain_io_yaml(
+        "answerability", "granite-4.0-micro", _RAG_INTRINSICS_REPO_NAME
+    )
+    IntrinsicsRewriter(config_file=local_path)
 
 
 _CANNED_INPUT_EXPECTED_DIR = _TEST_DATA_DIR / "test_canned_input"
@@ -328,7 +329,11 @@ def test_canned_input(yaml_json_combo_no_alora):
         transform_kwargs = {}
 
     # Temporary: Use a YAML file from local disk
-    rewriter = IntrinsicsRewriter(config_file=cfg.yaml_file)
+    config_file = cfg.yaml_file
+    if not config_file:
+        # Load from HF Hub if not local file
+        config_file = util.obtain_io_yaml(cfg.task, cfg.base_model_id, cfg.repo_id)
+    rewriter = IntrinsicsRewriter(config_file=config_file)
 
     json_data = _read_file(cfg.inputs_file)
     before = ChatCompletion.model_validate_json(json_data)
@@ -531,7 +536,7 @@ def test_run_transformers(yaml_json_combo_with_model):
     # Download files from Hugging Face Hub
     try:
         lora_dir = util.obtain_lora(
-            cfg.task, _BASE_MODEL, _RAG_INTRINSICS_REPO_NAME, alora=cfg.is_alora
+            cfg.task, cfg.base_model_id, cfg.repo_id, alora=cfg.is_alora
         )
     except requests.exceptions.HTTPError:
         pytest.xfail("Downloads fail on CI server because repo is private")

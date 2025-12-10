@@ -3,7 +3,7 @@
         {
             "index": 0,
             "message": {
-                "content": "{\"answer_relevance_rewrite\": \"Alice, Bob, and Carol attended the meeting.\"}",
+                "content": "{\"answer_relevance_rewrite\": \"The meeting attendees were Alice, Bob, and Carol.\"}",
                 "role": "assistant"
             }
         }

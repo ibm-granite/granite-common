@@ -5,7 +5,6 @@ Constants relating to of input and output processing for LoRA adapters in IBM's
 `rag-agent-lib` library of intrinsics.
 """
 
-INTRINSICS_LIB_REPO_ID = "ibm-granite/granite-3.3-8b-rag-agent-lib"
 YAML_REQUIRED_FIELDS = [
     "model",
     "response_format",
@@ -30,6 +29,7 @@ YAML_JSON_FIELDS = [
 OLD_LAYOUT_REPOS = [
     "ibm-granite/rag-intrinsics-lib",
     "generative-computing/rag-intrinsics-lib",
+    "generative-computing/core-intrinsics-lib",
 ]
 """Repositories (aka "models") on Hugging Face Hub that use the old layout of
 ``<task>/<adapter type>/<base model>``.
