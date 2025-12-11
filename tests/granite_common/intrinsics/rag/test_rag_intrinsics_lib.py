@@ -47,7 +47,9 @@ class YamlJsonCombo(pydantic.BaseModel):
     short_name: str
     """Short name for the test scenario, for printing to the logs."""
     yaml_file: pathlib.Path | None = None
-    """Location of local YAML file, or ``None`` to download from remote repo."""
+    """Location of local YAML file, or ``None`` to download from remote repo.
+    If the file is downloaded, the validator for this field will update this field
+    automatically."""
     inputs_file: pathlib.Path
     """Location of local JSON input file."""
     arguments_file: pathlib.Path | None = None
@@ -63,6 +65,18 @@ class YamlJsonCombo(pydantic.BaseModel):
     base_model_id: str = "ibm-granite/granite-4.0-micro"
     """Base model on which the target adapter was trained. Should be small enough to
     run on the CI server."""
+
+    @pydantic.model_validator(mode="after")
+    def _maybe_download_yaml(self):
+        """
+        If YAML file is not provided, download one based on other attributes of this
+        object.
+        """
+        if not self.yaml_file:
+            self.yaml_file = util.obtain_io_yaml(
+                self.task, self.base_model_id, self.repo_id
+            )
+        return self
 
 
 _YAML_JSON_COMBOS_LIST = [
@@ -209,7 +223,7 @@ _YAML_JSON_COMBOS_LIST = [
 _YAML_JSON_COMBOS = {c.short_name: c for c in _YAML_JSON_COMBOS_LIST}
 
 
-# All combinations of input and model
+# All combinations of input and model where a model is present
 _YAML_JSON_COMBOS_WITH_MODEL = {
     k: v for k, v in _YAML_JSON_COMBOS.items() if v.task is not None
 }
@@ -217,6 +231,10 @@ _YAML_JSON_COMBOS_WITH_MODEL = {
 # All combinations of input and model that are not aLoRA models (includes no model)
 _YAML_JSON_COMBOS_NO_ALORA = {
     k: v for k, v in _YAML_JSON_COMBOS.items() if not v.is_alora
+}
+
+_YAML_JSON_COMBOS_WITH_LORA_MODEL = {
+    k: v for k, v in _YAML_JSON_COMBOS.items() if v.task is not None and not v.is_alora
 }
 
 
@@ -257,9 +275,21 @@ def _yaml_json_combo_no_alora(
 )
 def _yaml_json_combo_with_model(request: pytest.FixtureRequest) -> YamlJsonCombo:
     """Version of :func:`_yaml_json_combo()` fixture with only the inputs that have
-    models. Includes an additional flag for whether the model is LoRA or aLoRA
+    models.
     """
     return _YAML_JSON_COMBOS_WITH_MODEL[request.param]
+
+
+@pytest.fixture(
+    name="yaml_json_combo_with_lora_model",
+    scope="module",
+    params=_YAML_JSON_COMBOS_WITH_LORA_MODEL,
+)
+def _yaml_json_combo_with_lora_model(request: pytest.FixtureRequest) -> YamlJsonCombo:
+    """Version of :func:`_yaml_json_combo()` fixture with only the inputs that have
+    non-aLoRA models.
+    """
+    return _YAML_JSON_COMBOS_WITH_LORA_MODEL[request.param]
 
 
 def test_no_orphan_files():
@@ -328,12 +358,7 @@ def test_canned_input(yaml_json_combo_no_alora):
     else:
         transform_kwargs = {}
 
-    # Temporary: Use a YAML file from local disk
-    config_file = cfg.yaml_file
-    if not config_file:
-        # Load from HF Hub if not local file
-        config_file = util.obtain_io_yaml(cfg.task, cfg.base_model_id, cfg.repo_id)
-    rewriter = IntrinsicsRewriter(config_file=config_file)
+    rewriter = IntrinsicsRewriter(config_file=cfg.yaml_file)
 
     json_data = _read_file(cfg.inputs_file)
     before = ChatCompletion.model_validate_json(json_data)
@@ -369,7 +394,7 @@ def test_openai_compat(yaml_json_combo_no_alora):
 
     # Create a fake connection to the API so we can use its request validation code.
     # Note that network access is blocked for this test case.
-    openai_base_url = "http://localhost:98765/not/a/valid/url"
+    openai_base_url = "http://example.com:98765/not/a/valid/url"
     openai_api_key = "not_a_valid_api_key"
     client = openai.OpenAI(base_url=openai_base_url, api_key=openai_api_key)
 
@@ -384,58 +409,28 @@ def test_openai_compat(yaml_json_combo_no_alora):
         client.chat.completions.create(**(after.model_dump()))
 
 
-# Combinations of YAML and canned output files that go together.
-# Canned output is in test_canned_output/model_output/<short name>.json
-_YAML_OUTPUT_COMBOS = {
-    # Short name => YAML file
-    "answerability_answerable": _INPUT_YAML_DIR / "answerability.yaml",
-    "answerability_unanswerable": _INPUT_YAML_DIR / "answerability.yaml",
-    "query_rewrite": _INPUT_YAML_DIR / "query_rewrite.yaml",
-    "context_relevance": _INPUT_YAML_DIR / "context_relevance.yaml",
-    "hallucination_detection": _INPUT_YAML_DIR / "hallucination_detection.yaml",
-    "citations": _INPUT_YAML_DIR / "citations.yaml",
-    "requirement_check": _INPUT_YAML_DIR / "requirement_check.yaml",
-    "answer_relevance_classifier": _INPUT_YAML_DIR / "answer_relevance_classifier.yaml",
-    "answer_relevance_rewriter": _INPUT_YAML_DIR / "answer_relevance_rewriter.yaml",
-}
-
-
-_CANNED_OUTPUT_MODEL_INPUT_DIR = _TEST_DATA_DIR / "test_canned_output/model_input"
 _CANNED_OUTPUT_MODEL_OUTPUT_DIR = _TEST_DATA_DIR / "test_canned_output/model_output"
 _CANNED_OUTPUT_EXPECTED_DIR = _TEST_DATA_DIR / "test_canned_output/expected_result"
 
 
-@pytest.fixture(name="yaml_output_combo", scope="module", params=_YAML_OUTPUT_COMBOS)
-def _yaml_output_combo(request: pytest.FixtureRequest) -> tuple[str, str]:
-    """Pytest fixture that iterates over the various inputs to
-    :func:`test_canned_output()`
-
-    :returns: Tuple of:
-     * short name of test case
-     * location of YAML file
-     * location of model input file
-     * location of model raw output file
-     * location of expected file
-    """
-    return (
-        request.param,
-        _YAML_OUTPUT_COMBOS[request.param],
-        _CANNED_OUTPUT_MODEL_INPUT_DIR / f"{request.param}.json",
-        _CANNED_OUTPUT_MODEL_OUTPUT_DIR / f"{request.param}.json",
-        _CANNED_OUTPUT_EXPECTED_DIR / f"{request.param}.json",
-    )
-
-
-def test_canned_output(yaml_output_combo):
+def test_canned_output(yaml_json_combo_with_lora_model):
     """
     Verify that the output processing for each model works on previous model outputs
     read from disk. Model outputs are stored in OpenAI format.
 
-    :param yaml_output_combo: Fixture containing pairs of short name, IO YAML file
+    :param yaml_json_combo_no_alora: Same cases as test_canned_input
     """
-    _, yaml_file, input_file, output_file, expected_file = yaml_output_combo
+    # _, yaml_ile, input_file, output_file, expected_file = yaml_output_combo
 
-    processor = IntrinsicsResultProcessor(config_file=yaml_file)
+    # Same cases as test_canned_input
+    cfg = yaml_json_combo_with_lora_model
+
+    # Input is input to model, not input to rewriter
+    input_file = _CANNED_INPUT_EXPECTED_DIR / f"{cfg.short_name}.json"
+    output_file = _CANNED_OUTPUT_MODEL_OUTPUT_DIR / f"{cfg.short_name}.json"
+    expected_file = _CANNED_OUTPUT_EXPECTED_DIR / f"{cfg.short_name}.json"
+
+    processor = IntrinsicsResultProcessor(config_file=cfg.yaml_file)
     with open(input_file, encoding="utf-8") as f:
         model_input = ChatCompletion.model_validate_json(f.read())
     with open(output_file, encoding="utf-8") as f:
@@ -562,6 +557,10 @@ def test_run_transformers(yaml_json_combo_with_model):
     responses = granite_common.util.generate_with_transformers(
         tokenizer, model, generate_input, other_input
     )
+
+    # Pull this string out of the debugger to create a fresh model outputs file.
+    responses_str = responses.model_dump_json(indent=4)
+    print(responses_str)
 
     # Output processing
     transformed_responses = result_processor.transform(responses, transformed_input)
