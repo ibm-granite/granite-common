@@ -3,7 +3,7 @@
         {
             "index": 0,
             "message": {
-                "content": "{\"rewritten_question\": \"Is Rex, the dog, more likely to get fleas because he spends a lot of time outdoors?\"}",
+                "content": "{\"rewritten_question\": \"Is Rex more likely to get fleas because he spends a lot of time outdoors?\"}",
                 "role": "assistant"
             }
         }

@@ -5,7 +5,6 @@ Constants relating to of input and output processing for LoRA adapters in IBM's
 `rag-agent-lib` library of intrinsics.
 """
 
-INTRINSICS_LIB_REPO_ID = "ibm-granite/granite-3.3-8b-rag-agent-lib"
 YAML_REQUIRED_FIELDS = [
     "model",
     "response_format",
@@ -27,18 +26,22 @@ YAML_JSON_FIELDS = [
 ]
 """Fields of the YAML file that contain JSON values as strings"""
 
-RAG_INTRINSICS_LIB_REPO_NAME = "ibm-granite/rag-intrinsics-lib"
-"""Location of the RAG intrinsics library on Huggingface Hub"""
+OLD_LAYOUT_REPOS = [
+    "ibm-granite/rag-intrinsics-lib",
+    "generative-computing/rag-intrinsics-lib",
+    "generative-computing/core-intrinsics-lib",
+]
+"""Repositories (aka "models") on Hugging Face Hub that use the old layout of
+``<task>/<adapter type>/<base model>``.
+"""
 
 BASE_MODEL_TO_CANONICAL_NAME = {
     "ibm-granite/granite-3.3-8b-instruct": "granite-3.3-8b-instruct",
     "ibm-granite/granite-3.3-2b-instruct": "granite-3.3-2b-instruct",
-    "granite-3.3-8b-instruct": "granite-3.3-8b-instruct",
-    "granite-3.3-2b-instruct": "granite-3.3-2b-instruct",
     "openai/gpt-oss-20b": "gpt-oss-20b",
-    "gpt-oss-20b": "gpt-oss-20b",
+    "ibm-granite/granite-4.0-micro": "granite-4.0-micro",
 }
-"""Base model names that we accept for LoRA/aLoRA adapters in intrinsics-lib.
+"""Base model names that we accept for LoRA/aLoRA adapters in intrinsics libraries.
 Each model name maps to the name of the directory that contains (a)LoRA adapters for
 that model."""
 
