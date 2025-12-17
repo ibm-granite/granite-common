@@ -1,11 +1,7 @@
 # Model name string, or null to use whatever is provided in the chat completion request.
 model: ~
 # JSON schema of the model's output
-response_format: |
-  {
-    "type": "string",
-    "enum": ["answerable", "unanswerable"]
-  }
+response_format: ~
 transformations:
   # Convert categorical answer to continuous value by decoding logprobs
   - type: likelihood
@@ -21,5 +17,11 @@ instruction: ~
 parameters:
   # "unanswerable" can be 6 tokens at high temperatures
   max_completion_tokens: 6
+  extra_body:
+    guided_json:
+      {
+        "type": "string",
+        "enum": ["answerable", "unanswerable"]
+      }
 # No sentence boundary detection
 sentence_boundaries: ~

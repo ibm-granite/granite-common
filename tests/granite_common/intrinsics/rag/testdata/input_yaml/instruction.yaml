@@ -1,18 +1,20 @@
 # Model name string, or null to use whatever is provided in the chat completion request
 model: ~
 # JSON schema of the model's output
-response_format: |
-  {
-    "type": "string",
-    "enum": ["fish", "not fish"]
-  }
+response_format: ~
 # No transformations
 transformations: ~
 instruction: |
   {{ This text should be inside curly braces. }}
   Here's the text of the last message: {last_message}
-  Does the last message talk about fish? 
+  Does the last message talk about fish?
   All pets named '{test_kwarg}' are fish.
 parameters:
   temperature: 0.75
+  extra_body:
+    guided_json:
+      {
+        "type": "string",
+        "enum": ["fish", "not fish"]
+      }
 sentence_boundaries: ~

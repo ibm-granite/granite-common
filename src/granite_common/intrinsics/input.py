@@ -152,11 +152,11 @@ class IntrinsicsRewriter(ChatCompletionRewriter):
     """JSON Schema of expected response format"""
 
     parameters: dict
-    """Additional parameters (key-value pairs) that this rewriter adds to all chat 
+    """Additional parameters (key-value pairs) that this rewriter adds to all chat
     completion requests."""
 
     extra_body_parameters: dict
-    """Extended vLLM-specific parameters that go under the ``extra_body`` element of 
+    """Extended vLLM-specific parameters that go under the ``extra_body`` element of
     the parameters field. These parameters need to be merged with any ``extra_body``
     content that is present in incoming requests."""
 
@@ -166,14 +166,14 @@ class IntrinsicsRewriter(ChatCompletionRewriter):
 
     sentence_boundaries: dict[str, str] | None
     """
-    Optional sentence boundary marking specification, as a mapping from sentence 
+    Optional sentence boundary marking specification, as a mapping from sentence
     location (i.e. "last_message", "documents") to marker string (i.e. "c" for the
     first sentence to be marked with "<c0>").
     """
 
     docs_as_message: str | None
     """
-    Optional specification for moving documents from ``extra_body/documents`` to a 
+    Optional specification for moving documents from ``extra_body/documents`` to a
     user message at the beginning of the messages list. Value specifies how to serialize
     the documents into the message: "string" or "json".
     """
@@ -223,7 +223,7 @@ class IntrinsicsRewriter(ChatCompletionRewriter):
         self.instruction = self.config["instruction"]
 
         if self.config["response_format"] is not None:
-            self.extra_body_parameters["guided_json"] = self.config["response_format"]
+            self.response_format = self.config["response_format"]
 
         self.sentence_boundaries = self.config["sentence_boundaries"]
         if self.sentence_boundaries:
