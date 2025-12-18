@@ -1,7 +1,5 @@
 # Model name string, or null to use whatever is provided in the chat completion request
 model: ~
-# JSON schema of the model's output
-response_format: ~
 # No transformations
 transformations: ~
 instruction: |
@@ -12,6 +10,7 @@ instruction: |
 parameters:
   temperature: 0.75
   extra_body:
+    # JSON schema of the model's output
     guided_json:
       {
         "type": "string",

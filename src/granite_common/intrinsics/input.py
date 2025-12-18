@@ -148,9 +148,6 @@ class IntrinsicsRewriter(ChatCompletionRewriter):
     config: dict
     """Parsed YAML configuration file for the target intrinsic."""
 
-    response_format: dict
-    """JSON Schema of expected response format"""
-
     parameters: dict
     """Additional parameters (key-value pairs) that this rewriter adds to all chat
     completion requests."""
@@ -222,9 +219,6 @@ class IntrinsicsRewriter(ChatCompletionRewriter):
             self.parameters["top_logprobs"] = TOP_LOGPROBS
         self.instruction = self.config["instruction"]
 
-        if self.config["response_format"] is not None:
-            self.response_format = self.config["response_format"]
-
         self.sentence_boundaries = self.config["sentence_boundaries"]
         if self.sentence_boundaries:
             # Sentence boundary detection requires nltk
@@ -256,6 +250,17 @@ class IntrinsicsRewriter(ChatCompletionRewriter):
             raise ValueError(
                 f"docs_as_message parameter set to '{self.docs_as_message}', which is "
                 f"not one of the valid options {valid_docs_as_message}"
+            )
+
+        # Param `response_body` will take priority over `extra_body["guided_json"]`
+        # for vLLM, so throw an error that only one can be specified.
+        if (
+            "response_format" in self.parameters
+            and "guided_json" in self.extra_body_parameters
+        ):
+            raise KeyError(
+                "choose either `response_format` or `extra_body['guided_json']` "
+                "as `response_format` will take priority"
             )
 
     def _mark_sentence_boundaries(

@@ -1,7 +1,5 @@
 # Model name string, or null to use whatever is provided in the chat completion request.
 model: ~
-# JSON schema of the model's output
-response_format: ~
 transformations:
   # Convert categorical answer to continuous value by decoding logprobs
   - type: likelihood
@@ -18,6 +16,7 @@ parameters:
   # "unanswerable" can be 6 tokens at high temperatures
   max_completion_tokens: 6
   extra_body:
+    # JSON schema of the model's output
     guided_json:
       {
         "type": "string",
