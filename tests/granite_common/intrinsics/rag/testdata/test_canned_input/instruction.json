@@ -15,12 +15,14 @@
   ],
   "model": "dummy-model-1b",
   "extra_body": {
-    "guided_json": {
-      "type": "string",
-      "enum": [
-        "fish",
-        "not fish"
-      ]
+    "structured_outputs": {
+      "json": {
+        "type": "string",
+        "enum": [
+          "fish",
+          "not fish"
+        ]
+      }
     }
   },
   "max_completion_tokens": 42,

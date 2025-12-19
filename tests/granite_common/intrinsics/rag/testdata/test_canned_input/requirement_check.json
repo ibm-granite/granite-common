@@ -28,8 +28,10 @@
         "doc_id": "1"
       }
     ],
-    "guided_json": {
-      "type": "boolean"
+    "structured_outputs": {
+      "json": {
+        "type": "boolean"
+      }
     }
   },
   "max_completion_tokens": 5,

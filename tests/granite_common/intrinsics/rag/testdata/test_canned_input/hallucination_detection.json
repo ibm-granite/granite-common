@@ -24,43 +24,45 @@
         "doc_id": "1"
       }
     ],
-    "guided_json": {
-      "$defs": {
-        "HallucinationOutputEntry": {
-          "properties": {
-            "r": {
-              "minimum": 0,
-              "title": "Sentence Num",
-              "type": "integer"
+    "structured_outputs": {
+      "json": {
+        "$defs": {
+          "HallucinationOutputEntry": {
+            "properties": {
+              "r": {
+                "minimum": 0,
+                "title": "Sentence Num",
+                "type": "integer"
+              },
+              "f": {
+                "title": "Is Faithful",
+                "type": "string",
+                "enum": [
+                  "faithful",
+                  "partial",
+                  "unfaithful"
+                ]
+              },
+              "e": {
+                "title": "Reasoning",
+                "type": "string"
+              }
             },
-            "f": {
-              "title": "Is Faithful",
-              "type": "string",
-              "enum": [
-                "faithful",
-                "partial",
-                "unfaithful"
-              ]
-            },
-            "e": {
-              "title": "Reasoning",
-              "type": "string"
-            }
-          },
-          "required": [
-            "r",
-            "e",
-            "f"
-          ],
-          "title": "HallucinationOutputEntry",
-          "type": "object"
-        }
-      },
-      "items": {
-        "$ref": "#/$defs/HallucinationOutputEntry"
-      },
-      "title": "HallucinationOutput",
-      "type": "array"
+            "required": [
+              "r",
+              "e",
+              "f"
+            ],
+            "title": "HallucinationOutputEntry",
+            "type": "object"
+          }
+        },
+        "items": {
+          "$ref": "#/$defs/HallucinationOutputEntry"
+        },
+        "title": "HallucinationOutput",
+        "type": "array"
+      }
     }
   },
   "max_completion_tokens": 4096,

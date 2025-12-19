@@ -20,12 +20,14 @@
         "doc_id": "2"
       }
     ],
-    "guided_json": {
-      "type": "string",
-      "enum": [
-        "answerable",
-        "unanswerable"
-      ]
+    "structured_outputs": {
+      "json": {
+        "type": "string",
+        "enum": [
+          "answerable",
+          "unanswerable"
+        ]
+      }
     }
   },
   "max_completion_tokens": 6,
