@@ -249,9 +249,9 @@ class VLLMExtraBody(pydantic.BaseModel, NoDefaultsMixin):
             "supports."
         ),
     )
-    guided_json: str | dict | None = Field(
+    structured_outputs: dict | None = Field(
         default=None,
-        description=("If specified, the output will follow the JSON schema."),
+        description=("If specified, the output will follow the specified schema."),
     )
 
     model_config = pydantic.ConfigDict(

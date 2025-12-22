@@ -24,17 +24,19 @@
         "doc_id": "2"
       }
     ],
-    "guided_json": {
-      "properties": {
-        "answer_relevance_rewrite": {
-          "title": "Rewritten answer",
-          "type": "string"
-        }
-      },
-      "required": [
-        "answer_relevance_rewrite"
-      ],
-      "type": "object"
+    "structured_outputs": {
+      "json": {
+        "properties": {
+          "answer_relevance_rewrite": {
+            "title": "Rewritten answer",
+            "type": "string"
+          }
+        },
+        "required": [
+          "answer_relevance_rewrite"
+        ],
+        "type": "object"
+      }
     }
   },
   "temperature": 0.0,

@@ -7,12 +7,14 @@
   ],
   "model": "original-model-name",
   "extra_body": {
-    "guided_json": {
-      "type": "string",
-      "enum": [
-        "answerable",
-        "unanswerable"
-      ]
+    "structured_outputs": {
+      "json": {
+        "type": "string",
+        "enum": [
+          "answerable",
+          "unanswerable"
+        ]
+      }
     }
   },
   "frequency_penalty": 0.1,

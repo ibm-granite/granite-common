@@ -27,7 +27,7 @@ Please install nltk with:
     pip install nltk
 In some environments you may also need to manually download model weights with:
     python -m nltk.downloader punkt_tab
-See https://www.nltk.org/install.html#installing-nltk-data for more detailed 
+See https://www.nltk.org/install.html#installing-nltk-data for more detailed
 instructions."""
 
 
@@ -191,7 +191,8 @@ def chat_completion_request_to_transformers_inputs(
 
     if (
         request.get("extra_body") is not None
-        and request["extra_body"].get("guided_json") is not None
+        and request["extra_body"].get("structured_outputs") is not None
+        and request["extra_body"].get("structured_outputs").get("json") is not None
     ):
         # Constrained decoding in Hugging Face requires using a third-party library
         # to create a callback function to be invoked from inside generate()
@@ -220,7 +221,7 @@ def chat_completion_request_to_transformers_inputs(
         )
         grammar_compiler = xgr.GrammarCompiler(tokenizer_info)
         compiled_grammar = grammar_compiler.compile_json_schema(
-            request["extra_body"]["guided_json"]
+            request["extra_body"]["structured_outputs"]["json"]
         )
         logits_processor = xgr.contrib.hf.LogitsProcessor(compiled_grammar)
 

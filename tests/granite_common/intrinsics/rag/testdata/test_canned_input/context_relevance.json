@@ -10,23 +10,25 @@
     }
   ],
   "extra_body": {
-    "guided_json": {
-      "title": "ContextRelevanceOutput",
-      "type": "object",
-      "properties": {
-        "context_relevance": {
-          "type": "string",
-          "description": "Context relevancy judgment.",
-          "enum": [
-            "relevant",
-            "irrelevant",
-            "partially relevant"
-          ]
-        }
-      },
-      "required": [
-        "context_relevance"
-      ]
+    "structured_outputs": {
+      "json": {
+        "title": "ContextRelevanceOutput",
+        "type": "object",
+        "properties": {
+          "context_relevance": {
+            "type": "string",
+            "description": "Context relevancy judgment.",
+            "enum": [
+              "relevant",
+              "irrelevant",
+              "partially relevant"
+            ]
+          }
+        },
+        "required": [
+          "context_relevance"
+        ]
+      }
     }
   },
   "logprobs": true,
