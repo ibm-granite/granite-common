@@ -94,7 +94,7 @@ def obtain_lora(
     """
     Downloads a cached copy of a LoRA or aLoRA adapter from the
     [Granite Intrinsics Library](
-    https://huggingface.co/ibm-granite/granite-3.3-8b-rag-agent-lib) if one is not
+    https://huggingface.co/ibm-granite/granite-lib-rag-r1.0) if one is not
     already in the local cache.
 
     :param intrinsic_name: Short name of the intrinsic model, such as "certainty".
@@ -158,7 +158,7 @@ def obtain_io_yaml(
     """
     Downloads a cached copy of an ``io.yaml`` configuration file for an intrinsic in
     the [Granite Intrinsics Library](
-    https://huggingface.co/ibm-granite/granite-3.3-8b-rag-agent-lib) if one is not
+    https://huggingface.co/ibm-granite/granite-lib-rag-r1.0) if one is not
     already in the local cache.
 
     :param intrinsic_name: Short name of the intrinsic model, such as "certainty".

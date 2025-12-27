@@ -16,16 +16,16 @@ runs:
         sleep 10
         time curl -i http://localhost:55555
 
-    - name: Download granite3.3:8b model
+    - name: Download granite4:micro model
       shell: bash
       run: |
-        OLLAMA_HOST="localhost:55555" ollama pull granite3.3:8b
+        OLLAMA_HOST="localhost:55555" ollama pull granite4:micro
 
-    - name: Wait for granite3.3:8b download
+    - name: Wait for granite4:micro download
       shell: bash
       run: |
         sleep 10
-        until OLLAMA_HOST="localhost:55555" ollama list granite3.3:8b
+        until OLLAMA_HOST="localhost:55555" ollama list granite4:micro
         do
           sleep 5
         done

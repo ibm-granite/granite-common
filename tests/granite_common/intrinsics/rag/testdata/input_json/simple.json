@@ -2,6 +2,5 @@
     "messages": [{
         "role": "user",
         "content": "Hello world."
-    }],
-    "max_completion_tokens": 1
+    }]
 }
