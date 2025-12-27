@@ -106,6 +106,7 @@ def move_documents_to_message(
     ):
         docs_list = chat_completion.extra_body.documents
 
+        doc_message_text = ""
         if how == "string":
             doc_text = "\n\n".join(
                 [f"[Document {d.doc_id}]\n{d.text}" for d in docs_list]

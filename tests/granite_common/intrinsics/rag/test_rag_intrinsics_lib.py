@@ -237,6 +237,15 @@ _YAML_JSON_COMBOS_WITH_LORA_MODEL = {
     k: v for k, v in _YAML_JSON_COMBOS.items() if v.task is not None and not v.is_alora
 }
 
+# Combinations suitable for an Ollama backend
+_YAML_JSON_COMBOS_FOR_OLLAMA = {
+    k: v
+    for k, v in _YAML_JSON_COMBOS.items()
+    if v.task is not None
+    and not v.is_alora
+    and v.base_model_id == "ibm-granite/granite-4.0-micro"
+}
+
 
 @pytest.fixture(name="yaml_json_combo", scope="module", params=_YAML_JSON_COMBOS)
 def _yaml_json_combo(request: pytest.FixtureRequest) -> YamlJsonCombo:
@@ -290,6 +299,18 @@ def _yaml_json_combo_with_lora_model(request: pytest.FixtureRequest) -> YamlJson
     non-aLoRA models.
     """
     return _YAML_JSON_COMBOS_WITH_LORA_MODEL[request.param]
+
+
+@pytest.fixture(
+    name="yaml_json_combo_for_ollama",
+    scope="module",
+    params=_YAML_JSON_COMBOS_FOR_OLLAMA,
+)
+def _yaml_json_combo_for_ollama(request: pytest.FixtureRequest) -> YamlJsonCombo:
+    """Version of :func:`_yaml_json_combo()` fixture with only inputs suitable
+    for an Ollama backend.
+    """
+    return _YAML_JSON_COMBOS_FOR_OLLAMA[request.param]
 
 
 def test_no_orphan_files():
@@ -571,6 +592,96 @@ def test_run_transformers(yaml_json_combo_with_model):
 
     with open(
         _TEST_DATA_DIR / f"test_run_transformers/{cfg.short_name}.json",
+        encoding="utf-8",
+    ) as f:
+        expected = ChatCompletionResponse.model_validate_json(f.read())
+    # expected_str = expected.model_dump_json(indent=4)
+
+    # Correct for floating point rounding.
+    # Can't use pytest.approx() because of lists
+    transformed_json = _round_floats(
+        json_util.parse_inline_json(transformed_responses.model_dump()), num_digits=2
+    )
+    expected_json = _round_floats(
+        json_util.parse_inline_json(expected.model_dump()), num_digits=2
+    )
+    if transformed_json != expected_json:
+        # Simple comparison failed.
+        # Pull out just the content and attempt a more sophisticated comparison
+        assert len(transformed_responses.choices) == len(expected.choices)
+
+        for tc, ec in zip(transformed_responses.choices, expected.choices, strict=True):
+            t_json = json.loads(tc.message.content)
+            e_json = json.loads(ec.message.content)
+
+            assert t_json == pytest.approx(e_json, abs=0.1)
+
+
+def test_run_ollama(yaml_json_combo_for_ollama):
+    """
+    Run the target model end-to-end with an Ollama backend.
+    """
+    cfg = yaml_json_combo_for_ollama
+
+    # Change base model id to Ollama's version
+    if cfg.base_model_id == "ibm-granite/granite-4.0-micro":
+        cfg.base_model_id = "granite4:micro"
+    else:
+        pytest.xfail(f"Unsupported base model: {cfg.base_model_id}")
+
+    if cfg.arguments_file:
+        with open(cfg.arguments_file, encoding="utf8") as f:
+            transform_kwargs = json.load(f)
+    else:
+        transform_kwargs = {}
+
+    # Load input request
+    with open(cfg.inputs_file, encoding="utf-8") as f:
+        model_input = ChatCompletion.model_validate_json(f.read())
+    model_input.model = cfg.task
+
+    # Download files from Hugging Face Hub
+    try:
+        lora_dir = util.obtain_lora(
+            cfg.task, cfg.base_model_id, cfg.repo_id, alora=cfg.is_alora
+        )
+    except requests.exceptions.HTTPError:
+        pytest.xfail("Downloads fail on CI server because repo is private")
+
+    # Load IO config YAML for this model
+    io_yaml_path = lora_dir / "io.yaml"
+    if not os.path.exists(io_yaml_path):
+        # Use local files until proper configs are up on Hugging Face
+        io_yaml_path = cfg.yaml_file.replace("input_yaml", "input_yaml_ollama")
+    rewriter = IntrinsicsRewriter(config_file=io_yaml_path)
+    result_processor = IntrinsicsResultProcessor(config_file=io_yaml_path)
+
+    # Prepare inputs for inference
+    transformed_input = rewriter.transform(model_input, **transform_kwargs)
+    print(transformed_input.model_dump_json(indent=4))
+
+    # Run the model using an Ollama backend
+    openai_base_url = "http://localhost:55555/v1/"
+    openai_api_key = "rag_intrinsics_1234"
+    client = openai.OpenAI(base_url=openai_base_url, api_key=openai_api_key)
+
+    chat_completion = client.chat.completions.create(**transformed_input.model_dump())
+
+    # Pull this string out of the debugger to create a fresh model outputs file.
+    responses_str = chat_completion.choices[0].model_dump_json(indent=4)
+    print(responses_str)
+
+    # Output processing
+    transformed_responses = result_processor.transform(
+        chat_completion, transformed_input
+    )
+
+    # Pull this string out of the debugger to create a fresh expected file.
+    transformed_str = transformed_responses.model_dump_json(indent=4)
+    print(transformed_str)
+
+    with open(
+        _TEST_DATA_DIR / f"test_run_ollama/{cfg.short_name}.json",
         encoding="utf-8",
     ) as f:
         expected = ChatCompletionResponse.model_validate_json(f.read())
