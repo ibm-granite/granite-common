@@ -8,14 +8,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Setup Git credentials for HF
-      shell: bash
-      run: |
-        git config --global credential.helper store
-        echo "https://user:${{ inputs.HF_TOKEN }}@huggingface.co" > ~/.git-credentials
-        git config --global user.email "github-actions@github.com"
-        git config --global user.name "GitHub Actions"
-
     - name: Clone HF intrinsics repo
       shell: bash
       run: |
