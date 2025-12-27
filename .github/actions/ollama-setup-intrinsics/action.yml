@@ -19,7 +19,10 @@ runs:
     - name: Clone HF intrinsics repo
       shell: bash
       run: |
-        git clone --branch refs/pr/4 https://huggingface.co/ibm-granite/granite-lib-rag-r1.0
+        git clone git@hf.co:ibm-granite/granite-lib-rag-r1.0
+        cd granite-lib-rag-r1.0
+        git fetch origin
+        git pull origin refs/pr/4
 
     - name: List cloned files
       shell: bash
