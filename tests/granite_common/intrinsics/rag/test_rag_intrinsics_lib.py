@@ -661,7 +661,7 @@ def test_run_ollama(yaml_json_combo_for_ollama):
     print(transformed_input.model_dump_json(indent=4))
 
     # Run the model using an Ollama backend
-    openai_base_url = "http://p1-r11-n4.bluevela.rmf.ibm.com:55555/v1/"
+    openai_base_url = "http://localhost:55555/v1/"
     openai_api_key = "rag_intrinsics_1234"
     client = openai.OpenAI(base_url=openai_base_url, api_key=openai_api_key)
 
