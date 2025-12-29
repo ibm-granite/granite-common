@@ -4,5 +4,6 @@
       "content": "Who is the CEO of Microsoft?",
       "role": "user"
     }
-  ]
+  ],
+  "temperature": 0.0
 }
