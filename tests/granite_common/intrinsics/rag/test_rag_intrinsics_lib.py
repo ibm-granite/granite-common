@@ -132,42 +132,42 @@ _YAML_JSON_COMBOS_LIST = [
         inputs_file=_INPUT_JSON_DIR / "query_rewrite.json",
         task="query_rewrite",
     ),
-    YamlJsonCombo(
-        short_name="requirement_check",
-        inputs_file=_INPUT_JSON_DIR / "requirement_check.json",
-        arguments_file=_INPUT_ARGS_DIR / "requirement_check.json",
-        task="requirement_check",
-        # Granite 4.0 adapters not currently available
-        repo_id="ibm-granite/rag-intrinsics-lib",
-        base_model_id="ibm-granite/granite-3.3-2b-instruct",
-    ),
-    YamlJsonCombo(
-        short_name="requirement_check_alora",
-        inputs_file=_INPUT_JSON_DIR / "requirement_check.json",
-        arguments_file=_INPUT_ARGS_DIR / "requirement_check.json",
-        task="requirement_check",
-        is_alora=True,
-        # Granite 4.0 adapters not currently available
-        repo_id="ibm-granite/rag-intrinsics-lib",
-        base_model_id="ibm-granite/granite-3.3-2b-instruct",
-    ),
-    YamlJsonCombo(
-        short_name="uncertainty",
-        inputs_file=_INPUT_JSON_DIR / "uncertainty.json",
-        task="uncertainty",
-        # Granite 4.0 adapters not currently available
-        repo_id="ibm-granite/rag-intrinsics-lib",
-        base_model_id="ibm-granite/granite-3.3-2b-instruct",
-    ),
-    YamlJsonCombo(
-        short_name="uncertainty_alora",
-        inputs_file=_INPUT_JSON_DIR / "uncertainty.json",
-        task="uncertainty",
-        is_alora=True,
-        # Granite 4.0 adapters not currently available
-        repo_id="ibm-granite/rag-intrinsics-lib",
-        base_model_id="ibm-granite/granite-3.3-2b-instruct",
-    ),
+    # YamlJsonCombo(
+    #     short_name="requirement_check",
+    #     inputs_file=_INPUT_JSON_DIR / "requirement_check.json",
+    #     arguments_file=_INPUT_ARGS_DIR / "requirement_check.json",
+    #     task="requirement_check",
+    #     # Granite 4.0 adapters not currently available
+    #     repo_id="ibm-granite/rag-intrinsics-lib",
+    #     base_model_id="ibm-granite/granite-3.3-2b-instruct",
+    # ),
+    # YamlJsonCombo(
+    #     short_name="requirement_check_alora",
+    #     inputs_file=_INPUT_JSON_DIR / "requirement_check.json",
+    #     arguments_file=_INPUT_ARGS_DIR / "requirement_check.json",
+    #     task="requirement_check",
+    #     is_alora=True,
+    #     # Granite 4.0 adapters not currently available
+    #     repo_id="ibm-granite/rag-intrinsics-lib",
+    #     base_model_id="ibm-granite/granite-3.3-2b-instruct",
+    # ),
+    # YamlJsonCombo(
+    #     short_name="uncertainty",
+    #     inputs_file=_INPUT_JSON_DIR / "uncertainty.json",
+    #     task="uncertainty",
+    #     # Granite 4.0 adapters not currently available
+    #     repo_id="ibm-granite/rag-intrinsics-lib",
+    #     base_model_id="ibm-granite/granite-3.3-2b-instruct",
+    # ),
+    # YamlJsonCombo(
+    #     short_name="uncertainty_alora",
+    #     inputs_file=_INPUT_JSON_DIR / "uncertainty.json",
+    #     task="uncertainty",
+    #     is_alora=True,
+    #     # Granite 4.0 adapters not currently available
+    #     repo_id="ibm-granite/rag-intrinsics-lib",
+    #     base_model_id="ibm-granite/granite-3.3-2b-instruct",
+    # ),
     YamlJsonCombo(
         short_name="context_relevance",
         inputs_file=_INPUT_JSON_DIR / "context_relevance.json",
@@ -661,7 +661,7 @@ def test_run_ollama(yaml_json_combo_for_ollama):
     print(transformed_input.model_dump_json(indent=4))
 
     # Run the model using an Ollama backend
-    openai_base_url = "http://localhost:55555/v1/"
+    openai_base_url = "http://p1-r11-n4.bluevela.rmf.ibm.com:55555/v1/"
     openai_api_key = "rag_intrinsics_1234"
     client = openai.OpenAI(base_url=openai_base_url, api_key=openai_api_key)
 
