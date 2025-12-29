@@ -132,42 +132,42 @@ _YAML_JSON_COMBOS_LIST = [
         inputs_file=_INPUT_JSON_DIR / "query_rewrite.json",
         task="query_rewrite",
     ),
-    # YamlJsonCombo(
-    #     short_name="requirement_check",
-    #     inputs_file=_INPUT_JSON_DIR / "requirement_check.json",
-    #     arguments_file=_INPUT_ARGS_DIR / "requirement_check.json",
-    #     task="requirement_check",
-    #     # Granite 4.0 adapters not currently available
-    #     repo_id="ibm-granite/rag-intrinsics-lib",
-    #     base_model_id="ibm-granite/granite-3.3-2b-instruct",
-    # ),
-    # YamlJsonCombo(
-    #     short_name="requirement_check_alora",
-    #     inputs_file=_INPUT_JSON_DIR / "requirement_check.json",
-    #     arguments_file=_INPUT_ARGS_DIR / "requirement_check.json",
-    #     task="requirement_check",
-    #     is_alora=True,
-    #     # Granite 4.0 adapters not currently available
-    #     repo_id="ibm-granite/rag-intrinsics-lib",
-    #     base_model_id="ibm-granite/granite-3.3-2b-instruct",
-    # ),
-    # YamlJsonCombo(
-    #     short_name="uncertainty",
-    #     inputs_file=_INPUT_JSON_DIR / "uncertainty.json",
-    #     task="uncertainty",
-    #     # Granite 4.0 adapters not currently available
-    #     repo_id="ibm-granite/rag-intrinsics-lib",
-    #     base_model_id="ibm-granite/granite-3.3-2b-instruct",
-    # ),
-    # YamlJsonCombo(
-    #     short_name="uncertainty_alora",
-    #     inputs_file=_INPUT_JSON_DIR / "uncertainty.json",
-    #     task="uncertainty",
-    #     is_alora=True,
-    #     # Granite 4.0 adapters not currently available
-    #     repo_id="ibm-granite/rag-intrinsics-lib",
-    #     base_model_id="ibm-granite/granite-3.3-2b-instruct",
-    # ),
+    YamlJsonCombo(
+        short_name="requirement_check",
+        inputs_file=_INPUT_JSON_DIR / "requirement_check.json",
+        arguments_file=_INPUT_ARGS_DIR / "requirement_check.json",
+        task="requirement_check",
+        # Granite 4.0 adapters not currently available
+        repo_id="ibm-granite/rag-intrinsics-lib",
+        base_model_id="ibm-granite/granite-3.3-2b-instruct",
+    ),
+    YamlJsonCombo(
+        short_name="requirement_check_alora",
+        inputs_file=_INPUT_JSON_DIR / "requirement_check.json",
+        arguments_file=_INPUT_ARGS_DIR / "requirement_check.json",
+        task="requirement_check",
+        is_alora=True,
+        # Granite 4.0 adapters not currently available
+        repo_id="ibm-granite/rag-intrinsics-lib",
+        base_model_id="ibm-granite/granite-3.3-2b-instruct",
+    ),
+    YamlJsonCombo(
+        short_name="uncertainty",
+        inputs_file=_INPUT_JSON_DIR / "uncertainty.json",
+        task="uncertainty",
+        # Granite 4.0 adapters not currently available
+        repo_id="ibm-granite/rag-intrinsics-lib",
+        base_model_id="ibm-granite/granite-3.3-2b-instruct",
+    ),
+    YamlJsonCombo(
+        short_name="uncertainty_alora",
+        inputs_file=_INPUT_JSON_DIR / "uncertainty.json",
+        task="uncertainty",
+        is_alora=True,
+        # Granite 4.0 adapters not currently available
+        repo_id="ibm-granite/rag-intrinsics-lib",
+        base_model_id="ibm-granite/granite-3.3-2b-instruct",
+    ),
     YamlJsonCombo(
         short_name="context_relevance",
         inputs_file=_INPUT_JSON_DIR / "context_relevance.json",
