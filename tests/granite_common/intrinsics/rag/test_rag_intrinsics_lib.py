@@ -62,6 +62,8 @@ class YamlJsonCombo(pydantic.BaseModel):
     repo_id: str = _RAG_INTRINSICS_REPO_NAME
     """Repo on Hugging Face Hub from which the adapter for this intrinsic should be
     loaded."""
+    revision: str = "main"
+    """Revision or branch of the Hugging Face `repo_id`."""
     base_model_id: str = "ibm-granite/granite-4.0-micro"
     """Base model on which the target adapter was trained. Should be small enough to
     run on the CI server."""
@@ -623,6 +625,8 @@ def test_run_ollama(yaml_json_combo_for_ollama):
     """
     cfg = yaml_json_combo_for_ollama
 
+    cfg.revision = "refs/pr/4"
+
     # Change base model id to Ollama's version
     if cfg.base_model_id == "ibm-granite/granite-4.0-micro":
         cfg.base_model_id = "granite4:micro"
@@ -643,7 +647,11 @@ def test_run_ollama(yaml_json_combo_for_ollama):
     # Download files from Hugging Face Hub
     try:
         lora_dir = util.obtain_lora(
-            cfg.task, cfg.base_model_id, cfg.repo_id, alora=cfg.is_alora
+            cfg.task,
+            cfg.base_model_id,
+            cfg.repo_id,
+            revision=cfg.revision,
+            alora=cfg.is_alora,
         )
     except requests.exceptions.HTTPError:
         pytest.xfail("Downloads fail on CI server because repo is private")

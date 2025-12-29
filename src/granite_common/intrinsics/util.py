@@ -87,6 +87,7 @@ def obtain_lora(
     target_model_name: str,
     repo_id: str,
     /,
+    revision: str = "main",
     alora: bool = False,
     cache_dir: str | None = None,
     file_glob: str = "*",
@@ -131,6 +132,7 @@ def obtain_lora(
         repo_id=repo_id,
         allow_patterns=f"{lora_subdir_name}/{file_glob}",
         cache_dir=cache_dir,
+        revision=revision,
     )
     lora_dir = pathlib.Path(local_root_path) / lora_subdir_name
 
@@ -152,6 +154,7 @@ def obtain_io_yaml(
     target_model_name: str,
     repo_id: str,
     /,
+    revision: str = "main",
     alora: bool = False,
     cache_dir: str | None = None,
 ) -> pathlib.Path:
@@ -177,6 +180,7 @@ def obtain_io_yaml(
         intrinsic_name,
         target_model_name,
         repo_id,
+        revision=revision,
         alora=alora,
         cache_dir=cache_dir,
         file_glob="io.yaml",
