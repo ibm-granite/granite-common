@@ -131,6 +131,7 @@ def obtain_lora(
         repo_id=repo_id,
         allow_patterns=f"{lora_subdir_name}/{file_glob}",
         cache_dir=cache_dir,
+        revision="refs/pr/4",
     )
     lora_dir = pathlib.Path(local_root_path) / lora_subdir_name
 
