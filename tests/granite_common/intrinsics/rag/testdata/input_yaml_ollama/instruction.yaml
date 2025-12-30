@@ -12,8 +12,13 @@ instruction: |
 parameters:
   temperature: 0.75
   response_format:
-    enum:
-    - fish
-    - not fish
-    type: string
+    type: json_schema
+    json_schema:
+      schema:
+        enum:
+        - fish
+        - not fish
+        type: string
+      strict: true
 sentence_boundaries: ~
+docs_as_message: roles
