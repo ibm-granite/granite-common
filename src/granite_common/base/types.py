@@ -122,6 +122,22 @@ class UserMessage(_ChatMessageBase):
     role: Literal["user"] = "user"
 
 
+class DocumentMessage(_ChatMessageBase):
+    """Document message for an IBM Granite model (from the Ollama library) chat
+    completion request."""
+
+    role: str
+
+    @pydantic.field_validator("role")
+    def validate_document_prefix(cls, doc_role: str) -> str:
+        expected_prefix = "document "
+        if not doc_role.startswith(expected_prefix):
+            raise ValueError(
+                f"Document role string must start with prefix '{expected_prefix}'"
+            )
+        return doc_role
+
+
 class ToolCall(pydantic.BaseModel, NoDefaultsMixin):
     """Format of an entry in the ``tool_calls`` list of an assistant message"""
 
@@ -172,6 +188,7 @@ ChatMessage: TypeAlias = (
     | ToolResultMessage
     | SystemMessage
     | DeveloperMessage
+    | DocumentMessage
 )
 """Type alias for all message types. We use this Union instead of the actual base class
 :class:`_ChatMessageBase` so that Pydantic can parse the message list from JSON."""

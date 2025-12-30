@@ -11,7 +11,7 @@ import json
 import pathlib
 
 # First Party
-from granite_common import UserMessage
+from granite_common import DocumentMessage, UserMessage
 from granite_common.base.io import ChatCompletionRewriter
 from granite_common.base.types import ChatCompletion, VLLMExtraBody
 from granite_common.util import import_optional
@@ -106,6 +106,7 @@ def move_documents_to_message(
     ):
         docs_list = chat_completion.extra_body.documents
 
+        doc_message_text = ""
         if how == "string":
             doc_text = "\n\n".join(
                 [f"[Document {d.doc_id}]\n{d.text}" for d in docs_list]
@@ -115,12 +116,22 @@ def move_documents_to_message(
             )
         elif how == "json":
             doc_message_text = json.dumps([d.model_dump() for d in docs_list])
+        elif how == "roles":
+            doc_roles = []
+            for doc in docs_list:
+                doc_role = DocumentMessage(
+                    role=f"document {doc.doc_id}", content=doc.text
+                )
+                doc_roles.append(doc_role)
         else:
             raise ValueError(f"Unknown document serialization method '{how}'")
 
-        new_messages = [
-            UserMessage(content=doc_message_text)
-        ] + chat_completion.messages
+        if how == "roles":
+            new_messages = doc_roles + chat_completion.messages
+        else:
+            new_messages = [
+                UserMessage(content=doc_message_text)
+            ] + chat_completion.messages
 
         # Round-trip through parsed JSON so that extra_body.documents will be unset
         new_extra_body = VLLMExtraBody.model_validate(
@@ -253,7 +264,7 @@ class IntrinsicsRewriter(ChatCompletionRewriter):
                     )
 
         self.docs_as_message = self.config["docs_as_message"]
-        valid_docs_as_message = ["string", "json"]
+        valid_docs_as_message = ["string", "json", "roles"]
         if self.docs_as_message and self.docs_as_message not in valid_docs_as_message:
             raise ValueError(
                 f"docs_as_message parameter set to '{self.docs_as_message}', which is "
