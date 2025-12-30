@@ -59,5 +59,6 @@
       }
     }
   },
+  "temperature": 0.0,
   "max_completion_tokens": 4096
 }
