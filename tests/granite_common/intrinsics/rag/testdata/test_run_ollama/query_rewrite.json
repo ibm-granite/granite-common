@@ -3,7 +3,7 @@
         {
             "index": 0,
             "message": {
-                "content": "{\"rewritten_question\": \"Is Rex more likely to get fleas than Lucy?\"}",
+                "content": "{\"rewritten_question\": \"Is my dog more likely to get fleas than my cat?\"}",
                 "role": "assistant"
             }
         }
