@@ -16,6 +16,11 @@ runs:
         sleep 10
         time curl -i http://localhost:55555
 
+    - name: Ollama version
+      shell: bash
+      run: |
+        OLLAMA_HOST="localhost:55555" ollama -v
+
     - name: Download granite4:micro model
       shell: bash
       run: |
