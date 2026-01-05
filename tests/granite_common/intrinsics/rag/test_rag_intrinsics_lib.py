@@ -625,7 +625,7 @@ def test_run_ollama(yaml_json_combo_for_ollama):
     """
     cfg = yaml_json_combo_for_ollama
 
-    cfg.revision = "refs/pr/4"
+    # cfg.revision = "refs/pr/4"
 
     # Change base model id to Ollama's version
     if cfg.base_model_id == "ibm-granite/granite-4.0-micro":
