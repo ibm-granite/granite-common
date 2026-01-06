@@ -5,10 +5,10 @@ Common shared types
 """
 
 # Standard
-from typing import Literal, TypeAlias
+from typing import Annotated, Literal, TypeAlias
 
 # Third Party
-from pydantic import Field
+from pydantic import Field, StringConstraints
 from typing_extensions import Any
 import pydantic
 
@@ -122,6 +122,13 @@ class UserMessage(_ChatMessageBase):
     role: Literal["user"] = "user"
 
 
+class DocumentMessage(_ChatMessageBase):
+    """Document message for an IBM Granite model (from the Ollama library) chat
+    completion request."""
+
+    role: Annotated[str, StringConstraints(pattern=r"^document .+$")]
+
+
 class ToolCall(pydantic.BaseModel, NoDefaultsMixin):
     """Format of an entry in the ``tool_calls`` list of an assistant message"""
 
@@ -172,6 +179,7 @@ ChatMessage: TypeAlias = (
     | ToolResultMessage
     | SystemMessage
     | DeveloperMessage
+    | DocumentMessage
 )
 """Type alias for all message types. We use this Union instead of the actual base class
 :class:`_ChatMessageBase` so that Pydantic can parse the message list from JSON."""

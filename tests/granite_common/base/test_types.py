@@ -23,15 +23,21 @@ def test_chat_message_types():
     am = types.AssistantMessage(content="assistant content", tool_calls=[])
     trm = types.ToolResultMessage(content="tool result content", tool_call_id="123")
     sm = types.SystemMessage(content="system content")
+    dm = types.DocumentMessage(role="document 1", content="document content")
 
     assert um.role == "user"
     assert am.role == "assistant"
     assert trm.role == "tool"
     assert sm.role == "system"
+    assert dm.role.startswith("document ") and len(dm.role) > len("document ")
+
     assert um.model_dump()["role"] == "user"
     assert am.model_dump()["role"] == "assistant"
     assert trm.model_dump()["role"] == "tool"
     assert sm.model_dump()["role"] == "system"
+    assert dm.model_dump()["role"].startswith("document ") and len(
+        dm.model_dump()["role"]
+    ) > len("document ")
 
 
 def test_tool_definition():
