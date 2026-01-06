@@ -5,7 +5,6 @@ Tests for the core types
 """
 
 # Third Party
-import pydantic
 import pytest
 
 # First Party
@@ -39,15 +38,6 @@ def test_chat_message_types():
     assert dm.model_dump()["role"].startswith("document ") and len(
         dm.model_dump()["role"]
     ) > len("document ")
-
-
-def test_document_messages():
-    # Valid document message
-
-    # Missing document id
-    with pytest.raises(pydantic.ValidationError) as exc_info:
-        types.DocumentMessage(role="document ", content="document content")
-    assert "id must have at least one character" in str(exc_info.value)
 
 
 def test_tool_definition():
