@@ -5,10 +5,10 @@ Common shared types
 """
 
 # Standard
-from typing import Literal, TypeAlias
+from typing import Annotated, Literal, TypeAlias
 
 # Third Party
-from pydantic import Field
+from pydantic import Field, StringConstraints
 from typing_extensions import Any
 import pydantic
 
@@ -126,16 +126,7 @@ class DocumentMessage(_ChatMessageBase):
     """Document message for an IBM Granite model (from the Ollama library) chat
     completion request."""
 
-    role: str
-
-    @pydantic.field_validator("role")
-    def validate_document_prefix(cls, doc_role: str) -> str:
-        expected_prefix = "document "
-        if not doc_role.startswith(expected_prefix):
-            raise ValueError(
-                f"Document role string must start with prefix '{expected_prefix}'"
-            )
-        return doc_role
+    role: Annotated[str, StringConstraints(pattern=r"^document .+$")]
 
 
 class ToolCall(pydantic.BaseModel, NoDefaultsMixin):
