@@ -6,7 +6,7 @@ runs:
     - name: Install Ollama and start server
       shell: bash
       run: |
-        curl -fsSL https://ollama.com/download/ollama-linux-amd64.tar.zst \
+        curl -fsSL https://ollama.com/download/ollama-linux-amd64.tar.zst
           | sudo tar -x --zstd -C ollama -
         OLLAMA_HOST="localhost:55555" ollama serve &
 
