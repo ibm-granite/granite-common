@@ -1,0 +1,39 @@
+{
+  "messages": [
+    {
+      "content": "What can I help you with?",
+      "role": "assistant"
+    },
+    {
+      "content": "We're thinking about using React or Vue for our frontend.",
+      "role": "user"
+    },
+    {
+      "content": "Both are popular frameworks. What are you looking for?",
+      "role": "assistant"
+    },
+    {
+      "content": "Should I use it?",
+      "role": "user"
+    }
+  ],
+  "extra_body": {
+    "structured_outputs": {
+      "json": {
+        "properties": {
+          "clarification": {
+            "title": "clarification",
+            "type": "string"
+          }
+        },
+        "required": [
+          "clarification"
+        ],
+        "title": "QueryClarificationOutput",
+        "type": "object"
+      }
+    }
+  },
+  "temperature": 0.0,
+  "max_completion_tokens": 1024
+}

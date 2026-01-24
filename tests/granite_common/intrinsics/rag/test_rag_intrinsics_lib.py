@@ -76,7 +76,7 @@ class YamlJsonCombo(pydantic.BaseModel):
         """
         if not self.yaml_file:
             self.yaml_file = util.obtain_io_yaml(
-                self.task, self.base_model_id, self.repo_id
+                self.task, self.base_model_id, self.repo_id, revision=self.revision
             )
         return self
 
@@ -129,6 +129,12 @@ _YAML_JSON_COMBOS_LIST = [
     #     task="hallucination_detection",
     #     is_alora=True
     # ),
+    YamlJsonCombo(
+        short_name="query_clarification",
+        inputs_file=_INPUT_JSON_DIR / "query_clarification.json",
+        task="query_clarification",
+        revision="refs/pr/9",
+    ),
     YamlJsonCombo(
         short_name="query_rewrite",
         inputs_file=_INPUT_JSON_DIR / "query_rewrite.json",
@@ -554,7 +560,11 @@ def test_run_transformers(yaml_json_combo_with_model):
     # Download files from Hugging Face Hub
     try:
         lora_dir = util.obtain_lora(
-            cfg.task, cfg.base_model_id, cfg.repo_id, alora=cfg.is_alora
+            cfg.task,
+            cfg.base_model_id,
+            cfg.repo_id,
+            revision=cfg.revision,
+            alora=cfg.is_alora,
         )
     except requests.exceptions.HTTPError:
         pytest.xfail("Downloads fail on CI server because repo is private")
@@ -658,7 +668,7 @@ def test_run_ollama(yaml_json_combo_for_ollama):
     io_yaml_path = lora_dir / "io.yaml"
     if not os.path.exists(io_yaml_path):
         # Use local files until proper configs are up on Hugging Face
-        io_yaml_path = cfg.yaml_file.replace("input_yaml", "input_yaml_ollama")
+        io_yaml_path = str(cfg.yaml_file).replace("input_yaml", "input_yaml_ollama")
     rewriter = IntrinsicsRewriter(config_file=io_yaml_path)
     result_processor = IntrinsicsResultProcessor(config_file=io_yaml_path)
 

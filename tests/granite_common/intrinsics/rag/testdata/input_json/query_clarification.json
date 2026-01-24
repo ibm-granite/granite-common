@@ -1,0 +1,22 @@
+{
+    "messages": [
+        {
+            "role": "assistant",
+            "content": "What can I help you with?"
+        },
+        {
+            "role": "user",
+            "content": "We're thinking about using React or Vue for our frontend."
+        },
+        {
+            "role": "assistant",
+            "content": "Both are popular frameworks. What are you looking for?"
+        },
+        {
+            "role": "user",
+            "content": "Should I use it?"
+        }
+    ],
+    "temperature": 0.0,
+    "max_completion_tokens": 512
+}

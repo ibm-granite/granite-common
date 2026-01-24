@@ -1,0 +1,11 @@
+{
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "content": "{\"clarification\": \"Could you please provide more details on what factors are important to you in choosing between React and Vue?\"}",
+                "role": "assistant"
+            }
+        }
+    ]
+}
