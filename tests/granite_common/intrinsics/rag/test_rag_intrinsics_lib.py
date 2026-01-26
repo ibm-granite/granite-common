@@ -133,7 +133,6 @@ _YAML_JSON_COMBOS_LIST = [
         short_name="query_clarification",
         inputs_file=_INPUT_JSON_DIR / "query_clarification.json",
         task="query_clarification",
-        revision="refs/pr/9",
     ),
     YamlJsonCombo(
         short_name="query_rewrite",
