@@ -3,7 +3,7 @@
         {
             "index": 0,
             "message": {
-                "content": "{\"clarification\": \"CLEAR\"}",
+                "content": "{\"clarification\": \"There are many languages that descended from Common Brittonic, like Welsh, Breton, and Cornish. Which one are you referring to?\"}",
                 "role": "assistant"
             }
         }
