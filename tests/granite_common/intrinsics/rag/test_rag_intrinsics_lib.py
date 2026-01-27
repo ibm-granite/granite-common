@@ -583,7 +583,7 @@ def test_run_transformers(yaml_json_combo_with_model):
 
     # Pull this string out of the debugger to create a fresh model outputs file.
     responses_str = responses.model_dump_json(indent=4)
-    print(responses_str)
+    print(responses_str[:1000])  # Limit stdout content
 
     # Output processing
     transformed_responses = result_processor.transform(responses, transformed_input)
