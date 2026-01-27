@@ -5,6 +5,7 @@ Tests of code under ``granite_common.rag_agent_lib``
 """
 
 # Standard
+from unittest import mock
 import copy
 import json
 import os
@@ -621,7 +622,7 @@ def test_run_transformers(yaml_json_combo_with_model):
 
 def test_run_ollama(yaml_json_combo_for_ollama):
     """
-    Run the target model end-to-end with an Ollama backend.
+    Run the target model end-to-end with a mock Ollama backend.
     """
     cfg = yaml_json_combo_for_ollama
 
@@ -666,12 +667,21 @@ def test_run_ollama(yaml_json_combo_for_ollama):
     transformed_input = rewriter.transform(model_input, **transform_kwargs)
     print(transformed_input.model_dump_json(indent=4))
 
-    # Run the model using an Ollama backend
-    openai_base_url = "http://localhost:55555/v1/"
-    openai_api_key = "rag_intrinsics_1234"
-    client = openai.OpenAI(base_url=openai_base_url, api_key=openai_api_key)
+    # Load a canned model response for the mock Ollama backend
+    canned_output_file = _CANNED_OUTPUT_MODEL_OUTPUT_DIR / f"{cfg.short_name}.json"
+    with open(canned_output_file, encoding="utf-8") as f:
+        mock_response = ChatCompletionResponse.model_validate_json(f.read())
 
-    chat_completion = client.chat.completions.create(**transformed_input.model_dump())
+    # Run the model using a mock Ollama backend
+    client = openai.OpenAI(
+        base_url="http://localhost:55555/v1/", api_key="rag_intrinsics_1234"
+    )
+    with mock.patch.object(
+        client.chat.completions, "create", return_value=mock_response
+    ):
+        chat_completion = client.chat.completions.create(
+            **transformed_input.model_dump()
+        )
 
     # Pull this string out of the debugger to create a fresh model outputs file.
     responses_str = chat_completion.choices[0].model_dump_json(indent=4)
