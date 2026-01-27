@@ -7,11 +7,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "granite-common"
 authors = [
-  { name="Fred Reiss", email="frreiss@us.ibm.com" },
-  { name="Gabe Goodhart", email="ghart@us.ibm.com" },
-  { name="Mark Sturdevant", email="mark.sturdevant@ibm.com" },
-  { name="Martin Hickey", email="martin.hickey@ie.ibm.com" },
-  { name="Khoi-Nguyen Tran", email="kndtran@ibm.com"},
+    { name = "Fred Reiss", email = "frreiss@us.ibm.com" },
+    { name = "Gabe Goodhart", email = "ghart@us.ibm.com" },
+    { name = "Mark Sturdevant", email = "mark.sturdevant@ibm.com" },
+    { name = "Martin Hickey", email = "martin.hickey@ie.ibm.com" },
+    { name = "Khoi-Nguyen Tran", email = "kndtran@ibm.com" },
 ]
 description = "Input and output processing for IBM Granite models"
 readme = "README.md"
@@ -31,29 +31,14 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
     "jsonschema",
-    "pydantic >= 2.0.0, < 3.0",  # LiteLLM requires >= 2
+    "pydantic >= 2.0.0, < 3.0", # LiteLLM requires >= 2
 ]
 
 [project.optional-dependencies]
-transformers = [
-    "transformers[torch]",
-    "peft",
-    "huggingface-hub",
-    "xgrammar"
-]
-nltk = [
-    "nltk~=3.9.1",
-]
-gpt-oss = [
-    "triton>=3.4",
-    "accelerate",
-    "kernels"
-]
-retriever = [
-    "sentence-transformers",
-    "pyarrow",
-    "elasticsearch>=8.0.0,<9.0.0",
-]
+transformers = ["transformers[torch]", "peft", "huggingface-hub", "xgrammar"]
+nltk = ["nltk~=3.9.1"]
+gpt-oss = ["triton>=3.4", "accelerate", "kernels"]
+retriever = ["sentence-transformers", "pyarrow", "elasticsearch>=8.0.0,<9.0.0"]
 dev = [
     "isort==6.0.1",
     "pre-commit>=3.0.4,<5.0",
@@ -64,31 +49,30 @@ dev = [
     "pytest-html",
     "pytest-retry~=1.7",
     "pytest-xdist",
-    "pytest-recording",  # Used for blocking network access
+    "pytest-recording",             # Used for blocking network access
     "ruff==0.14.10",
     "tox",
     "anywidget",
     "ipywidgets",
+    "requests",
     "openai",
     "huggingface-hub",
     "granite-common[transformers]",
     "granite-common[nltk]",
     "granite-common[gpt-oss]",
-    "granite-common[retriever]"
+    "granite-common[retriever]",
 ]
 
 # Dependencies needed for running notebooks. Update as required.
 notebook = [
     "notebook",
-    "aiohttp",  # For AIO in notebooks
+    "aiohttp",         # For AIO in notebooks
+    "requests",
     "openai",
     "nltk",
     "huggingface-hub",
 ]
-all = [
-    "granite-common[dev]",
-    "granite-common[notebook]",
-]
+all = ["granite-common[dev]", "granite-common[notebook]"]
 
 [project.urls]
 homepage = "https://github.com/ibm-granite/granite-common"
@@ -121,30 +105,29 @@ extend-safe-fixes = ["UP006", "UP007"]
 
 # Fixers will be enabled gradually.
 select = [
-  "B", # flake8-bugbear
-  "E", # pycodestyle
-  "F", # Pyflakes
-  "Q", # flake8-quotes
-  # Ruff does not support isort's import_headings feature, yet.
-  # "I",   # isort
-  "UP",  # pyupgrade
-  "SIM", # flake8-simplify
-  "TID", # flake8-tidy-imports
+    "B", # flake8-bugbear
+    "E", # pycodestyle
+    "F", # Pyflakes
+    "Q", # flake8-quotes
+    # Ruff does not support isort's import_headings feature, yet.
+    # "I",   # isort
+    "UP",  # pyupgrade
+    "SIM", # flake8-simplify
+    "TID", # flake8-tidy-imports
 ]
 
-ignore = [
-]
+ignore = []
 
 [tool.ruff.lint.isort]
 # same as .isort.cfg except for settings that are commented out as that are not yet supported
 # profile="black"
-from-first=true
+from-first = true
 # import_heading_future="Future"
 # import_heading_stdlib="Standard"
 # import_heading_thirdparty="Third Party"
 # import_heading_firstparty="First Party"
 # import_heading_localfolder="Local"
-known-local-folder=["src/granite_common","tests"]
+known-local-folder = ["src/granite_common", "tests"]
 # extend-skip="src/granite_io/_version.py"
 
 [tool.pytest.ini_options]
