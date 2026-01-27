@@ -36,7 +36,8 @@ dependencies = [
 
 [project.optional-dependencies]
 transformers = [
-    "transformers[torch]",
+    "transformers[torch]<5",
+    "requests",
     "peft",
     "huggingface-hub",
     "xgrammar"
