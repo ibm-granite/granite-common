@@ -480,7 +480,10 @@ class DecodeSentences(AddFieldsTransformation):
         self.text_name = output_names.get("text")
         self.document_id_name = output_names.get("document_id")
 
-        if config["docs_as_message"] and config["docs_as_message"] != "json":
+        if config["docs_as_message"] and config["docs_as_message"] not in [
+            "json",
+            "roles",
+        ]:
             raise ValueError(
                 f"Decoding sentences from message with document "
                 f"encoding method '{config['docs_as_message']}' is "
@@ -514,13 +517,22 @@ class DecodeSentences(AddFieldsTransformation):
                 documents = chat_completion.extra_body.documents
             else:
                 # Model requires documents in a user message. Decode the message.
-                # Currently onli JSON format is supported.
-                if self.config["docs_as_message"] != "json":
+                if self.config["docs_as_message"] == "json":
+                    documents_json = json.loads(chat_completion.messages[0].content)
+                    documents = [Document.model_validate(d) for d in documents_json]
+                elif self.config["docs_as_message"] == "roles":
+                    documents = []
+                    for message in chat_completion.messages:
+                        if message.role.startswith("document "):
+                            document = Document(
+                                doc_id=message.role[len("document ") :],
+                                text=message.content,
+                            )
+                            documents.append(document)
+                else:
                     raise ValueError(
                         f"Unsupported doc type {self.config['docs_as_message']}"
                     )
-                documents_json = json.loads(chat_completion.messages[0].content)
-                documents = [Document.model_validate(d) for d in documents_json]
 
             if documents is None:
                 documents = []

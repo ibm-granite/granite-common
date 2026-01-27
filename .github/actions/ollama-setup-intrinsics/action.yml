@@ -19,19 +19,19 @@ runs:
     - name: Clone HF intrinsics repo
       shell: bash
       run: |
-        git clone https://huggingface.co/ibm-granite/rag-intrinsics-lib
+        git clone https://huggingface.co/ibm-granite/granite-lib-rag-r1.0
 
     - name: List cloned files
       shell: bash
-      run: ls -lah rag-intrinsics-lib
+      run: ls -lah granite-lib-rag-r1.0
 
-    - name: Convert weights to GGUF and deploy on Ollama
+    - name: Deploy intrinsics on Ollama
       shell: bash
       run: |
-        cd rag-intrinsics-lib
+        cd granite-lib-rag-r1.0
         bash run_ollama.sh
 
     - name: Clean up
       shell: bash
       run: |
-        rm -rf rag-intrinsics-lib
+        rm -rf granite-lib-rag-r1.0

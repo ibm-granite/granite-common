@@ -6,8 +6,8 @@ runs:
     - name: Install Ollama and start server
       shell: bash
       run: |
-        curl -fsSL https://ollama.com/download/ollama-linux-amd64.tgz \
-          | sudo tar zx -C /usr
+        curl -fsSL https://ollama.com/download/ollama-linux-amd64.tar.zst \
+          | sudo tar -x --zstd -C /usr
         OLLAMA_HOST="localhost:55555" ollama serve &
 
     - name: Wait for Ollama server
@@ -16,16 +16,21 @@ runs:
         sleep 10
         time curl -i http://localhost:55555
 
-    - name: Download granite3.3:8b model
+    - name: Ollama version
       shell: bash
       run: |
-        OLLAMA_HOST="localhost:55555" ollama pull granite3.3:8b
+        OLLAMA_HOST="localhost:55555" ollama -v
 
-    - name: Wait for granite3.3:8b download
+    - name: Download granite4:micro model
+      shell: bash
+      run: |
+        OLLAMA_HOST="localhost:55555" ollama pull granite4:micro
+
+    - name: Wait for granite4:micro download
       shell: bash
       run: |
         sleep 10
-        until OLLAMA_HOST="localhost:55555" ollama list granite3.3:8b
+        until OLLAMA_HOST="localhost:55555" ollama list granite4:micro
         do
           sleep 5
         done
