@@ -15,6 +15,7 @@ import openai
 import pydantic
 import pytest
 import requests
+import torch
 import yaml
 
 # First Party
@@ -540,6 +541,9 @@ def test_run_transformers(yaml_json_combo_with_model):
     """
     Run the target model end-to-end on transformers.
     """
+    # Prevent thrashing when running tests in parallel
+    torch.set_num_threads(2)
+
     cfg = yaml_json_combo_with_model
     if cfg.arguments_file:
         with open(cfg.arguments_file, encoding="utf8") as f:
@@ -583,7 +587,7 @@ def test_run_transformers(yaml_json_combo_with_model):
 
     # Pull this string out of the debugger to create a fresh model outputs file.
     responses_str = responses.model_dump_json(indent=4)
-    print(responses_str[:1000])  # Limit stdout content
+    print(responses_str[:10000])  # Limit stdout content
 
     # Output processing
     transformed_responses = result_processor.transform(responses, transformed_input)

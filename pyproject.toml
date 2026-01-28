@@ -49,7 +49,7 @@ dev = [
     "pytest-html",
     "pytest-retry~=1.7",
     "pytest-xdist",
-    "pytest-recording",  # Used for blocking network access
+    "pytest-recording",             # Used for blocking network access
     "ruff==0.14.13",
     "tox",
     "anywidget",
@@ -131,5 +131,8 @@ known-local-folder = ["src/granite_common", "tests"]
 # extend-skip="src/granite_io/_version.py"
 
 [tool.pytest.ini_options]
+
 # Run tests in parallel.
-addopts = "-n 8"
+# Use work stealing to compensate for skew in test running times.
+# Temporarily disabled because it is not compatible with --isolate
+addopts = "-n auto --dist worksteal"
