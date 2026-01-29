@@ -128,6 +128,9 @@ def chat_completion_request_to_transformers_inputs(
     with import_optional("torch"):
         # Third Party
         import torch
+    with import_optional("transformers"):
+        # Third Party
+        import transformers
 
     if isinstance(request, pydantic.BaseModel):
         request = request.model_dump()
@@ -150,6 +153,19 @@ def chat_completion_request_to_transformers_inputs(
         tokenizer_input["documents"] = request["extra_body"]["documents"]
 
     input_tokens = tokenizer.apply_chat_template(**tokenizer_input, return_tensors="pt")
+
+    # Transformers 5 switched the return type of apply_chat_template() from Tensor to
+    # BatchEncoding. Adjust our behavior depending on which direction the currently
+    # installed version of apply_chat_template() decided to go.
+    if isinstance(input_tokens, transformers.tokenization_utils_base.BatchEncoding):
+        # BatchEncoding
+        input_tokens = input_tokens["input_ids"]
+    elif not isinstance(input_tokens, torch.Tensor):
+        raise TypeError(
+            f"Expected Tokenizer.apply_chat_template() to return either a "
+            f"Tensor or a BatchEncoding object, but received an object "
+            f"of type {type(input_tokens)} instead."
+        )
 
     # generate() will fail with many different creative error messages if tokens aren't
     # on the right device.
@@ -334,9 +350,13 @@ def generate_with_transformers(
         # get back the same tokenization.
         # This supported API doesn't work reliably, so we fall back on the unsupported
         # method of pulling token lengths out of the tokenizer.
+        # Transformers 5 changed the behavior of batch_decode() when fed a list of
+        # individual token IDs, so we need to massage response_tokens into a format
+        # that will produce the same result with version 5 and with older versions.
+        list_of_singleton_lists = [[t] for t in response_tokens]
         ends = list(
             itertools.accumulate(
-                [len(s) for s in tokenizer.batch_decode(response_tokens)]
+                [len(s) for s in tokenizer.batch_decode(list_of_singleton_lists)]
             )
         )
         begins = [0] + ends[:-1]
