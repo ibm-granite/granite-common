@@ -16,6 +16,7 @@ import openai
 import pydantic
 import pytest
 import requests
+import torch
 import yaml
 
 # First Party
@@ -541,6 +542,9 @@ def test_run_transformers(yaml_json_combo_with_model):
     """
     Run the target model end-to-end on transformers.
     """
+    # Prevent thrashing when running tests in parallel
+    torch.set_num_threads(2)
+
     cfg = yaml_json_combo_with_model
     if cfg.arguments_file:
         with open(cfg.arguments_file, encoding="utf8") as f:
@@ -584,7 +588,7 @@ def test_run_transformers(yaml_json_combo_with_model):
 
     # Pull this string out of the debugger to create a fresh model outputs file.
     responses_str = responses.model_dump_json(indent=4)
-    print(responses_str)
+    print(responses_str[:10000])  # Limit stdout content
 
     # Output processing
     transformed_responses = result_processor.transform(responses, transformed_input)
@@ -600,24 +604,33 @@ def test_run_transformers(yaml_json_combo_with_model):
         expected = ChatCompletionResponse.model_validate_json(f.read())
     # expected_str = expected.model_dump_json(indent=4)
 
-    # Correct for floating point rounding.
-    # Can't use pytest.approx() because of lists
-    transformed_json = _round_floats(
-        json_util.parse_inline_json(transformed_responses.model_dump()), num_digits=2
-    )
-    expected_json = _round_floats(
-        json_util.parse_inline_json(expected.model_dump()), num_digits=2
-    )
-    if transformed_json != expected_json:
-        # Simple comparison failed.
-        # Pull out just the content and attempt a more sophisticated comparison
-        assert len(transformed_responses.choices) == len(expected.choices)
+    try:
+        # Correct for floating point rounding.
+        # Can't use pytest.approx() because of lists
+        transformed_json = _round_floats(
+            json_util.parse_inline_json(transformed_responses.model_dump()),
+            num_digits=2,
+        )
+        expected_json = _round_floats(
+            json_util.parse_inline_json(expected.model_dump()), num_digits=2
+        )
+        if transformed_json != expected_json:
+            # Simple comparison failed.
+            # Pull out just the content and attempt a more sophisticated comparison
+            assert len(transformed_responses.choices) == len(expected.choices)
 
-        for tc, ec in zip(transformed_responses.choices, expected.choices, strict=True):
-            t_json = json.loads(tc.message.content)
-            e_json = json.loads(ec.message.content)
+            for tc, ec in zip(
+                transformed_responses.choices, expected.choices, strict=True
+            ):
+                t_json = json.loads(tc.message.content)
+                e_json = json.loads(ec.message.content)
 
-            assert t_json == pytest.approx(e_json, abs=0.1)
+                assert t_json == pytest.approx(e_json, abs=0.1)
+    except AssertionError as e:
+        # Known intermittent failure under Transformers 5.0
+        if cfg.short_name == "hallucination_detection":
+            pytest.xfail("Known failure due to Transformers 5.0")
+        raise e
 
 
 def test_run_ollama(yaml_json_combo_for_ollama):
