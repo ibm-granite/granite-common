@@ -17,6 +17,7 @@ YAML_OPTIONAL_FIELDS = [
     "instruction",
     "parameters",
     "sentence_boundaries",
+    "strip_channel_tokens",
 ]
 """Fields that may be present in every intrinsic's YAML configuration file. If
 not present, the parsed config dictionary will contain a null value in thier place."""
