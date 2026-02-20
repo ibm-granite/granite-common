@@ -7,19 +7,22 @@ runs:
       run: |
         df -h
       shell: bash
-    - name: Remove old Docker images
+    - name: Remove old Docker images (Linux only)
       if: runner.os == 'Linux'
       run: |
         sudo docker rmi "$(docker image ls -aq)" >/dev/null 2>&1 || true
       shell: bash
-    - name: Free Disk Space Linux
+    - name: Free Disk Space (Linux only)
       if: runner.os == 'Linux'
       run: |
         sudo rm -rf \
           /usr/share/dotnet /usr/local/lib/android /opt/ghc \
           /usr/local/share/powershell /usr/share/swift /usr/local/.ghcup \
           /usr/lib/jvm || true
-        sudo apt install aptitude -y >/dev/null 2>&1
+      shell: bash
+    - name: Clean up packages (Linux only)
+      if: runner.os == 'Linux'
+      run: |
         sudo aptitude purge '~n ^mysql' -f -y >/dev/null 2>&1
         sudo aptitude purge '~n ^dotnet' -f -y >/dev/null 2>&1
         sudo apt-get autoremove -y >/dev/null 2>&1
