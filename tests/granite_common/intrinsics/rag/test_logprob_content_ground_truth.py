@@ -6,9 +6,6 @@
 import json
 import pathlib
 
-# Third Party
-import pytest
-
 # First Party
 from granite_common.base.types import (
     ChatCompletionLogProb,
@@ -112,20 +109,24 @@ class TestContentFromLogprobs:
     def test_json_object_payload(self):
         """JSON object payload is extracted from channel tokens."""
         payload = [("{", 0.0), ('"key"', 0.0), (":", 0.0), ('"val"', 0.0), ("}", 0.0)]
-        logprobs = _make_logprobs(_SINGLE_CHANNEL_PREFIX + payload + _SINGLE_CHANNEL_SUFFIX)
+        logprobs = _make_logprobs(
+            _SINGLE_CHANNEL_PREFIX + payload + _SINGLE_CHANNEL_SUFFIX
+        )
         result = _content_from_logprobs(logprobs)
         assert result is not None
-        content, lp = result
+        content, _lp = result
         assert content == '{"key":"val"}'
         assert json.loads(content) == {"key": "val"}
 
     def test_json_array_payload(self):
         """JSON array payload is extracted from channel tokens."""
         payload = [("[", 0.0), ("1", 0.0), (",", 0.0), ("2", 0.0), ("]", 0.0)]
-        logprobs = _make_logprobs(_SINGLE_CHANNEL_PREFIX + payload + _SINGLE_CHANNEL_SUFFIX)
+        logprobs = _make_logprobs(
+            _SINGLE_CHANNEL_PREFIX + payload + _SINGLE_CHANNEL_SUFFIX
+        )
         result = _content_from_logprobs(logprobs)
         assert result is not None
-        content, lp = result
+        content, _lp = result
         assert content == "[1,2]"
         assert json.loads(content) == [1, 2]
 
@@ -281,7 +282,9 @@ class TestResultProcessorWithLogprobGroundTruth:
                 "logprobs": wrapped_logprobs,
                 "message": model_output.choices[0].message.model_copy(
                     update={
-                        "content": '<|channel|>\nfinal\n<|message|>\n"answerable"\n<|return|>'
+                        "content": (
+                            '<|channel|>\nfinal\n<|message|>\n"answerable"\n<|return|>'
+                        )
                     }
                 ),
             }
