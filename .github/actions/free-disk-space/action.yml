@@ -23,11 +23,11 @@ runs:
     - name: Clean up packages (Linux only)
       if: runner.os == 'Linux'
       run: |
-        sudo apt install aptitude -y >/dev/null 2>&1
-        sudo aptitude purge '~n ^mysql' -f -y >/dev/null 2>&1
-        sudo aptitude purge '~n ^dotnet' -f -y >/dev/null 2>&1
-        sudo apt-get autoremove -y >/dev/null 2>&1
-        sudo apt-get autoclean -y >/dev/null 2>&1
+        sudo apt install aptitude -y
+        sudo aptitude purge '~n ^mysql' -f -y
+        sudo aptitude purge '~n ^dotnet' -f -y
+        sudo apt-get autoremove -y
+        sudo apt-get autoclean -y
       shell: bash
     - name: Print disk space after cleanup
       run: |
