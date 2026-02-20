@@ -23,6 +23,7 @@ runs:
     - name: Clean up packages (Linux only)
       if: runner.os == 'Linux'
       run: |
+        sudo apt update
         sudo apt install aptitude -y
         sudo aptitude purge '~n ^mysql' -f -y
         sudo aptitude purge '~n ^dotnet' -f -y
