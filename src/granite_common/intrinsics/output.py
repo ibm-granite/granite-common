@@ -14,6 +14,7 @@ import enum
 import json
 import math
 import pathlib
+import re
 
 # First Party
 from granite_common.base.io import ChatCompletionResultProcessor
@@ -944,6 +945,68 @@ NAME_TO_RULE = {cls.YAML_NAME: cls for cls in ALL_RULES}
 ############################################
 
 
+_JSON_PAYLOAD_RE = re.compile(r"[\[{\"].*", re.DOTALL)
+"""Regex to find the start of a JSON payload in a concatenated token string.
+Matches the first ``[``, ``{``, or ``"`` and everything after it."""
+
+
+def _content_from_logprobs(
+    logprobs: ChatCompletionLogProbs,
+) -> tuple[str, ChatCompletionLogProbs] | None:
+    """Derive authoritative content and aligned logprobs from logprob token texts.
+
+    Logprob tokens represent the exact sequence the model produced.  When
+    inference servers wrap the payload in control tokens (e.g. gpt-oss channel
+    tokens), the logprob token texts are the ground truth for what the model
+    actually output.
+
+    This function concatenates the token texts, locates the JSON payload, and
+    returns the payload string together with a trimmed logprobs object that
+    covers only the payload tokens.
+
+    :param logprobs: Logprobs from a chat completion choice.
+    :returns: ``(content, trimmed_logprobs)`` or ``None`` if no JSON payload
+        is found.
+    """
+    if logprobs.content is None:
+        return None
+
+    token_strings = [lp.token for lp in logprobs.content]
+    concat = "".join(token_strings)
+
+    # Find the start of the JSON payload in the concatenated tokens.
+    m = _JSON_PAYLOAD_RE.search(concat)
+    if m is None:
+        return None
+
+    payload_char_start = m.start()
+
+    # Walk tokens to find the first token that overlaps with the payload.
+    char_offset = 0
+    start_ix = 0
+    for i, tok in enumerate(token_strings):
+        tok_end = char_offset + len(tok)
+        if tok_end > payload_char_start:
+            start_ix = i
+            break
+        char_offset = tok_end
+
+    # Trim trailing control tokens that aren't part of JSON.  Walk backwards
+    # from the end skipping tokens that look like control tokens.
+    end_ix = len(logprobs.content)
+    for i in range(len(token_strings) - 1, start_ix - 1, -1):
+        tok = token_strings[i].strip()
+        if tok == "" or (tok.startswith("<|") and tok.endswith("|>")):
+            end_ix = i
+        else:
+            break
+
+    trimmed_tokens = logprobs.content[start_ix:end_ix]
+    content = "".join(lp.token for lp in trimmed_tokens)
+    trimmed_logprobs = logprobs.model_copy(update={"content": trimmed_tokens})
+    return content, trimmed_logprobs
+
+
 class IntrinsicsResultProcessor(ChatCompletionResultProcessor):
     """General-purpose chat completion result processor for use with the models in the
     RAG Agent Library. Reads parameters of the model's input and output formats
@@ -1005,14 +1068,26 @@ class IntrinsicsResultProcessor(ChatCompletionResultProcessor):
         choice: ChatCompletionResponseChoice,
         chat_completion: ChatCompletion | None,
     ) -> ChatCompletionResponseChoice:
+        content = choice.message.content
+        logprobs = choice.logprobs
+
+        # When logprobs are available, use their token texts as the ground
+        # truth for the model's output.  This handles cases where the
+        # inference server modifies message.content (e.g. stripping or
+        # failing to strip control tokens like gpt-oss channel tokens).
+        if logprobs is not None:
+            derived = _content_from_logprobs(logprobs)
+            if derived is not None:
+                content, logprobs = derived
+
         # Parse JSON output twice: Once to verify valid JSON and once to compute offsets
         # Note that we don't currently check schema, as that would require an additional
         # library dependency.
-        parsed_json = json.loads(choice.message.content)
-        reparsed_json = json_util.reparse_json_with_offsets(choice.message.content)
+        parsed_json = json.loads(content)
+        reparsed_json = json_util.reparse_json_with_offsets(content)
         for rule in self.rules:
             parsed_json = rule.apply(
-                parsed_json, reparsed_json, choice.logprobs, chat_completion
+                parsed_json, reparsed_json, logprobs, chat_completion
             )
         updated_message = choice.message.model_copy(
             update={"content": json.dumps(parsed_json)}
