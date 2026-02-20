@@ -423,7 +423,7 @@ def _desplit_sentences(
             texts.append(target_text[tagged_begin:])
             break
         begins.append(begin)
-        begin += delimiter_loc
+        begin += delimiter_loc - tagged_begin
         ends.append(begin)
         new_tagged_begin = delimiter_loc + len(delimiter)
         texts.append(target_text[tagged_begin:delimiter_loc])
