@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 __doc__ = """
-Support for the intrinsics in the RAG Agent Library.
+Support for input and output processing for intrinsic models.
 """
 
 # Local
