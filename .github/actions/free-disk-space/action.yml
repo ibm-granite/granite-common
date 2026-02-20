@@ -11,6 +11,7 @@ runs:
       if: runner.os == 'Linux'
       run: |
         sudo docker rmi "$(docker image ls -aq)" >/dev/null 2>&1 || true
+      shell: bash
     - name: Free Disk Space Linux
       if: runner.os == 'Linux'
       run: |
