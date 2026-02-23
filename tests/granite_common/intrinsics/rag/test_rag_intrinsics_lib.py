@@ -234,6 +234,7 @@ _YAML_JSON_COMBOS_LIST = [
         inputs_file=_INPUT_JSON_DIR / "answerable.json",
         task="answerability",
         repo_id="ibm-granite/granite-lib-rag-gpt-oss-r1.0",
+        revision="refs/pr/3",
         base_model_id="openai/gpt-oss-20b",
     ),
     YamlJsonCombo(
@@ -241,6 +242,7 @@ _YAML_JSON_COMBOS_LIST = [
         inputs_file=_INPUT_JSON_DIR / "citations.json",
         task="citations",
         repo_id="ibm-granite/granite-lib-rag-gpt-oss-r1.0",
+        revision="refs/pr/3",
         base_model_id="openai/gpt-oss-20b",
     ),
     YamlJsonCombo(
@@ -248,6 +250,7 @@ _YAML_JSON_COMBOS_LIST = [
         inputs_file=_INPUT_JSON_DIR / "hallucination_detection.json",
         task="hallucination_detection",
         repo_id="ibm-granite/granite-lib-rag-gpt-oss-r1.0",
+        revision="refs/pr/3",
         base_model_id="openai/gpt-oss-20b",
     ),
     YamlJsonCombo(
@@ -255,6 +258,7 @@ _YAML_JSON_COMBOS_LIST = [
         inputs_file=_INPUT_JSON_DIR / "query_rewrite.json",
         task="query_rewrite",
         repo_id="ibm-granite/granite-lib-rag-gpt-oss-r1.0",
+        revision="refs/pr/3",
         base_model_id="openai/gpt-oss-20b",
     ),
 ]
