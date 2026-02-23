@@ -108,7 +108,7 @@ class TestLogprobsWorkaround:
         )
         result = _logprobs_workaround(logprobs)
         assert result is not None
-        content, lp = result
+        content, _ = result
         # Leading whitespace token after <|message|> is included
         assert content.strip() == '"answerable"'
 
@@ -119,7 +119,7 @@ class TestLogprobsWorkaround:
         )
         result = _logprobs_workaround(logprobs)
         assert result is not None
-        content, lp = result
+        content, _ = result
         assert content == '"answerable"'
 
     def test_multi_channel(self):
