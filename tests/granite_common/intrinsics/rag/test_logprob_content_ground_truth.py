@@ -312,9 +312,7 @@ class TestResultProcessorWithLogprobsWorkaround:
                 "logprobs": wrapped_logprobs,
                 "message": model_output.choices[0].message.model_copy(
                     update={
-                        "content": (
-                            '<|channel|>final<|message|>"answerable"<|end|>'
-                        )
+                        "content": ('<|channel|>final<|message|>"answerable"<|end|>')
                     }
                 ),
             }

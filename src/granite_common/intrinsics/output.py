@@ -28,12 +28,12 @@ from granite_common.base.types import (
     Document,
 )
 
-_logger = logging.getLogger(__name__)
-
 # Local
 from . import json_util
 from .input import sentence_delimiter
 from .util import make_config_dict
+
+_logger = logging.getLogger(__name__)
 
 
 class _MappingType(enum.Enum):
@@ -948,9 +948,7 @@ NAME_TO_RULE = {cls.YAML_NAME: cls for cls in ALL_RULES}
 ############################################
 
 
-_FINAL_CHANNEL_RE = re.compile(
-    r"<\|channel\|>\s*final\s*<\|message\|>", re.DOTALL
-)
+_FINAL_CHANNEL_RE = re.compile(r"<\|channel\|>\s*final\s*<\|message\|>", re.DOTALL)
 """Regex to locate the start of the final Harmony channel header, allowing
 optional whitespace between control tokens."""
 
@@ -997,10 +995,7 @@ def _logprobs_workaround(
         tok_end = char_offset + len(tok)
         if tok_end > payload_char_start:
             # If this token partially overlaps the header, start at the next.
-            if char_offset < payload_char_start:
-                start_ix = i + 1
-            else:
-                start_ix = i
+            start_ix = i + 1 if char_offset < payload_char_start else i
             break
         char_offset = tok_end
 
