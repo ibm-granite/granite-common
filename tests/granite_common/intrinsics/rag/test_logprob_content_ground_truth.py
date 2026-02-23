@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
-"""Tests for deriving content from logprob token texts in IntrinsicsResultProcessor."""
+"""Tests for the logprobs_workaround in IntrinsicsResultProcessor."""
 
 # Standard
 import json
@@ -15,7 +15,7 @@ from granite_common.base.types import (
 )
 from granite_common.intrinsics.output import (
     IntrinsicsResultProcessor,
-    _content_from_logprobs,
+    _logprobs_workaround,
 )
 
 
@@ -35,8 +35,18 @@ def _make_logprobs(tokens: list[tuple[str, float]]) -> ChatCompletionLogProbs:
     return ChatCompletionLogProbs(content=content)
 
 
-# Single channel sequence wrapping a payload.
+# Harmony final channel: <|channel|>final<|message|>...<|end|>
 _SINGLE_CHANNEL_PREFIX = [
+    ("<|channel|>", 0.0),
+    ("final", 0.0),
+    ("<|message|>", 0.0),
+]
+_SINGLE_CHANNEL_SUFFIX = [
+    ("<|end|>", 0.0),
+]
+
+# With whitespace between tokens (as seen from some gpt-oss outputs).
+_SINGLE_CHANNEL_PREFIX_WS = [
     ("<|channel|>", 0.0),
     ("\n", 0.0),
     ("final", 0.0),
@@ -44,17 +54,17 @@ _SINGLE_CHANNEL_PREFIX = [
     ("<|message|>", 0.0),
     ("\n", 0.0),
 ]
-_SINGLE_CHANNEL_SUFFIX = [
+_SINGLE_CHANNEL_SUFFIX_RETURN = [
     ("\n", 0.0),
     ("<|return|>", 0.0),
 ]
 
-# Multi-channel sequence (analysis + role markers + final) as seen from
-# gpt-oss hallucination_detection.
+# Multi-channel sequence (analysis + final) as seen from gpt-oss.
 _MULTI_CHANNEL_PREFIX = [
     ("<|channel|>", 0.0),
     ("analysis", 0.0),
     ("<|message|>", 0.0),
+    ("some analysis text", 0.0),
     ("<|end|>", 0.0),
     ("<|start|>", 0.0),
     ("assistant", 0.0),
@@ -71,35 +81,53 @@ _PAYLOAD_TOKENS = [
 ]
 
 
-class TestContentFromLogprobs:
-    """Tests for the _content_from_logprobs helper."""
+class TestLogprobsWorkaround:
+    """Tests for the _logprobs_workaround helper."""
 
-    def test_payload_only(self):
-        """Logprobs with only payload tokens return content unchanged."""
+    def test_no_channel_returns_none(self):
+        """Logprobs without channel tokens return None."""
         logprobs = _make_logprobs(_PAYLOAD_TOKENS)
-        result = _content_from_logprobs(logprobs)
-        assert result is not None
-        content, lp = result
-        assert content == '"answerable"'
-        tokens = [c.token for c in lp.content]
-        assert tokens == ['"', "answer", "able", '"']
+        assert _logprobs_workaround(logprobs) is None
 
-    def test_single_channel_wrapper(self):
-        """Single channel wrapper is stripped, payload extracted."""
+    def test_single_channel(self):
+        """Final channel payload is extracted."""
         logprobs = _make_logprobs(
             _SINGLE_CHANNEL_PREFIX + _PAYLOAD_TOKENS + _SINGLE_CHANNEL_SUFFIX
         )
-        result = _content_from_logprobs(logprobs)
+        result = _logprobs_workaround(logprobs)
         assert result is not None
         content, lp = result
         assert content == '"answerable"'
         tokens = [c.token for c in lp.content]
         assert tokens == ['"', "answer", "able", '"']
 
-    def test_multi_channel_wrapper(self):
-        """Multiple channel sequences are stripped, payload extracted."""
-        logprobs = _make_logprobs(_MULTI_CHANNEL_PREFIX + _PAYLOAD_TOKENS)
-        result = _content_from_logprobs(logprobs)
+    def test_single_channel_with_whitespace(self):
+        """Final channel with whitespace between control tokens."""
+        logprobs = _make_logprobs(
+            _SINGLE_CHANNEL_PREFIX_WS + _PAYLOAD_TOKENS + _SINGLE_CHANNEL_SUFFIX_RETURN
+        )
+        result = _logprobs_workaround(logprobs)
+        assert result is not None
+        content, lp = result
+        # Leading whitespace token after <|message|> is included
+        assert content.strip() == '"answerable"'
+
+    def test_single_channel_return_stop(self):
+        """<|return|> is also recognized as end of final channel."""
+        logprobs = _make_logprobs(
+            _SINGLE_CHANNEL_PREFIX + _PAYLOAD_TOKENS + [("<|return|>", 0.0)]
+        )
+        result = _logprobs_workaround(logprobs)
+        assert result is not None
+        content, lp = result
+        assert content == '"answerable"'
+
+    def test_multi_channel(self):
+        """Analysis channel is skipped, final channel payload extracted."""
+        logprobs = _make_logprobs(
+            _MULTI_CHANNEL_PREFIX + _PAYLOAD_TOKENS + _SINGLE_CHANNEL_SUFFIX
+        )
+        result = _logprobs_workaround(logprobs)
         assert result is not None
         content, lp = result
         assert content == '"answerable"'
@@ -107,24 +135,24 @@ class TestContentFromLogprobs:
         assert tokens == ['"', "answer", "able", '"']
 
     def test_json_object_payload(self):
-        """JSON object payload is extracted from channel tokens."""
+        """JSON object payload is extracted from final channel."""
         payload = [("{", 0.0), ('"key"', 0.0), (":", 0.0), ('"val"', 0.0), ("}", 0.0)]
         logprobs = _make_logprobs(
             _SINGLE_CHANNEL_PREFIX + payload + _SINGLE_CHANNEL_SUFFIX
         )
-        result = _content_from_logprobs(logprobs)
+        result = _logprobs_workaround(logprobs)
         assert result is not None
         content, _lp = result
         assert content == '{"key":"val"}'
         assert json.loads(content) == {"key": "val"}
 
     def test_json_array_payload(self):
-        """JSON array payload is extracted from channel tokens."""
+        """JSON array payload is extracted from final channel."""
         payload = [("[", 0.0), ("1", 0.0), (",", 0.0), ("2", 0.0), ("]", 0.0)]
         logprobs = _make_logprobs(
             _SINGLE_CHANNEL_PREFIX + payload + _SINGLE_CHANNEL_SUFFIX
         )
-        result = _content_from_logprobs(logprobs)
+        result = _logprobs_workaround(logprobs)
         assert result is not None
         content, _lp = result
         assert content == "[1,2]"
@@ -133,7 +161,7 @@ class TestContentFromLogprobs:
     def test_none_content(self):
         """Logprobs with None content returns None."""
         logprobs = ChatCompletionLogProbs(content=None)
-        assert _content_from_logprobs(logprobs) is None
+        assert _logprobs_workaround(logprobs) is None
 
 
 _TEST_DATA_DIR = pathlib.Path(__file__).parent / "testdata"
@@ -155,12 +183,13 @@ def _wrap_logprobs_with_channel(original_logprobs, prefix_tokens, suffix_tokens=
     return ChatCompletionLogProbs(content=parts)
 
 
-class TestResultProcessorWithLogprobGroundTruth:
-    """End-to-end test of IntrinsicsResultProcessor using logprob ground truth."""
+class TestResultProcessorWithLogprobsWorkaround:
+    """End-to-end test of IntrinsicsResultProcessor with logprobs_workaround."""
 
     def _make_config(self):
         return {
             "model": None,
+            "logprobs_workaround": True,
             "response_format": {
                 "type": "string",
                 "enum": ["answerable", "unanswerable"],
@@ -193,7 +222,7 @@ class TestResultProcessorWithLogprobGroundTruth:
             return ChatCompletionResponse.model_validate_json(f.read())
 
     def test_single_channel_in_logprobs(self):
-        """Single channel wrapper in logprobs, clean content."""
+        """Single final channel wrapper in logprobs."""
         model_output = self._load_answerable_output()
         original_logprobs = model_output.choices[0].logprobs
         wrapped_logprobs = _wrap_logprobs_with_channel(
@@ -212,11 +241,13 @@ class TestResultProcessorWithLogprobGroundTruth:
         assert result_json["answerability_likelihood"] > 0.9
 
     def test_multi_channel_in_logprobs(self):
-        """Multiple channel sequences in logprobs, clean content."""
+        """Analysis + final channel in logprobs, final channel extracted."""
         model_output = self._load_answerable_output()
         original_logprobs = model_output.choices[0].logprobs
         wrapped_logprobs = _wrap_logprobs_with_channel(
-            original_logprobs, _MULTI_CHANNEL_PREFIX
+            original_logprobs,
+            _MULTI_CHANNEL_PREFIX,
+            _SINGLE_CHANNEL_SUFFIX,
         )
         wrapped_choice = model_output.choices[0].model_copy(
             update={"logprobs": wrapped_logprobs}
@@ -230,8 +261,8 @@ class TestResultProcessorWithLogprobGroundTruth:
         assert isinstance(result_json["answerability_likelihood"], float)
         assert result_json["answerability_likelihood"] > 0.9
 
-    def test_clean_logprobs_no_channel(self):
-        """Clean logprobs without channel tokens still work correctly."""
+    def test_no_channel_falls_back_to_content(self):
+        """Without channel tokens in logprobs, falls back to message.content."""
         model_output = self._load_answerable_output()
         processor = IntrinsicsResultProcessor(config_dict=self._make_config())
         result = processor.transform(model_output)
@@ -273,7 +304,6 @@ class TestResultProcessorWithLogprobGroundTruth:
         model_output = self._load_answerable_output()
         original_logprobs = model_output.choices[0].logprobs
 
-        # Wrap logprobs and also put channel tokens in content
         wrapped_logprobs = _wrap_logprobs_with_channel(
             original_logprobs, _SINGLE_CHANNEL_PREFIX, _SINGLE_CHANNEL_SUFFIX
         )
@@ -283,7 +313,7 @@ class TestResultProcessorWithLogprobGroundTruth:
                 "message": model_output.choices[0].message.model_copy(
                     update={
                         "content": (
-                            '<|channel|>\nfinal\n<|message|>\n"answerable"\n<|return|>'
+                            '<|channel|>final<|message|>"answerable"<|end|>'
                         )
                     }
                 ),
@@ -297,3 +327,14 @@ class TestResultProcessorWithLogprobGroundTruth:
         assert "answerability_likelihood" in result_json
         assert isinstance(result_json["answerability_likelihood"], float)
         assert result_json["answerability_likelihood"] > 0.9
+
+    def test_disabled_uses_content_directly(self):
+        """Without logprobs_workaround, channel tokens in logprobs are ignored."""
+        model_output = self._load_answerable_output()
+        config = self._make_config()
+        config["logprobs_workaround"] = False
+        processor = IntrinsicsResultProcessor(config_dict=config)
+        # This should work because message.content is clean JSON
+        result = processor.transform(model_output)
+        result_json = json.loads(result.choices[0].message.content)
+        assert "answerability_likelihood" in result_json

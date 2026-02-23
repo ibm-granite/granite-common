@@ -12,6 +12,7 @@ import collections
 import copy
 import enum
 import json
+import logging
 import math
 import pathlib
 import re
@@ -26,6 +27,8 @@ from granite_common.base.types import (
     ChatCompletionResponseChoice,
     Document,
 )
+
+_logger = logging.getLogger(__name__)
 
 # Local
 from . import json_util
@@ -945,63 +948,76 @@ NAME_TO_RULE = {cls.YAML_NAME: cls for cls in ALL_RULES}
 ############################################
 
 
-_JSON_PAYLOAD_RE = re.compile(r"[\[{\"].*", re.DOTALL)
-"""Regex to find the start of a JSON payload in a concatenated token string.
-Matches the first ``[``, ``{``, or ``"`` and everything after it."""
+_FINAL_CHANNEL_RE = re.compile(
+    r"<\|channel\|>\s*final\s*<\|message\|>", re.DOTALL
+)
+"""Regex to locate the start of the final Harmony channel header, allowing
+optional whitespace between control tokens."""
+
+_FINAL_CHANNEL_END_TOKENS = {"<|end|>", "<|return|>", "<|end_of_text|>"}
 
 
-def _content_from_logprobs(
+def _logprobs_workaround(
     logprobs: ChatCompletionLogProbs,
 ) -> tuple[str, ChatCompletionLogProbs] | None:
-    """Derive authoritative content and aligned logprobs from logprob token texts.
+    """Extract content and aligned logprobs from the final Harmony channel.
 
-    Logprob tokens represent the exact sequence the model produced.  When
-    inference servers wrap the payload in control tokens (e.g. gpt-oss channel
-    tokens), the logprob token texts are the ground truth for what the model
-    actually output.
+    Models using the `OpenAI Harmony response format
+    <https://developers.openai.com/cookbook/articles/openai-harmony>`_ wrap
+    output in channel tokens.  The final channel contains the user-facing
+    payload::
 
-    This function concatenates the token texts, locates the JSON payload, and
-    returns the payload string together with a trimmed logprobs object that
-    covers only the payload tokens.
+        <|channel|>final<|message|>{payload}<|end|>
+
+    This function walks the logprob token sequence, locates the final channel,
+    and returns the payload tokens with a perfectly-aligned logprobs object.
 
     :param logprobs: Logprobs from a chat completion choice.
-    :returns: ``(content, trimmed_logprobs)`` or ``None`` if no JSON payload
+    :returns: ``(content, trimmed_logprobs)`` or ``None`` if no final channel
         is found.
     """
     if logprobs.content is None:
         return None
 
     token_strings = [lp.token for lp in logprobs.content]
-    concat = "".join(token_strings)
 
-    # Find the start of the JSON payload in the concatenated tokens.
-    m = _JSON_PAYLOAD_RE.search(concat)
+    # Locate the final channel by scanning for the
+    # <|channel|>final<|message|> sequence in the token stream.
+    concat = "".join(token_strings)
+    m = _FINAL_CHANNEL_RE.search(concat)
     if m is None:
         return None
 
-    payload_char_start = m.start()
+    payload_char_start = m.end()
 
-    # Walk tokens to find the first token that overlaps with the payload.
+    # Map payload_char_start to a token index.
     char_offset = 0
-    start_ix = 0
+    start_ix = None
     for i, tok in enumerate(token_strings):
         tok_end = char_offset + len(tok)
         if tok_end > payload_char_start:
-            start_ix = i
+            # If this token partially overlaps the header, start at the next.
+            if char_offset < payload_char_start:
+                start_ix = i + 1
+            else:
+                start_ix = i
             break
         char_offset = tok_end
 
-    # Trim trailing control tokens that aren't part of JSON.  Walk backwards
-    # from the end skipping tokens that look like control tokens.
-    end_ix = len(logprobs.content)
-    for i in range(len(token_strings) - 1, start_ix - 1, -1):
-        tok = token_strings[i].strip()
-        if tok == "" or (tok.startswith("<|") and tok.endswith("|>")):
+    if start_ix is None or start_ix >= len(token_strings):
+        return None
+
+    # Find the end of the final channel (<|end|> or <|return|>).
+    end_ix = len(token_strings)
+    for i in range(start_ix, len(token_strings)):
+        if token_strings[i].strip() in _FINAL_CHANNEL_END_TOKENS:
             end_ix = i
-        else:
             break
 
     trimmed_tokens = logprobs.content[start_ix:end_ix]
+    if not trimmed_tokens:
+        return None
+
     content = "".join(lp.token for lp in trimmed_tokens)
     trimmed_logprobs = logprobs.model_copy(update={"content": trimmed_tokens})
     return content, trimmed_logprobs
@@ -1071,14 +1087,25 @@ class IntrinsicsResultProcessor(ChatCompletionResultProcessor):
         content = choice.message.content
         logprobs = choice.logprobs
 
-        # When logprobs are available, use their token texts as the ground
-        # truth for the model's output.  This handles cases where the
-        # inference server modifies message.content (e.g. stripping or
-        # failing to strip control tokens like gpt-oss channel tokens).
-        if logprobs is not None:
-            derived = _content_from_logprobs(logprobs)
+        # When configured, use logprob token texts as the ground truth for
+        # the model's output.  This handles cases where the inference server
+        # modifies message.content (e.g. stripping or failing to strip
+        # control tokens like gpt-oss channel tokens).
+        if self.config.get("logprobs_workaround") and logprobs is not None:
+            derived = _logprobs_workaround(logprobs)
             if derived is not None:
-                content, logprobs = derived
+                derived_content, logprobs = derived
+                if derived_content != content:
+                    _logger.warning(
+                        "logprobs_workaround: content derived from logprob "
+                        "tokens differs from message.content. Using logprob "
+                        "content as ground truth.\n"
+                        "  message.content: %r\n"
+                        "  logprob content: %r",
+                        content,
+                        derived_content,
+                    )
+                content = derived_content
 
         # Parse JSON output twice: Once to verify valid JSON and once to compute offsets
         # Note that we don't currently check schema, as that would require an additional

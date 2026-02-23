@@ -13,6 +13,7 @@ YAML_REQUIRED_FIELDS = [
 """Fields that must be present in every intrinsic's YAML configuration file."""
 
 YAML_OPTIONAL_FIELDS = [
+    "logprobs_workaround",
     "docs_as_message",
     "instruction",
     "parameters",
