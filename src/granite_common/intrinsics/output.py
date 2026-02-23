@@ -15,7 +15,6 @@ import json
 import logging
 import math
 import pathlib
-import re
 
 # First Party
 from granite_common.base.io import ChatCompletionResultProcessor
@@ -948,11 +947,42 @@ NAME_TO_RULE = {cls.YAML_NAME: cls for cls in ALL_RULES}
 ############################################
 
 
-_FINAL_CHANNEL_RE = re.compile(r"<\|channel\|>\s*final\s*<\|message\|>", re.DOTALL)
-"""Regex to locate the start of the final Harmony channel header, allowing
-optional whitespace between control tokens."""
+_HARMONY_CHANNEL_TOKEN = "<|channel|>"
+_HARMONY_MESSAGE_TOKEN = "<|message|>"
+_HARMONY_END_TOKENS = frozenset({"<|end|>", "<|return|>", "<|end_of_text|>"})
 
-_FINAL_CHANNEL_END_TOKENS = {"<|end|>", "<|return|>", "<|end_of_text|>"}
+
+def _find_final_channel_header(token_strings: list[str]) -> int | None:
+    """Find the token index of ``<|message|>`` that ends the last
+    ``<|channel|> final <|message|>`` header in the token sequence.
+
+    Matches are done on exact token values so that the single special token
+    ``<|channel|>`` is never confused with regular tokens that happen to
+    concatenate to the same string (e.g. ``['<|', 'channel', '|>']``).
+
+    :returns: Index of the ``<|message|>`` token, or ``None``.
+    """
+    last_match = None
+    i = 0
+    while i < len(token_strings):
+        if token_strings[i] == _HARMONY_CHANNEL_TOKEN:
+            # Look ahead for "final" then <|message|>, skipping whitespace.
+            j = i + 1
+            while j < len(token_strings) and token_strings[j].strip() == "":
+                j += 1
+            if j < len(token_strings) and token_strings[j].strip() == "final":
+                j += 1
+                while j < len(token_strings) and token_strings[j].strip() == "":
+                    j += 1
+                if (
+                    j < len(token_strings)
+                    and token_strings[j] == _HARMONY_MESSAGE_TOKEN
+                ):
+                    last_match = j
+                    i = j + 1
+                    continue
+        i += 1
+    return last_match
 
 
 def _logprobs_workaround(
@@ -965,10 +995,12 @@ def _logprobs_workaround(
     output in channel tokens.  The final channel contains the user-facing
     payload::
 
-        <|channel|>final<|message|>{payload}<|end|>
+        <|channel|> final <|message|> {payload} <|end|>
 
-    This function walks the logprob token sequence, locates the final channel,
-    and returns the payload tokens with a perfectly-aligned logprobs object.
+    This function walks the logprob token sequence, matching individual
+    tokens (not concatenated strings) to locate the final channel header.
+    This ensures that the single special token ``<|channel|>`` is never
+    confused with regular tokens that concatenate to the same string.
 
     :param logprobs: Logprobs from a chat completion choice.
     :returns: ``(content, trimmed_logprobs)`` or ``None`` if no final channel
@@ -979,33 +1011,20 @@ def _logprobs_workaround(
 
     token_strings = [lp.token for lp in logprobs.content]
 
-    # Locate the final channel by scanning for the
-    # <|channel|>final<|message|> sequence in the token stream.
-    concat = "".join(token_strings)
-    m = _FINAL_CHANNEL_RE.search(concat)
-    if m is None:
+    # Find the <|message|> token that ends the final channel header.
+    message_ix = _find_final_channel_header(token_strings)
+    if message_ix is None:
         return None
 
-    payload_char_start = m.end()
-
-    # Map payload_char_start to a token index.
-    char_offset = 0
-    start_ix = None
-    for i, tok in enumerate(token_strings):
-        tok_end = char_offset + len(tok)
-        if tok_end > payload_char_start:
-            # If this token partially overlaps the header, start at the next.
-            start_ix = i + 1 if char_offset < payload_char_start else i
-            break
-        char_offset = tok_end
-
-    if start_ix is None or start_ix >= len(token_strings):
+    # Payload starts at the token after <|message|>.
+    start_ix = message_ix + 1
+    if start_ix >= len(token_strings):
         return None
 
-    # Find the end of the final channel (<|end|> or <|return|>).
+    # Find the end of the final channel by looking for an end token.
     end_ix = len(token_strings)
     for i in range(start_ix, len(token_strings)):
-        if token_strings[i].strip() in _FINAL_CHANNEL_END_TOKENS:
+        if token_strings[i] in _HARMONY_END_TOKENS:
             end_ix = i
             break
 
