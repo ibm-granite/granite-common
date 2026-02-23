@@ -1,0 +1,897 @@
+{
+    "id": "chatcmpl-a8162a8c21b1325a",
+    "choices": [
+        {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": {
+                "content": [
+                    {
+                        "token": "<|channel|>",
+                        "bytes": [
+                            60,
+                            124,
+                            99,
+                            104,
+                            97,
+                            110,
+                            110,
+                            101,
+                            108,
+                            124,
+                            62
+                        ],
+                        "logprob": -3.576278118089249e-7,
+                        "top_logprobs": [
+                            {
+                                "token": "<|channel|>",
+                                "bytes": [
+                                    60,
+                                    124,
+                                    99,
+                                    104,
+                                    97,
+                                    110,
+                                    110,
+                                    101,
+                                    108,
+                                    124,
+                                    62
+                                ],
+                                "logprob": -3.576278118089249e-7
+                            },
+                            {
+                                "token": "<|message|>",
+                                "bytes": [
+                                    60,
+                                    124,
+                                    109,
+                                    101,
+                                    115,
+                                    115,
+                                    97,
+                                    103,
+                                    101,
+                                    124,
+                                    62
+                                ],
+                                "logprob": -15.0
+                            },
+                            {
+                                "token": "<|constrain|>",
+                                "bytes": [
+                                    60,
+                                    124,
+                                    99,
+                                    111,
+                                    110,
+                                    115,
+                                    116,
+                                    114,
+                                    97,
+                                    105,
+                                    110,
+                                    124,
+                                    62
+                                ],
+                                "logprob": -21.5
+                            },
+                            {
+                                "token": " v",
+                                "bytes": [
+                                    32,
+                                    118
+                                ],
+                                "logprob": -23.8125
+                            },
+                            {
+                                "token": " n",
+                                "bytes": [
+                                    32,
+                                    110
+                                ],
+                                "logprob": -23.9375
+                            },
+                            {
+                                "token": " fl",
+                                "bytes": [
+                                    32,
+                                    102,
+                                    108
+                                ],
+                                "logprob": -24.1875
+                            },
+                            {
+                                "token": " pr",
+                                "bytes": [
+                                    32,
+                                    112,
+                                    114
+                                ],
+                                "logprob": -24.3125
+                            },
+                            {
+                                "token": " T",
+                                "bytes": [
+                                    32,
+                                    84
+                                ],
+                                "logprob": -24.5
+                            },
+                            {
+                                "token": " pl",
+                                "bytes": [
+                                    32,
+                                    112,
+                                    108
+                                ],
+                                "logprob": -24.5625
+                            },
+                            {
+                                "token": " log",
+                                "bytes": [
+                                    32,
+                                    108,
+                                    111,
+                                    103
+                                ],
+                                "logprob": -24.625
+                            }
+                        ]
+                    },
+                    {
+                        "token": "final",
+                        "bytes": [
+                            102,
+                            105,
+                            110,
+                            97,
+                            108
+                        ],
+                        "logprob": 0.0,
+                        "top_logprobs": [
+                            {
+                                "token": "final",
+                                "bytes": [
+                                    102,
+                                    105,
+                                    110,
+                                    97,
+                                    108
+                                ],
+                                "logprob": 0.0
+                            },
+                            {
+                                "token": " final",
+                                "bytes": [
+                                    32,
+                                    102,
+                                    105,
+                                    110,
+                                    97,
+                                    108
+                                ],
+                                "logprob": -24.0
+                            },
+                            {
+                                "token": "FINAL",
+                                "bytes": [
+                                    70,
+                                    73,
+                                    78,
+                                    65,
+                                    76
+                                ],
+                                "logprob": -26.25
+                            },
+                            {
+                                "token": "fa",
+                                "bytes": [
+                                    102,
+                                    97
+                                ],
+                                "logprob": -27.125
+                            },
+                            {
+                                "token": "Final",
+                                "bytes": [
+                                    70,
+                                    105,
+                                    110,
+                                    97,
+                                    108
+                                ],
+                                "logprob": -27.625
+                            },
+                            {
+                                "token": "\tfinal",
+                                "bytes": [
+                                    9,
+                                    102,
+                                    105,
+                                    110,
+                                    97,
+                                    108
+                                ],
+                                "logprob": -29.0
+                            },
+                            {
+                                "token": "answer",
+                                "bytes": [
+                                    97,
+                                    110,
+                                    115,
+                                    119,
+                                    101,
+                                    114
+                                ],
+                                "logprob": -30.375
+                            },
+                            {
+                                "token": "default",
+                                "bytes": [
+                                    100,
+                                    101,
+                                    102,
+                                    97,
+                                    117,
+                                    108,
+                                    116
+                                ],
+                                "logprob": -30.5
+                            },
+                            {
+                                "token": "output",
+                                "bytes": [
+                                    111,
+                                    117,
+                                    116,
+                                    112,
+                                    117,
+                                    116
+                                ],
+                                "logprob": -31.0
+                            },
+                            {
+                                "token": "normal",
+                                "bytes": [
+                                    110,
+                                    111,
+                                    114,
+                                    109,
+                                    97,
+                                    108
+                                ],
+                                "logprob": -31.0
+                            }
+                        ]
+                    },
+                    {
+                        "token": "<|message|>",
+                        "bytes": [
+                            60,
+                            124,
+                            109,
+                            101,
+                            115,
+                            115,
+                            97,
+                            103,
+                            101,
+                            124,
+                            62
+                        ],
+                        "logprob": 0.0,
+                        "top_logprobs": [
+                            {
+                                "token": "<|message|>",
+                                "bytes": [
+                                    60,
+                                    124,
+                                    109,
+                                    101,
+                                    115,
+                                    115,
+                                    97,
+                                    103,
+                                    101,
+                                    124,
+                                    62
+                                ],
+                                "logprob": 0.0
+                            },
+                            {
+                                "token": " ",
+                                "bytes": [
+                                    32
+                                ],
+                                "logprob": -19.0
+                            },
+                            {
+                                "token": " The",
+                                "bytes": [
+                                    32,
+                                    84,
+                                    104,
+                                    101
+                                ],
+                                "logprob": -19.5
+                            },
+                            {
+                                "token": "<|constrain|>",
+                                "bytes": [
+                                    60,
+                                    124,
+                                    99,
+                                    111,
+                                    110,
+                                    115,
+                                    116,
+                                    114,
+                                    97,
+                                    105,
+                                    110,
+                                    124,
+                                    62
+                                ],
+                                "logprob": -20.1875
+                            },
+                            {
+                                "token": " text",
+                                "bytes": [
+                                    32,
+                                    116,
+                                    101,
+                                    120,
+                                    116
+                                ],
+                                "logprob": -21.25
+                            },
+                            {
+                                "token": "—the",
+                                "bytes": [
+                                    226,
+                                    128,
+                                    148,
+                                    116,
+                                    104,
+                                    101
+                                ],
+                                "logprob": -21.375
+                            },
+                            {
+                                "token": "<|start|>",
+                                "bytes": [
+                                    60,
+                                    124,
+                                    115,
+                                    116,
+                                    97,
+                                    114,
+                                    116,
+                                    124,
+                                    62
+                                ],
+                                "logprob": -21.4375
+                            },
+                            {
+                                "token": " content",
+                                "bytes": [
+                                    32,
+                                    99,
+                                    111,
+                                    110,
+                                    116,
+                                    101,
+                                    110,
+                                    116
+                                ],
+                                "logprob": -21.6875
+                            },
+                            {
+                                "token": "<|channel|>",
+                                "bytes": [
+                                    60,
+                                    124,
+                                    99,
+                                    104,
+                                    97,
+                                    110,
+                                    110,
+                                    101,
+                                    108,
+                                    124,
+                                    62
+                                ],
+                                "logprob": -22.25
+                            },
+                            {
+                                "token": "<|end|>",
+                                "bytes": [
+                                    60,
+                                    124,
+                                    101,
+                                    110,
+                                    100,
+                                    124,
+                                    62
+                                ],
+                                "logprob": -22.25
+                            }
+                        ]
+                    },
+                    {
+                        "token": "\"",
+                        "bytes": [
+                            34
+                        ],
+                        "logprob": 0.0,
+                        "top_logprobs": [
+                            {
+                                "token": "\"",
+                                "bytes": [
+                                    34
+                                ],
+                                "logprob": 0.0
+                            },
+                            {
+                                "token": "\"a",
+                                "bytes": [
+                                    34,
+                                    97
+                                ],
+                                "logprob": -21.75
+                            },
+                            {
+                                "token": "!",
+                                "bytes": [
+                                    33
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": "#",
+                                "bytes": [
+                                    35
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": "(",
+                                "bytes": [
+                                    40
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": ")",
+                                "bytes": [
+                                    41
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": "'",
+                                "bytes": [
+                                    39
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": "&",
+                                "bytes": [
+                                    38
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": "$",
+                                "bytes": [
+                                    36
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": "%",
+                                "bytes": [
+                                    37
+                                ],
+                                "logprob": -9999.0
+                            }
+                        ]
+                    },
+                    {
+                        "token": "answer",
+                        "bytes": [
+                            97,
+                            110,
+                            115,
+                            119,
+                            101,
+                            114
+                        ],
+                        "logprob": -0.03365280106663704,
+                        "top_logprobs": [
+                            {
+                                "token": "answer",
+                                "bytes": [
+                                    97,
+                                    110,
+                                    115,
+                                    119,
+                                    101,
+                                    114
+                                ],
+                                "logprob": -0.03365280106663704
+                            },
+                            {
+                                "token": "un",
+                                "bytes": [
+                                    117,
+                                    110
+                                ],
+                                "logprob": -3.4086527824401855
+                            },
+                            {
+                                "token": "ans",
+                                "bytes": [
+                                    97,
+                                    110,
+                                    115
+                                ],
+                                "logprob": -12.471153259277344
+                            },
+                            {
+                                "token": "an",
+                                "bytes": [
+                                    97,
+                                    110
+                                ],
+                                "logprob": -12.658653259277344
+                            },
+                            {
+                                "token": "una",
+                                "bytes": [
+                                    117,
+                                    110,
+                                    97
+                                ],
+                                "logprob": -16.346153259277344
+                            },
+                            {
+                                "token": "u",
+                                "bytes": [
+                                    117
+                                ],
+                                "logprob": -16.908653259277344
+                            },
+                            {
+                                "token": "a",
+                                "bytes": [
+                                    97
+                                ],
+                                "logprob": -19.158653259277344
+                            },
+                            {
+                                "token": "unan",
+                                "bytes": [
+                                    117,
+                                    110,
+                                    97,
+                                    110
+                                ],
+                                "logprob": -19.564903259277344
+                            },
+                            {
+                                "token": "!",
+                                "bytes": [
+                                    33
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": "\"",
+                                "bytes": [
+                                    34
+                                ],
+                                "logprob": -9999.0
+                            }
+                        ]
+                    },
+                    {
+                        "token": "able",
+                        "bytes": [
+                            97,
+                            98,
+                            108,
+                            101
+                        ],
+                        "logprob": 0.0,
+                        "top_logprobs": [
+                            {
+                                "token": "able",
+                                "bytes": [
+                                    97,
+                                    98,
+                                    108,
+                                    101
+                                ],
+                                "logprob": 0.0
+                            },
+                            {
+                                "token": "abl",
+                                "bytes": [
+                                    97,
+                                    98,
+                                    108
+                                ],
+                                "logprob": -32.875
+                            },
+                            {
+                                "token": "ab",
+                                "bytes": [
+                                    97,
+                                    98
+                                ],
+                                "logprob": -33.5
+                            },
+                            {
+                                "token": "a",
+                                "bytes": [
+                                    97
+                                ],
+                                "logprob": -41.1875
+                            },
+                            {
+                                "token": "$",
+                                "bytes": [
+                                    36
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": "#",
+                                "bytes": [
+                                    35
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": "%",
+                                "bytes": [
+                                    37
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": "&",
+                                "bytes": [
+                                    38
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": "!",
+                                "bytes": [
+                                    33
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": "\"",
+                                "bytes": [
+                                    34
+                                ],
+                                "logprob": -9999.0
+                            }
+                        ]
+                    },
+                    {
+                        "token": "\"",
+                        "bytes": [
+                            34
+                        ],
+                        "logprob": 0.0,
+                        "top_logprobs": [
+                            {
+                                "token": "\"",
+                                "bytes": [
+                                    34
+                                ],
+                                "logprob": 0.0
+                            },
+                            {
+                                "token": "#",
+                                "bytes": [
+                                    35
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": "%",
+                                "bytes": [
+                                    37
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": "(",
+                                "bytes": [
+                                    40
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": ")",
+                                "bytes": [
+                                    41
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": "!",
+                                "bytes": [
+                                    33
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": "$",
+                                "bytes": [
+                                    36
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": "'",
+                                "bytes": [
+                                    39
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": "*",
+                                "bytes": [
+                                    42
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": "&",
+                                "bytes": [
+                                    38
+                                ],
+                                "logprob": -9999.0
+                            }
+                        ]
+                    },
+                    {
+                        "token": "<|return|>",
+                        "bytes": [
+                            60,
+                            124,
+                            114,
+                            101,
+                            116,
+                            117,
+                            114,
+                            110,
+                            124,
+                            62
+                        ],
+                        "logprob": 0.0,
+                        "top_logprobs": [
+                            {
+                                "token": "<|return|>",
+                                "bytes": [
+                                    60,
+                                    124,
+                                    114,
+                                    101,
+                                    116,
+                                    117,
+                                    114,
+                                    110,
+                                    124,
+                                    62
+                                ],
+                                "logprob": 0.0
+                            },
+                            {
+                                "token": "\"",
+                                "bytes": [
+                                    34
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": "$",
+                                "bytes": [
+                                    36
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": "'",
+                                "bytes": [
+                                    39
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": "(",
+                                "bytes": [
+                                    40
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": "!",
+                                "bytes": [
+                                    33
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": "#",
+                                "bytes": [
+                                    35
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": "&",
+                                "bytes": [
+                                    38
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": ")",
+                                "bytes": [
+                                    41
+                                ],
+                                "logprob": -9999.0
+                            },
+                            {
+                                "token": "%",
+                                "bytes": [
+                                    37
+                                ],
+                                "logprob": -9999.0
+                            }
+                        ]
+                    }
+                ],
+                "refusal": null
+            },
+            "message": {
+                "content": "\"answerable\"",
+                "refusal": null,
+                "role": "assistant",
+                "annotations": null,
+                "audio": null,
+                "function_call": null,
+                "tool_calls": [],
+                "reasoning": null
+            },
+            "stop_reason": null,
+            "token_ids": null
+        }
+    ],
+    "created": 1771882907,
+    "model": "answerability",
+    "object": "chat.completion",
+    "service_tier": null,
+    "system_fingerprint": null,
+    "usage": {
+        "completion_tokens": 8,
+        "prompt_tokens": 89,
+        "total_tokens": 97,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+    },
+    "prompt_logprobs": null,
+    "prompt_token_ids": null,
+    "kv_transfer_params": null
+}
