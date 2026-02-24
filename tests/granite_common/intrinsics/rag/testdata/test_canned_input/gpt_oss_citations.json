@@ -13,7 +13,7 @@
       "role": "assistant"
     },
     {
-      "content": "Split the last assistant response into individual sentences. For each sentence in the response, identify the statement IDs from the below documents that it references. Ensure that your output includes all response sentence IDs, and for each response sentence ID, provide the list of corresponding referring document sentence IDs. The output must be a json structure.\n",
+      "content": "Split the last assistant response into individual sentences.  For each sentence in the response, identify the statement IDs from the below  documents that it references. Ensure that your output includes all response  sentence IDs, and for each response sentence ID, provide the list of corresponding  referring document sentence IDs. The output must be a json structure.\n",
       "role": "user"
     }
   ],

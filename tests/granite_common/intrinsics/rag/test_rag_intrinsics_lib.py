@@ -265,9 +265,17 @@ _YAML_JSON_COMBOS_LIST = [
 _YAML_JSON_COMBOS = {c.short_name: c for c in _YAML_JSON_COMBOS_LIST}
 
 
+# Base models that are small enough to run locally with transformers
+_LOCAL_BASE_MODELS = {
+    "ibm-granite/granite-4.0-micro",
+    "ibm-granite/granite-3.3-2b-instruct",
+}
+
 # All combinations of input and model where a model is present
 _YAML_JSON_COMBOS_WITH_MODEL = {
-    k: v for k, v in _YAML_JSON_COMBOS.items() if v.task is not None
+    k: v
+    for k, v in _YAML_JSON_COMBOS.items()
+    if v.task is not None and v.base_model_id in _LOCAL_BASE_MODELS
 }
 
 # All combinations of input and model that are not aLoRA models (includes no model)

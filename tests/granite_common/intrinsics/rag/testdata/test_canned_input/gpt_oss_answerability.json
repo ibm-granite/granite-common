@@ -1,6 +1,10 @@
 {
   "messages": [
     {
+      "content": "You have access to the following documents:\n\n[Document 1]\nThe square root of 4 is 2.",
+      "role": "user"
+    },
+    {
       "content": "Hello there, how can I help you?",
       "role": "assistant"
     },
@@ -10,12 +14,6 @@
     }
   ],
   "extra_body": {
-    "documents": [
-      {
-        "text": "The square root of 4 is 2.",
-        "doc_id": "1"
-      }
-    ],
     "structured_outputs": {
       "json": {
         "type": "string",
