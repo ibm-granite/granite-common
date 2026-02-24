@@ -1,21 +1,14 @@
 {
     "choices": [
         {
-            "finish_reason": "stop",
             "index": 0,
-            "logprobs": null,
             "message": {
                 "content": "{\n    \"rewritten_question\": \"Is Rex more likely to get fleas because he spends a lot of time in the backyard and outdoors?\"\n}",
-                "refusal": null,
                 "role": "assistant",
-                "annotations": null,
-                "audio": null,
-                "function_call": null,
-                "tool_calls": [],
-                "reasoning": null
+                "tool_calls": []
             },
-            "stop_reason": null,
-            "token_ids": null
+            "logprobs": null,
+            "finish_reason": "stop"
         }
     ]
 }
