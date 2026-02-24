@@ -1,5 +1,4 @@
 {
-    "id": "chatcmpl-a8162a8c21b1325a",
     "choices": [
         {
             "finish_reason": "stop",
@@ -21,7 +20,7 @@
                             124,
                             62
                         ],
-                        "logprob": -3.576278118089249e-7,
+                        "logprob": -3.576278118089249e-07,
                         "top_logprobs": [
                             {
                                 "token": "<|channel|>",
@@ -38,7 +37,7 @@
                                     124,
                                     62
                                 ],
-                                "logprob": -3.576278118089249e-7
+                                "logprob": -3.576278118089249e-07
                             },
                             {
                                 "token": "<|message|>",
@@ -348,7 +347,7 @@
                                 "logprob": -21.25
                             },
                             {
-                                "token": "—the",
+                                "token": "\u2014the",
                                 "bytes": [
                                     226,
                                     128,
@@ -878,20 +877,5 @@
             "stop_reason": null,
             "token_ids": null
         }
-    ],
-    "created": 1771882907,
-    "model": "answerability",
-    "object": "chat.completion",
-    "service_tier": null,
-    "system_fingerprint": null,
-    "usage": {
-        "completion_tokens": 8,
-        "prompt_tokens": 89,
-        "total_tokens": 97,
-        "completion_tokens_details": null,
-        "prompt_tokens_details": null
-    },
-    "prompt_logprobs": null,
-    "prompt_token_ids": null,
-    "kv_transfer_params": null
+    ]
 }

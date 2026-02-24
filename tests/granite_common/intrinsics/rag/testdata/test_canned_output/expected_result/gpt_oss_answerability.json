@@ -9,21 +9,5 @@
             },
             "finish_reason": "stop"
         }
-    ],
-    "prompt_logprobs": null,
-    "id": "chatcmpl-a8162a8c21b1325a",
-    "created": 1771882907,
-    "model": "answerability",
-    "object": "chat.completion",
-    "service_tier": null,
-    "system_fingerprint": null,
-    "usage": {
-        "completion_tokens": 8,
-        "prompt_tokens": 89,
-        "total_tokens": 97,
-        "completion_tokens_details": null,
-        "prompt_tokens_details": null
-    },
-    "prompt_token_ids": null,
-    "kv_transfer_params": null
+    ]
 }
