@@ -12,6 +12,7 @@ import collections
 import copy
 import enum
 import json
+import logging
 import math
 import pathlib
 
@@ -30,6 +31,8 @@ from granite_common.base.types import (
 from . import json_util
 from .input import sentence_delimiter
 from .util import make_config_dict
+
+_logger = logging.getLogger(__name__)
 
 
 class _MappingType(enum.Enum):
@@ -944,6 +947,96 @@ NAME_TO_RULE = {cls.YAML_NAME: cls for cls in ALL_RULES}
 ############################################
 
 
+_HARMONY_CHANNEL_TOKEN = "<|channel|>"
+_HARMONY_MESSAGE_TOKEN = "<|message|>"
+_HARMONY_END_TOKENS = frozenset({"<|end|>", "<|return|>", "<|end_of_text|>"})
+
+
+def _find_final_channel_header(token_strings: list[str]) -> int | None:
+    """Find the token index of ``<|message|>`` that ends the last
+    ``<|channel|> final <|message|>`` header in the token sequence.
+
+    Matches are done on exact token values so that the single special token
+    ``<|channel|>`` is never confused with regular tokens that happen to
+    concatenate to the same string (e.g. ``['<|', 'channel', '|>']``).
+
+    :returns: Index of the ``<|message|>`` token, or ``None``.
+    """
+    last_match = None
+    i = 0
+    while i < len(token_strings):
+        if token_strings[i] == _HARMONY_CHANNEL_TOKEN:
+            # Look ahead for "final" then <|message|>, skipping whitespace.
+            j = i + 1
+            while j < len(token_strings) and token_strings[j].strip() == "":
+                j += 1
+            if j < len(token_strings) and token_strings[j].strip() == "final":
+                j += 1
+                while j < len(token_strings) and token_strings[j].strip() == "":
+                    j += 1
+                if (
+                    j < len(token_strings)
+                    and token_strings[j] == _HARMONY_MESSAGE_TOKEN
+                ):
+                    last_match = j
+                    i = j + 1
+                    continue
+        i += 1
+    return last_match
+
+
+def _logprobs_workaround(
+    logprobs: ChatCompletionLogProbs,
+) -> tuple[str, ChatCompletionLogProbs] | None:
+    """Extract content and aligned logprobs from the final Harmony channel.
+
+    Models using the `OpenAI Harmony response format
+    <https://developers.openai.com/cookbook/articles/openai-harmony>`_ wrap
+    output in channel tokens.  The final channel contains the user-facing
+    payload::
+
+        <|channel|> final <|message|> {payload} <|end|>
+
+    This function walks the logprob token sequence, matching individual
+    tokens (not concatenated strings) to locate the final channel header.
+    This ensures that the single special token ``<|channel|>`` is never
+    confused with regular tokens that concatenate to the same string.
+
+    :param logprobs: Logprobs from a chat completion choice.
+    :returns: ``(content, trimmed_logprobs)`` or ``None`` if no final channel
+        is found.
+    """
+    if logprobs.content is None:
+        return None
+
+    token_strings = [lp.token for lp in logprobs.content]
+
+    # Find the <|message|> token that ends the final channel header.
+    message_ix = _find_final_channel_header(token_strings)
+    if message_ix is None:
+        return None
+
+    # Payload starts at the token after <|message|>.
+    start_ix = message_ix + 1
+    if start_ix >= len(token_strings):
+        return None
+
+    # Find the end of the final channel by looking for an end token.
+    end_ix = len(token_strings)
+    for i in range(start_ix, len(token_strings)):
+        if token_strings[i] in _HARMONY_END_TOKENS:
+            end_ix = i
+            break
+
+    trimmed_tokens = logprobs.content[start_ix:end_ix]
+    if not trimmed_tokens:
+        return None
+
+    content = "".join(lp.token for lp in trimmed_tokens)
+    trimmed_logprobs = logprobs.model_copy(update={"content": trimmed_tokens})
+    return content, trimmed_logprobs
+
+
 class IntrinsicsResultProcessor(ChatCompletionResultProcessor):
     """General-purpose chat completion result processor for use with the models in the
     RAG Agent Library. Reads parameters of the model's input and output formats
@@ -1005,14 +1098,37 @@ class IntrinsicsResultProcessor(ChatCompletionResultProcessor):
         choice: ChatCompletionResponseChoice,
         chat_completion: ChatCompletion | None,
     ) -> ChatCompletionResponseChoice:
+        content = choice.message.content
+        logprobs = choice.logprobs
+
+        # When configured, use logprob token texts as the ground truth for
+        # the model's output.  This handles cases where the inference server
+        # modifies message.content (e.g. stripping or failing to strip
+        # control tokens like gpt-oss channel tokens).
+        if self.config.get("logprobs_workaround") and logprobs is not None:
+            derived = _logprobs_workaround(logprobs)
+            if derived is not None:
+                derived_content, logprobs = derived
+                if derived_content != content:
+                    _logger.warning(
+                        "logprobs_workaround: content derived from logprob "
+                        "tokens differs from message.content. Using logprob "
+                        "content as ground truth.\n"
+                        "  message.content: %r\n"
+                        "  logprob content: %r",
+                        content,
+                        derived_content,
+                    )
+                content = derived_content
+
         # Parse JSON output twice: Once to verify valid JSON and once to compute offsets
         # Note that we don't currently check schema, as that would require an additional
         # library dependency.
-        parsed_json = json.loads(choice.message.content)
-        reparsed_json = json_util.reparse_json_with_offsets(choice.message.content)
+        parsed_json = json.loads(content)
+        reparsed_json = json_util.reparse_json_with_offsets(content)
         for rule in self.rules:
             parsed_json = rule.apply(
-                parsed_json, reparsed_json, choice.logprobs, chat_completion
+                parsed_json, reparsed_json, logprobs, chat_completion
             )
         updated_message = choice.message.model_copy(
             update={"content": json.dumps(parsed_json)}

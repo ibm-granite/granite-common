@@ -228,13 +228,54 @@ _YAML_JSON_COMBOS_LIST = [
     #     task="citations",
     #     is_alora=True,
     # ),
+    # gpt-oss-20b intrinsics (canned output tests only, no inference)
+    YamlJsonCombo(
+        short_name="gpt_oss_answerability",
+        inputs_file=_INPUT_JSON_DIR / "answerable.json",
+        task="answerability",
+        repo_id="ibm-granite/granite-lib-rag-gpt-oss-r1.0",
+        revision="refs/pr/3",
+        base_model_id="openai/gpt-oss-20b",
+    ),
+    YamlJsonCombo(
+        short_name="gpt_oss_citations",
+        inputs_file=_INPUT_JSON_DIR / "citations.json",
+        task="citations",
+        repo_id="ibm-granite/granite-lib-rag-gpt-oss-r1.0",
+        revision="refs/pr/3",
+        base_model_id="openai/gpt-oss-20b",
+    ),
+    YamlJsonCombo(
+        short_name="gpt_oss_hallucination_detection",
+        inputs_file=_INPUT_JSON_DIR / "hallucination_detection.json",
+        task="hallucination_detection",
+        repo_id="ibm-granite/granite-lib-rag-gpt-oss-r1.0",
+        revision="refs/pr/3",
+        base_model_id="openai/gpt-oss-20b",
+    ),
+    YamlJsonCombo(
+        short_name="gpt_oss_query_rewrite",
+        inputs_file=_INPUT_JSON_DIR / "query_rewrite.json",
+        task="query_rewrite",
+        repo_id="ibm-granite/granite-lib-rag-gpt-oss-r1.0",
+        revision="refs/pr/3",
+        base_model_id="openai/gpt-oss-20b",
+    ),
 ]
 _YAML_JSON_COMBOS = {c.short_name: c for c in _YAML_JSON_COMBOS_LIST}
 
 
+# Base models that are small enough to run locally with transformers
+_LOCAL_BASE_MODELS = {
+    "ibm-granite/granite-4.0-micro",
+    "ibm-granite/granite-3.3-2b-instruct",
+}
+
 # All combinations of input and model where a model is present
 _YAML_JSON_COMBOS_WITH_MODEL = {
-    k: v for k, v in _YAML_JSON_COMBOS.items() if v.task is not None
+    k: v
+    for k, v in _YAML_JSON_COMBOS.items()
+    if v.task is not None and v.base_model_id in _LOCAL_BASE_MODELS
 }
 
 # All combinations of input and model that are not aLoRA models (includes no model)
