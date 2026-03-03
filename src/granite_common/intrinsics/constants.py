@@ -42,6 +42,7 @@ BASE_MODEL_TO_CANONICAL_NAME = {
     "openai/gpt-oss-20b": "gpt-oss-20b",
     "ibm-granite/granite-4.0-micro": "granite-4.0-micro",
     "granite4:micro": "granite4_micro",
+    "gpt-oss:20b": "gpt-oss_20b",
 }
 """Base model names that we accept for LoRA/aLoRA adapters in intrinsics libraries.
 Each model name maps to the name of the directory that contains (a)LoRA adapters for
