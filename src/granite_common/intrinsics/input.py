@@ -49,8 +49,8 @@ def sentence_delimiter(tag, sentence_num) -> str:
 
 
 def mark_sentence_boundaries(
-    split_strings: list[list[str]], tag_prefix: str
-) -> tuple[str, int]:
+    split_strings: list[list[str]], tag_prefix: str, index: int = 0
+) -> tuple[list[str], int]:
     """
     Modify one or more input strings by inserting a tag in the form
     ``<[prefix][number]>``
@@ -59,10 +59,11 @@ def mark_sentence_boundaries(
     :param split_strings: Input string(s), pre-split into sentences
     :param tag_prefix: String to place before the number part of each tagged
         sentence boundary.
+    :param index: Starting index for sentence numbering (default: 0)
 
-    :returns: List of input strings with all sentence boundaries marked.
+    :returns: Tuple of (list of input strings with all sentence boundaries marked,
+        next available index)
     """
-    index = 0
     result = []
     for sentences in split_strings:
         to_concat = []
@@ -70,7 +71,7 @@ def mark_sentence_boundaries(
             to_concat.append(f"{sentence_delimiter(tag_prefix, index)}{sentence}")
             index += 1
         result.append(" ".join(to_concat))
-    return result
+    return result, index
 
 
 def move_documents_to_message(
@@ -252,10 +253,11 @@ class IntrinsicsRewriter(ChatCompletionRewriter):
                     f"Received {self.sentence_boundaries}."
                 )
             for k, v in self.sentence_boundaries.items():
-                if k not in ("last_message", "documents"):
+                if k not in ("last_message", "documents", "all_but_last_message"):
                     raise ValueError(
                         f"Unexpected location '{k}' in 'sentence_boundaries' field. "
-                        f"Value should be 'last_message' or 'documents'."
+                        f"Value should be 'last_message', 'documents', or "
+                        f"'all_but_last_message'."
                     )
                 if not isinstance(v, str):
                     raise TypeError(
@@ -282,20 +284,27 @@ class IntrinsicsRewriter(ChatCompletionRewriter):
         :param chat_completion: Argument to :func:`_transform()`
         :type chat_completion: ChatCompletion
         :return: Copy of original chat completion with sentence boundaries marked in
-            the last message and in documents.
+            the last message, in documents, and/or in all but the last message.
         :rtype: ChatCompletion
         """
+        # Initialize sentence index counter
+        index = 0
+
         # Mark sentence boundaries in the last message.
         if "last_message" in self.sentence_boundaries:
             messages = chat_completion.messages.copy()  # Do not modify input!
             last_message_as_sentences = list(
                 self.sentence_splitter.tokenize(messages[-1].content)
             )
-            rewritten_last_message_text = mark_sentence_boundaries(
-                [last_message_as_sentences], self.sentence_boundaries["last_message"]
-            )[0]
-            messages[-1].content = rewritten_last_message_text
+            rewritten_texts, _ = mark_sentence_boundaries(
+                [last_message_as_sentences],
+                self.sentence_boundaries["last_message"],
+                index,
+            )
+            messages[-1].content = rewritten_texts[0]
             chat_completion = chat_completion.model_copy(update={"messages": messages})
+            # Reset index for subsequent cases (documents, all_but_last_message)
+            index = 0
 
         # Mark sentence boundaries in documents if present
         if (
@@ -309,13 +318,14 @@ class IntrinsicsRewriter(ChatCompletionRewriter):
             # The documents input to the model consists of the original documents
             # with each sentence boundary marked with <c0>, <c1>, ... <ck-1>,
             # where `k` is the number of sentences in ALL documents.
+            rewritten_doc_texts, index = mark_sentence_boundaries(
+                docs_as_sentences, self.sentence_boundaries["documents"], index
+            )
             rewritten_docs = [
                 doc.model_copy(update={"text": text})
                 for doc, text in zip(
                     chat_completion.extra_body.documents,
-                    mark_sentence_boundaries(
-                        docs_as_sentences, self.sentence_boundaries["documents"]
-                    ),
+                    rewritten_doc_texts,
                     strict=True,
                 )
             ]
@@ -326,6 +336,23 @@ class IntrinsicsRewriter(ChatCompletionRewriter):
             chat_completion = chat_completion.model_copy(
                 update={"extra_body": extra_body}
             )
+
+        # Mark sentence boundaries in all messages except the last one
+        if "all_but_last_message" in self.sentence_boundaries:
+            messages = chat_completion.messages.copy()  # Do not modify input!
+            # Process all messages except the last one
+            for i in range(len(messages) - 1):
+                message_as_sentences = list(
+                    self.sentence_splitter.tokenize(messages[i].content)
+                )
+                rewritten_texts, index = mark_sentence_boundaries(
+                    [message_as_sentences],
+                    self.sentence_boundaries["all_but_last_message"],
+                    index,
+                )
+                messages[i].content = rewritten_texts[0]
+            chat_completion = chat_completion.model_copy(update={"messages": messages})
+
         return chat_completion
 
     def _transform(
